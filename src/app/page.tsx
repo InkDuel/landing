@@ -12,7 +12,7 @@ export default function Home() {
         <div className="logo">
           Ink<span className="accent">Duel</span>
         </div>
-        
+
         <nav className="nav-links">
           <a href="#como-funciona">El Loop</a>
           <a href="#entrenamiento">Entrenamiento</a>
@@ -27,8 +27,8 @@ export default function Home() {
       <section className="hero-section">
         <div className="hero-content">
           <h1 className="hero-title">
-            ESCRIBE. <br/>
-            COMPITE.<br/>
+            ESCRIBE. <br />
+            COMPITE.<br />
             <span className="text-stroke">MEJORA.</span>
           </h1>
           <p className="hero-subtitle">
@@ -58,7 +58,7 @@ export default function Home() {
           <div className="floating-card product-card prompt-card">
             <span className="ink-icon">✦</span>
             <h4>Prompt Generado</h4>
-            <p className="ui-text">"Escribe la historia de una ciudad que ha olvidado su propio nombre..."</p>
+            <p className="ui-text">&quot;Escribe la historia de una ciudad que ha olvidado su propio nombre...&quot;</p>
           </div>
           <div className="floating-card product-card timer-card">
             <div className="timer-ring">04:59</div>
@@ -109,76 +109,76 @@ export default function Home() {
 
       <section id="entrenamiento" className="core-thesis">
         <h2>
-           Tú no compites para ganar. <br/>
-           <span className="highlight-thesis">Compites para mejorar.</span>
+          Tú no compites para ganar. <br />
+          <span className="highlight-thesis">Compites para mejorar.</span>
         </h2>
         <div className="features-container">
-           <div className="f-item workout-card">
-             <h4>Gimnasio del Escritor</h4>
-             <p>InkDuel te arranca tu zona de confort. Descubres nuevos estilos, géneros y formatos empujado por la urgencia de vencer al reloj.</p>
-             <div className="ui-simulation">
-               <div className="ui-badge">Adaptabilidad +15 XP</div>
-               <div className="ui-badge">Vocabulario +10 XP</div>
-             </div>
-           </div>
-           <div className="f-item stats-card">
-             <h4>Resultados Visibles</h4>
-             <p>El feedback no es abstracto. El sistema evalúa mecánicas puntuales de desarrollo para acelerar tu aprendizaje.</p>
-             <div className="ui-simulation vertical">
-                <div className="score-row loose"><span className="score-label">Ritmo</span><div className="s-bar"><div className="fill w-80"></div></div></div>
-                <div className="score-row loose"><span className="score-label">Tensión</span><div className="s-bar"><div className="fill w-95 amber"></div></div></div>
-             </div>
-           </div>
+          <div className="f-item workout-card">
+            <h4>Gimnasio del Escritor</h4>
+            <p>InkDuel te arranca tu zona de confort. Descubres nuevos estilos, géneros y formatos empujado por la urgencia de vencer al reloj.</p>
+            <div className="ui-simulation">
+              <div className="ui-badge">Adaptabilidad +15 XP</div>
+              <div className="ui-badge">Vocabulario +10 XP</div>
+            </div>
+          </div>
+          <div className="f-item stats-card">
+            <h4>Resultados Visibles</h4>
+            <p>El feedback no es abstracto. El sistema evalúa mecánicas puntuales de desarrollo para acelerar tu aprendizaje.</p>
+            <div className="ui-simulation vertical">
+              <div className="score-row loose"><span className="score-label">Ritmo</span><div className="s-bar"><div className="fill w-80"></div></div></div>
+              <div className="score-row loose"><span className="score-label">Tensión</span><div className="s-bar"><div className="fill w-95 amber"></div></div></div>
+            </div>
+          </div>
         </div>
       </section>
 
       <section id="rangos" className="progression-path">
         <div className="progression-text">
-           <h2>Progreso que se siente.</h2>
-           <p>Escalar aquí no depende de jugar mucho tiempo, depende de escribir mejor. La maestría cuesta, y el estatus se gana.</p>
+          <h2>Progreso que se siente.</h2>
+          <p>Escalar aquí no depende de jugar mucho tiempo, depende de escribir mejor. La maestría cuesta, y el estatus se gana.</p>
         </div>
-        
+
         <div className="ranks-timeline">
-           <div className="line-connector"></div>
-           
-           <div className="rank-node r-aprendiz">
-             <div className="r-icon"></div>
-             <div className="r-label">Aprendiz</div>
-           </div>
-           <div className="rank-node r-escriba">
-             <div className="r-icon"></div>
-             <div className="r-label">Escriba</div>
-           </div>
-           <div className="rank-node r-narrador">
-             <div className="r-icon"></div>
-             <div className="r-label">Narrador</div>
-           </div>
-           <div className="rank-node r-duellista focused">
-             <div className="r-icon"></div>
-             <div className="r-label glow-text">Duellista</div>
-             <div className="focused-indicator">Tu ELO actual</div>
-           </div>
-           <div className="rank-node r-maestro dormant">
-             <div className="r-icon"></div>
-             <div className="r-label">Maestro de Tinta</div>
-           </div>
-           <div className="rank-node r-leyenda dormant">
-             <div className="r-icon"></div>
-             <div className="r-label">Leyenda</div>
-           </div>
+          <div className="line-connector"></div>
+
+          <div className="rank-node r-aprendiz">
+            <div className="r-icon"></div>
+            <div className="r-label">Aprendiz</div>
+          </div>
+          <div className="rank-node r-escriba">
+            <div className="r-icon"></div>
+            <div className="r-label">Escriba</div>
+          </div>
+          <div className="rank-node r-narrador">
+            <div className="r-icon"></div>
+            <div className="r-label">Narrador</div>
+          </div>
+          <div className="rank-node r-duellista focused">
+            <div className="r-icon"></div>
+            <div className="r-label glow-text">Duellista</div>
+            <div className="focused-indicator">Tu ELO actual</div>
+          </div>
+          <div className="rank-node r-maestro dormant">
+            <div className="r-icon"></div>
+            <div className="r-label">Maestro de Tinta</div>
+          </div>
+          <div className="rank-node r-leyenda dormant">
+            <div className="r-icon"></div>
+            <div className="r-label">Leyenda</div>
+          </div>
         </div>
       </section>
 
       <section className="hero-footer-cta">
         <h2 className="massive-cta">
-          CADA DUELO <br/> TE HACE MEJOR <br/> <span className="accent">ESCRITOR.</span>
+          CADA DUELO <br /> TE HACE MEJOR <br /> <span className="accent">ESCRITOR.</span>
         </h2>
         <p>Entra en la arena. Pon a prueba tus palabras. Sube de rango.</p>
         <button className="cta-button primary glow large-mega">Unirse a la beta</button>
       </section>
-      
+
       <footer className="footer-bar">
-         <span>© {new Date().getFullYear()} INKDUEL. Acepta el duelo.</span>
+        <span>© {new Date().getFullYear()} INKDUEL. Acepta el duelo.</span>
       </footer>
     </main>
   );
