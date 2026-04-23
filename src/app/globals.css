@@ -127,8 +127,90 @@ h1, h2, h3, h4, h5, .logo {
   color: var(--fg);
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.language-picker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 150px;
+  height: 44px;
+  border: 1px solid var(--line-color);
+  border-radius: 6px;
+  background: rgba(255,255,255,0.06);
+  color: var(--fg);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, transform 0.2s;
+}
+
+.language-picker:hover {
+  border-color: rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.1);
+  transform: translateY(-1px);
+}
+
+.language-current {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0 2rem 0 0.85rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.language-flag {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.language-picker::after {
+  content: "⌄";
+  position: absolute;
+  right: 0.8rem;
+  top: 50%;
+  transform: translateY(-55%);
+  color: #a1a1aa;
+  font-size: 1rem;
+  pointer-events: none;
+}
+
+.language-picker select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
 @media (max-width: 768px) {
   .nav-links { display: none; }
+  .site-header { padding: 1rem 4%; }
+  .header-actions { gap: 0.5rem; }
+  .language-picker {
+    min-width: 54px;
+    width: 54px;
+  }
+  .language-current {
+    padding: 0 1.6rem 0 0.7rem;
+  }
+  .language-current span:not(.language-flag) {
+    display: none;
+  }
+  .site-header .cta-button {
+    padding: 0.75rem 1rem;
+    font-size: 0.75rem;
+    max-width: 130px;
+    white-space: normal;
+    line-height: 1.1;
+  }
 }
 
 /* Buttons */
