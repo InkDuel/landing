@@ -26,6 +26,10 @@ type PolicyCopy = {
   sections: PolicySection[];
 };
 
+const CONTACT_EMAIL = 'inkduel.app@gmail.com';
+const PRIVACY_URL = 'https://inkduel.com/privacy';
+const DELETE_ACCOUNT_URL = 'https://inkduel.com/delete-account';
+
 const languageOptions: {
   code: Locale;
   label: string;
@@ -48,7 +52,7 @@ const copies: Record<Locale, PolicyCopy> = {
     lastUpdatedLabel: 'Última actualización',
     lastUpdatedValue: '24 de abril de 2026',
     contactLabel: 'Contacto de privacidad',
-    contactValue: 'privacy@inkduel.com',
+    contactValue: CONTACT_EMAIL,
     sections: [
       {
         title: '1. Quién es responsable de InkDuel',
@@ -131,7 +135,7 @@ const copies: Record<Locale, PolicyCopy> = {
           'Conservamos la información durante el tiempo necesario para operar InkDuel, mantener la seguridad del servicio y cumplir obligaciones legales o de prevención de fraude.',
           'Si solicitas eliminar tu cuenta desde la app o a través de nuestros canales de privacidad, eliminaremos o anonimizaremos la información asociada, salvo cuando debamos conservar ciertos datos por motivos legales, de seguridad o defensa frente a abusos.',
           'Cuando una cuenta sea eliminada, podremos eliminar o anonimizar la información asociada. En algunos casos, ciertos registros vinculados a duelos, rankings, reportes, seguridad o prevención de abuso podrían conservarse de forma limitada o anonimizada para preservar la integridad del servicio.',
-          'También puedes solicitar la eliminación de tu cuenta o datos desde nuestro canal web: https://inkduel.com/delete-account',
+          `También puedes solicitar la eliminación de tu cuenta o datos desde nuestro canal web: ${DELETE_ACCOUNT_URL}`,
         ],
         cta: {
           href: '/delete-account',
@@ -175,13 +179,14 @@ const copies: Record<Locale, PolicyCopy> = {
     lastUpdatedLabel: 'Last updated',
     lastUpdatedValue: 'April 24, 2026',
     contactLabel: 'Privacy contact',
-    contactValue: 'privacy@inkduel.com',
+    contactValue: CONTACT_EMAIL,
     sections: [
       {
         title: '1. Who is responsible for InkDuel',
         paragraphs: [
-          'InkDuel is a platform for writing challenges and duels. This policy applies to the website, the mobile app, and related services published under the InkDuel brand.',
-          'If you use InkDuel, you agree that we may process your information as described in this policy and under the laws that apply in your jurisdiction.',
+          'InkDuel is a mobile app and digital platform for writing challenges and duels. This policy applies to the website, the mobile app, and related services published under the InkDuel brand.',
+          'InkDuel is designed to help users develop their skills as writers through creative challenges, feedback, and visible progress. Our data processing is aimed at supporting and improving that experience.',
+          'When you use InkDuel, we will process your information as described in this policy and in accordance with the laws that apply in your jurisdiction.',
         ],
       },
       {
@@ -191,68 +196,101 @@ const copies: Record<Locale, PolicyCopy> = {
         ],
         bullets: [
           'Account data, such as email address, authentication identifiers, and sign-in provider.',
-          'Profile data, such as username, preferred language, bio, or any other information you choose to complete.',
-          'Content generated inside the app, such as stories, prompt responses, duel results, and reports submitted by users.',
-          'Technical and usage data, such as device identifiers, basic activity logs, crash information, and general app settings.',
-          'Notification data, such as the token needed to send you results or other relevant app activity updates.',
+          'Profile data, such as username, preferred language, bio, photo, or any other information you choose to complete.',
+          'Usage and activity data, such as basic interaction history, duel participation, votes, rankings, results, and preferences within the app.',
+          'Technical data, such as device identifiers, basic activity logs, crash information, performance data, app version, and general settings.',
+          'Notification data, such as the token needed to send you results, relevant activity updates, or operational messages.',
         ],
       },
       {
-        title: '3. How we use your information',
+        title: '3. User-generated content',
+        paragraphs: [
+          'User-generated content, such as stories, responses to prompts, votes, duel results, statistics, and reports, may be processed in order to operate InkDuel’s core features, including duel participation, result evaluation, feedback generation, abuse prevention, and improvement of the creative experience.',
+          'InkDuel does not claim ownership over the stories or texts that users create within the platform. However, by using the service, the user authorizes us to process, display, store, and organize that content to the extent necessary to provide the app’s features.',
+        ],
+      },
+      {
+        title: '4. How we use your information',
         paragraphs: [
           'We use information to operate InkDuel, give you access to your account, and provide the core product experience.',
+          'Some InkDuel features may use automated processes to analyze content, compare stories, calculate duel outcomes, generate feedback, and maintain a fair and dynamic experience. These processes are used to operate the product and help users develop their writing skills.',
+          'Duel results may be generated fully or partially through automated processes. These results are part of InkDuel’s competitive experience and do not produce legal effects on users.',
+          'We may also use information in aggregated or anonymized form to analyze how InkDuel works, improve duel quality, detect errors, prevent abuse, and develop new features.',
         ],
         bullets: [
           'Create and maintain your account.',
-          'Match duels, show results, and store your progress.',
-          'Personalize language, experience, and settings.',
+          'Match duels, show results, rankings, and store your progress.',
+          'Personalize language, experience, prompts, settings, and profile visibility.',
           'Send operational communications, including notifications related to app activity.',
+          'Generate evaluations, recommendations, and results within the InkDuel experience.',
           'Prevent fraud, abuse, unauthorized access, and other misuse.',
-          'Analyze failures, improve stability, and develop new features.',
+          'Use basic analytics, error monitoring, and performance tools to understand app usage, detect technical issues, and improve service stability.',
         ],
       },
       {
-        title: '4. When we share information',
+        title: '5. What information may be visible to other users',
         paragraphs: [
-          'We do not sell your personal data. We may share information only when needed to provide the service or comply with legal obligations.',
+          'Some InkDuel features imply that certain information may be visible to other users, such as username, public profile, published stories, duel participation, results, rankings, votes, or statistics associated with activity within the platform.',
+          'The specific visibility of this information may depend on product configuration, the public or competitive nature of certain features, and the privacy settings made available by the app at any given time.',
+        ],
+      },
+      {
+        title: '6. When we share information',
+        paragraphs: [
+          'We do not sell your personal data. We may share information only when needed to provide the service, operate specific features, or comply with legal obligations.',
+          'To operate certain features, InkDuel may process content through our own automated systems or those of external providers. This may include story analysis, response comparison, feedback generation, abuse detection, and duel result calculation.',
+          'We may review content, reports, or user activity when needed to moderate the platform, investigate abuse, or enforce our rules.',
         ],
         bullets: [
-          'With infrastructure and authentication providers that help us operate InkDuel, such as Firebase services, Google Cloud, or sign-in providers.',
-          'With providers involved in notifications, secure storage, basic analytics, or technical support.',
-          'When required by law, a valid authority request, or a need to protect rights, safety, and the operation of InkDuel.',
+          'With infrastructure and authentication providers that help us operate InkDuel, such as Firebase, Google Cloud, and sign-in providers.',
+          'With providers involved in notifications, secure storage, basic analytics, error monitoring, performance, or technical support.',
+          'With external automated processing providers when necessary to operate product features.',
+          'When required by law, a valid authority request, or a reasonable need to protect the rights, safety, or operation of InkDuel, its users, or third parties.',
           'As part of a reorganization, merger, or transfer of the business, if that ever occurs.',
         ],
       },
       {
-        title: '5. Data retention and deletion',
+        title: '7. Minimum age',
         paragraphs: [
-          'We keep information for as long as needed to operate InkDuel, maintain service security, and comply with legal obligations or fraud-prevention needs.',
-          'If you request deletion of your account from inside the app or through our privacy channels, we will delete or anonymize the associated information unless we must keep certain data for legal, security, or abuse-prevention reasons.',
-          'The in-app account deletion option is the main way to start this process. You can also contact privacy@inkduel.com.',
+          'InkDuel is not directed to children under 13 or to people who have not reached the minimum age required to consent to personal data processing in their jurisdiction.',
+          'If we detect that we have collected information from a minor without the required consent, we will take reasonable steps to delete it.',
         ],
       },
       {
-        title: '6. Your choices and rights',
+        title: '8. Data retention and account deletion',
+        paragraphs: [
+          'We keep information for as long as needed to operate InkDuel, maintain service security, and comply with legal obligations or fraud-prevention needs.',
+          'If you request deletion of your account from inside the app or through our privacy channels, we will delete or anonymize the associated information unless we must retain certain data for legal, security, or abuse-prevention reasons.',
+          'When an account is deleted, we may delete or anonymize the associated information. In some cases, certain records related to duels, rankings, reports, security, or abuse prevention may be kept in a limited or anonymized form to preserve service integrity.',
+          `You can also request deletion of your account or related data through our web channel: ${DELETE_ACCOUNT_URL}`,
+        ],
+        cta: {
+          href: '/delete-account',
+          label: 'Request account or data deletion',
+        },
+      },
+      {
+        title: '9. Your choices and rights',
         paragraphs: [
           'Depending on your country or region, you may have rights to access, correct, delete, or object to certain processing of personal data.',
           'You can also update part of your information directly in the app, including language, profile settings, and account deletion requests.',
         ],
       },
       {
-        title: '7. Security',
+        title: '10. Security',
         paragraphs: [
           'We apply reasonable technical and organizational measures to protect information against unauthorized access, loss, alteration, or improper disclosure.',
           'Even so, no system is completely fail-safe, and we cannot guarantee absolute security.',
         ],
       },
       {
-        title: '8. International transfers',
+        title: '11. International transfers',
         paragraphs: [
-          'Some of our providers may process information in different countries. When that happens, we take reasonable steps to ensure the transfer and processing maintain an appropriate level of protection.',
+          'Some of our providers may process information in different countries. When that happens, we take reasonable steps to ensure that the transfer and processing maintain an appropriate level of protection.',
         ],
       },
       {
-        title: '9. Changes to this policy',
+        title: '12. Changes to this policy',
         paragraphs: [
           'We may update this policy when our practices, product, or legal requirements change. We will publish the current version on this page and indicate the latest update date.',
         ],
@@ -268,13 +306,14 @@ const copies: Record<Locale, PolicyCopy> = {
     lastUpdatedLabel: 'Ultima atualizacao',
     lastUpdatedValue: '24 de abril de 2026',
     contactLabel: 'Contato de privacidade',
-    contactValue: 'privacy@inkduel.com',
+    contactValue: CONTACT_EMAIL,
     sections: [
       {
         title: '1. Quem e responsavel pelo InkDuel',
         paragraphs: [
-          'InkDuel e uma plataforma para desafios e duelos de escrita. Esta politica se aplica ao site, ao aplicativo movel e aos servicos relacionados publicados sob a marca InkDuel.',
-          'Ao usar o InkDuel, voce concorda que podemos tratar as suas informacoes conforme descrito nesta politica e de acordo com a legislacao aplicavel na sua jurisdicao.',
+          'InkDuel e um app movel e uma plataforma digital para desafios e duelos de escrita. Esta politica se aplica ao site, ao app movel e aos servicos relacionados publicados sob a marca InkDuel.',
+          'O objetivo do InkDuel e ajudar usuarios a desenvolver suas habilidades como escritores por meio de desafios criativos, feedback e progresso visivel. O tratamento de dados e orientado a sustentar e melhorar essa experiencia.',
+          'Ao usar o InkDuel, trataremos suas informacoes conforme descrito nesta politica e de acordo com a legislacao aplicavel na sua jurisdicao.',
         ],
       },
       {
@@ -284,70 +323,103 @@ const copies: Record<Locale, PolicyCopy> = {
         ],
         bullets: [
           'Dados da conta, como endereco de e-mail, identificadores de autenticacao e provedor de login.',
-          'Dados de perfil, como nome de usuario, idioma preferido, biografia ou qualquer outra informacao que voce decidir preencher.',
-          'Conteudo gerado dentro do app, como historias, respostas a prompts, resultados de duelos e denuncias enviadas por usuarios.',
-          'Dados tecnicos e de uso, como identificadores do dispositivo, registros basicos de atividade, informacoes de falhas e configuracoes gerais do app.',
-          'Dados de notificacoes, como o token necessario para enviar avisos sobre resultados ou atividade relevante do app.',
+          'Dados de perfil, como nome de usuario, idioma preferido, biografia, foto ou qualquer outra informacao que voce decidir preencher.',
+          'Dados de uso e atividade, como historico basico de interacao, participacao em duelos, votos, rankings, resultados e preferencias dentro do app.',
+          'Dados tecnicos, como identificadores do dispositivo, registros basicos de atividade, informacoes de erros, desempenho, versao do app e configuracoes gerais.',
+          'Dados de notificacoes, como o token necessario para enviar resultados, atividade relevante ou mensagens operacionais.',
         ],
       },
       {
-        title: '3. Como usamos as suas informacoes',
+        title: '3. Conteudo gerado pelos usuarios',
         paragraphs: [
-          'Usamos as informacoes para operar o InkDuel, permitir o acesso a sua conta e oferecer a experiencia principal do produto.',
+          'O conteudo gerado pelos usuarios, como historias, respostas a consignas, votos, resultados de duelos, estatisticas e denuncias, pode ser tratado para operar as funcionalidades principais do InkDuel, incluindo participacao em duelos, avaliacao de resultados, geracao de feedback, prevencao de abusos e melhoria da experiencia criativa.',
+          'O InkDuel nao reivindica a titularidade sobre as historias ou textos criados pelos usuarios dentro da plataforma. No entanto, ao usar o servico, o usuario nos autoriza a processar, exibir, armazenar e organizar esse conteudo na medida necessaria para prestar as funcoes do app.',
+        ],
+      },
+      {
+        title: '4. Como usamos suas informacoes',
+        paragraphs: [
+          'Usamos as informacoes para operar o InkDuel, permitir o acesso a sua conta e oferecer as funcoes principais do produto.',
+          'Algumas funcoes do InkDuel podem usar processos automatizados para analisar conteudo, comparar historias, calcular resultados de duelos, gerar feedback e manter uma experiencia justa e dinamica. Esses processos sao usados para operar o produto e ajudar usuarios a desenvolver suas habilidades de escrita.',
+          'Os resultados dos duelos podem ser gerados total ou parcialmente por processos automatizados. Esses resultados fazem parte da experiencia competitiva do InkDuel e nao produzem efeitos legais sobre os usuarios.',
+          'Tambem podemos usar informacoes de forma agregada ou anonimizada para analisar como o InkDuel funciona, melhorar a qualidade dos duelos, detectar erros, prevenir abusos e desenvolver novas funcionalidades.',
         ],
         bullets: [
-          'Criar e manter a sua conta.',
-          'Fazer o pareamento de duelos, mostrar resultados e armazenar o seu progresso.',
-          'Personalizar idioma, experiencia e configuracoes.',
+          'Criar e manter sua conta.',
+          'Emparelhar duelos, mostrar resultados, rankings e armazenar seu progresso.',
+          'Personalizar idioma, experiencia, consignas, configuracoes e visibilidade do perfil.',
           'Enviar comunicacoes operacionais, incluindo notificacoes relacionadas a atividade do app.',
+          'Gerar avaliacoes, recomendacoes e resultados dentro da experiencia do InkDuel.',
           'Prevenir fraude, abuso, acesso nao autorizado e outros usos indevidos.',
-          'Analisar falhas, melhorar a estabilidade e desenvolver novos recursos.',
+          'Usar ferramentas de analise basica, monitoramento de erros e desempenho para entender o uso do app, detectar falhas tecnicas e melhorar a estabilidade do servico.',
         ],
       },
       {
-        title: '4. Quando compartilhamos informacoes',
+        title: '5. Quais informacoes podem ser visiveis para outros usuarios',
         paragraphs: [
-          'Nao vendemos os seus dados pessoais. Podemos compartilhar informacoes apenas quando isso for necessario para prestar o servico ou cumprir obrigacoes legais.',
+          'Algumas funcoes do InkDuel implicam que certas informacoes possam ser visiveis para outros usuarios, como nome de usuario, perfil publico, historias publicadas, participacao em duelos, resultados, rankings, votos ou estatisticas associadas a atividade dentro da plataforma.',
+          'A visibilidade especifica dessas informacoes pode depender da configuracao do produto, da natureza publica ou competitiva de certas funcoes e das configuracoes de privacidade disponibilizadas pelo app em cada momento.',
+        ],
+      },
+      {
+        title: '6. Quando compartilhamos informacoes',
+        paragraphs: [
+          'Nao vendemos seus dados pessoais. Podemos compartilhar informacoes apenas quando isso for necessario para prestar o servico, operar funcoes especificas ou cumprir obrigacoes legais.',
+          'Para operar certas funcoes, o InkDuel pode processar conteudo por meio de sistemas automatizados proprios ou de fornecedores externos. Isso pode incluir analise de historias, comparacao de respostas, geracao de feedback, deteccao de abuso e calculo de resultados de duelos.',
+          'Podemos revisar conteudo, denuncias ou atividade de usuarios quando isso for necessario para moderar a plataforma, investigar abusos ou fazer cumprir nossas regras.',
         ],
         bullets: [
-          'Com provedores de infraestrutura e autenticacao que ajudam a operar o InkDuel, como servicos do Firebase, Google Cloud ou provedores de login.',
-          'Com provedores envolvidos em notificacoes, armazenamento seguro, analise basica ou suporte tecnico.',
-          'Quando houver exigencia legal, solicitacao valida de autoridade ou necessidade de proteger direitos, seguranca e funcionamento do InkDuel.',
+          'Com fornecedores de infraestrutura e autenticacao que ajudam a operar o InkDuel, como Firebase, Google Cloud e provedores de login.',
+          'Com fornecedores envolvidos em notificacoes, armazenamento seguro, analise basica, monitoramento de erros, desempenho ou suporte tecnico.',
+          'Com fornecedores externos de processamento automatizado, quando necessario para operar funcionalidades do produto.',
+          'Quando houver exigencia legal, solicitacao valida de autoridade ou necessidade razoavel de proteger direitos, seguranca ou funcionamento do InkDuel, de seus usuarios ou de terceiros.',
           'Como parte de uma reorganizacao, fusao ou transferencia do negocio, caso isso venha a acontecer.',
         ],
       },
       {
-        title: '5. Retencao e exclusao de dados',
+        title: '7. Idade minima',
+        paragraphs: [
+          'O InkDuel nao e direcionado a menores de 13 anos nem a pessoas que nao tenham atingido a idade minima exigida para consentir com o tratamento de dados pessoais em sua jurisdicao.',
+          'Se detectarmos que coletamos informacoes de um menor sem o consentimento necessario, tomaremos medidas razoaveis para exclui-las.',
+        ],
+      },
+      {
+        title: '8. Retencao e exclusao de dados',
         paragraphs: [
           'Mantemos as informacoes pelo tempo necessario para operar o InkDuel, preservar a seguranca do servico e cumprir obrigacoes legais ou necessidades de prevencao a fraude.',
-          'Se voce solicitar a exclusao da conta dentro do app ou pelos nossos canais de privacidade, excluiremos ou anonimizaremos as informacoes associadas, salvo quando precisarmos manter certos dados por motivos legais, de seguranca ou prevencao de abuso.',
-          'A opcao de exclusao de conta dentro do app e a principal forma de iniciar esse processo. Voce tambem pode entrar em contato por privacy@inkduel.com.',
+          'Se voce solicitar a exclusao da sua conta dentro do app ou pelos nossos canais de privacidade, excluiremos ou anonimizaremos as informacoes associadas, salvo quando precisarmos manter certos dados por motivos legais, de seguranca ou prevencao de abuso.',
+          'Quando uma conta for excluida, poderemos excluir ou anonimizar as informacoes associadas. Em alguns casos, certos registros vinculados a duelos, rankings, denuncias, seguranca ou prevencao de abuso podem ser mantidos de forma limitada ou anonimizada para preservar a integridade do servico.',
+          `Voce tambem pode solicitar a exclusao da sua conta ou dos seus dados pelo nosso canal web: ${DELETE_ACCOUNT_URL}`,
         ],
+        cta: {
+          href: '/delete-account',
+          label: 'Solicitar exclusao de conta ou dados',
+        },
       },
       {
-        title: '6. Suas escolhas e direitos',
+        title: '9. Suas escolhas e direitos',
         paragraphs: [
-          'Dependendo do seu pais ou regiao, voce pode ter direitos de acesso, correcao, exclusao ou oposicao a determinados tratamentos de dados pessoais.',
-          'Voce tambem pode atualizar parte das suas informacoes diretamente no app, incluindo idioma, configuracoes de perfil e solicitacao de exclusao da conta.',
+          'Dependendo do seu pais ou regiao, voce pode ter direitos de acessar, corrigir, excluir ou se opor a certos tratamentos de dados pessoais.',
+          'Voce tambem pode atualizar parte das suas informacoes diretamente no app, incluindo idioma, configuracoes de perfil e solicitacoes de exclusao da conta.',
         ],
       },
       {
-        title: '7. Seguranca',
+        title: '10. Seguranca',
         paragraphs: [
           'Aplicamos medidas tecnicas e organizacionais razoaveis para proteger as informacoes contra acesso nao autorizado, perda, alteracao ou divulgacao indevida.',
-          'Ainda assim, nenhum sistema e completamente infalivel, e nao podemos garantir seguranca absoluta.',
+          'Ainda assim, nenhum sistema e totalmente infalivel, e nao podemos garantir seguranca absoluta.',
         ],
       },
       {
-        title: '8. Transferencias internacionais',
+        title: '11. Transferencias internacionais',
         paragraphs: [
-          'Alguns dos nossos provedores podem processar informacoes em diferentes paises. Quando isso acontece, adotamos medidas razoaveis para que a transferencia e o tratamento mantenham um nivel adequado de protecao.',
+          'Alguns dos nossos fornecedores podem processar informacoes em diferentes paises. Quando isso acontece, adotamos medidas razoaveis para que a transferencia e o tratamento mantenham um nivel adequado de protecao.',
         ],
       },
       {
-        title: '9. Alteracoes nesta politica',
+        title: '12. Alteracoes nesta politica',
         paragraphs: [
-          'Podemos atualizar esta politica quando as nossas praticas, o produto ou os requisitos legais mudarem. Publicaremos a versao vigente nesta mesma pagina e indicaremos a data da ultima atualizacao.',
+          'Podemos atualizar esta politica quando nossas praticas, o produto ou os requisitos legais mudarem. Publicaremos a versao vigente nesta pagina e indicaremos a data da ultima atualizacao.',
         ],
       },
     ],
