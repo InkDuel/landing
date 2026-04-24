@@ -54,8 +54,8 @@ const copies: Record<Locale, PolicyCopy> = {
         title: '1. Quién es responsable de InkDuel',
         paragraphs: [
           'InkDuel es una app móvil y una plataforma digital para retos y duelos de escritura. Esta política se aplica al sitio web, a la app móvil y a los servicios relacionados publicados bajo la marca InkDuel.',
-          'El objetivo de InkDuel es ayudar a los usuarios a desarrollar sus habilidades como escritores mediante retos creativos, feedback y progreso visible. El tratamiento de datos está orientado a sostener y mejorar esa experiencia.',
-          'El uso de InkDuel implica la aceptación de esta política. Trataremos tu información según lo descrito aquí y conforme a la normativa aplicable en tu jurisdicción.',
+          'El objetivo de InkDuel es ayudar a los usuarios a desarrollar sus habilidades como escritores mediante retos creativos, retroalimentación y progreso visible. El tratamiento de datos está orientado a sostener y mejorar esa experiencia.',
+          'Al usar InkDuel, trataremos tu información según lo descrito en esta política y conforme a la normativa aplicable en tu jurisdicción.',
         ],
       },
       {
@@ -74,7 +74,7 @@ const copies: Record<Locale, PolicyCopy> = {
       {
         title: '3. Contenido generado por los usuarios',
         paragraphs: [
-          'El contenido generado por los usuarios, como relatos, respuestas a prompts, votos, resultados de duelos, estadísticas y reportes, puede ser tratado para operar las funcionalidades principales de InkDuel, incluyendo la participación en duelos, la evaluación de resultados, la generación de feedback, la prevención de abusos y la mejora de la experiencia creativa.',
+          'El contenido generado por los usuarios, como relatos, respuestas a consignas, votos, resultados de duelos, estadísticas y reportes, puede ser tratado para operar las funcionalidades principales de InkDuel, incluyendo la participación en duelos, la evaluación de resultados, la generación de retroalimentación, la prevención de abusos y la mejora de la experiencia creativa.',
           'InkDuel no reclama la titularidad sobre los relatos o textos que los usuarios crean dentro de la plataforma. Sin embargo, al usar el servicio, el usuario nos autoriza a procesar, mostrar, almacenar y organizar dicho contenido en la medida necesaria para prestar las funciones de la app.',
         ],
       },
@@ -82,15 +82,16 @@ const copies: Record<Locale, PolicyCopy> = {
         title: '4. Cómo usamos tu información',
         paragraphs: [
           'Usamos la información para operar InkDuel, permitir el acceso a tu cuenta y ofrecer las funciones principales del producto.',
-          'Algunas funciones de InkDuel pueden utilizar procesos automatizados para analizar contenido, comparar relatos, calcular resultados de duelos, generar feedback y mantener una experiencia justa y dinámica. Estos procesos se utilizan para operar el producto y ayudar a los usuarios a desarrollar sus habilidades como escritores.',
+          'Algunas funciones de InkDuel pueden utilizar procesos automatizados para analizar contenido, comparar relatos, calcular resultados de duelos, generar retroalimentación y mantener una experiencia justa y dinámica. Estos procesos se utilizan para operar el producto y ayudar a los usuarios a desarrollar sus habilidades como escritores.',
+          'Los resultados de los duelos pueden generarse total o parcialmente mediante procesos automatizados. Estos resultados forman parte de la experiencia competitiva de InkDuel y no producen efectos legales sobre los usuarios.',
           'También podemos utilizar información de forma agregada o anonimizada para analizar el funcionamiento de InkDuel, mejorar la calidad de los duelos, detectar errores, prevenir abusos y desarrollar nuevas funcionalidades.',
         ],
         bullets: [
           'Crear y mantener tu cuenta.',
           'Emparejar duelos, mostrar resultados, rankings y guardar tu progreso.',
-          'Personalizar idioma, experiencia, prompts, configuraciones y visibilidad del perfil.',
+          'Personalizar idioma, experiencia, consignas, configuraciones y visibilidad del perfil.',
           'Enviar comunicaciones operativas, incluidas notificaciones relacionadas con la actividad de la app.',
-          'Generar evaluaciones, feedback y resultados dentro de la experiencia de InkDuel.',
+          'Generar evaluaciones, recomendaciones y resultados dentro de la experiencia de InkDuel.',
           'Prevenir fraude, abuso, accesos no autorizados y otros usos indebidos.',
           'Utilizar herramientas de analítica básica, monitoreo de errores y rendimiento para entender cómo se usa la app, detectar fallos técnicos y mejorar la estabilidad del servicio.',
         ],
@@ -106,7 +107,8 @@ const copies: Record<Locale, PolicyCopy> = {
         title: '6. Cuándo compartimos información',
         paragraphs: [
           'No vendemos tus datos personales. Podemos compartir información solo en los supuestos necesarios para prestar el servicio, operar funciones específicas o cumplir obligaciones legales.',
-          'Para operar ciertas funciones, InkDuel puede procesar contenido mediante sistemas automatizados propios o de proveedores externos. Esto puede incluir el análisis de relatos, comparación de respuestas, generación de feedback, detección de abuso y cálculo de resultados de duelos.',
+          'Para operar ciertas funciones, InkDuel puede procesar contenido mediante sistemas automatizados propios o de proveedores externos. Esto puede incluir el análisis de relatos, comparación de respuestas, generación de retroalimentación, detección de abuso y cálculo de resultados de duelos.',
+          'Podemos revisar contenido, reportes o actividad de usuarios cuando sea necesario para moderar la plataforma, investigar abusos o hacer cumplir nuestras reglas.',
         ],
         bullets: [
           'Con proveedores de infraestructura y autenticación que nos ayudan a operar InkDuel, como Firebase, Google Cloud y proveedores de inicio de sesión.',
@@ -129,7 +131,7 @@ const copies: Record<Locale, PolicyCopy> = {
           'Conservamos la información durante el tiempo necesario para operar InkDuel, mantener la seguridad del servicio y cumplir obligaciones legales o de prevención de fraude.',
           'Si solicitas eliminar tu cuenta desde la app o a través de nuestros canales de privacidad, eliminaremos o anonimizaremos la información asociada, salvo cuando debamos conservar ciertos datos por motivos legales, de seguridad o defensa frente a abusos.',
           'Cuando una cuenta sea eliminada, podremos eliminar o anonimizar la información asociada. En algunos casos, ciertos registros vinculados a duelos, rankings, reportes, seguridad o prevención de abuso podrían conservarse de forma limitada o anonimizada para preservar la integridad del servicio.',
-          'También puedes solicitar la eliminación de tu cuenta o datos desde nuestro canal web.',
+          'También puedes solicitar la eliminación de tu cuenta o datos desde nuestro canal web: https://inkduel.com/delete-account',
         ],
         cta: {
           href: '/delete-account',

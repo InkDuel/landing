@@ -87,7 +87,10 @@ const copies: Record<Locale, DeleteAccountCopy> = {
         paragraphs: [
           'Para entender mejor cómo tratamos tus datos, consulta también nuestra Política de privacidad.',
         ],
-        bullets: ['Política de privacidad: https://inkduel.com/privacy'],
+        bullets: [
+          'Política de privacidad: https://inkduel.com/privacy',
+          'Canal web de eliminación de cuenta: https://inkduel.com/delete-account',
+        ],
       },
     ],
   },
