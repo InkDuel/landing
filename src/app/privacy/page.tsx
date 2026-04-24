@@ -4,6 +4,16 @@ import { useEffect, useMemo, useState } from 'react';
 
 type Locale = 'es' | 'en' | 'pt';
 
+type PolicySection = {
+  title: string;
+  paragraphs: string[];
+  bullets?: string[];
+  cta?: {
+    href: string;
+    label: string;
+  };
+};
+
 type PolicyCopy = {
   backToHome: string;
   eyebrow: string;
@@ -13,11 +23,7 @@ type PolicyCopy = {
   lastUpdatedValue: string;
   contactLabel: string;
   contactValue: string;
-  sections: {
-    title: string;
-    paragraphs: string[];
-    bullets?: string[];
-  }[];
+  sections: PolicySection[];
 };
 
 const languageOptions: {
@@ -30,96 +36,130 @@ const languageOptions: {
   { code: 'pt', label: 'Português', flag: '🇧🇷' },
 ];
 
+const withLocalePath = (path: string, locale: Locale) => `${path}?lang=${locale}`;
+
 const copies: Record<Locale, PolicyCopy> = {
   es: {
     backToHome: 'Volver al inicio',
-    eyebrow: 'Politica de privacidad',
-    title: 'Como InkDuel recopila, usa y protege tus datos.',
+    eyebrow: 'Política de privacidad',
+    title: 'Cómo InkDuel recopila, usa y protege tus datos.',
     intro:
-      'Esta politica explica que datos podemos tratar cuando usas InkDuel, por que los tratamos y que opciones tienes sobre tu informacion.',
-    lastUpdatedLabel: 'Ultima actualizacion',
-    lastUpdatedValue: '23 de abril de 2026',
+      'Esta política explica qué datos podemos tratar cuando usas InkDuel, por qué los tratamos y qué opciones tienes sobre tu información.',
+    lastUpdatedLabel: 'Última actualización',
+    lastUpdatedValue: '24 de abril de 2026',
     contactLabel: 'Contacto de privacidad',
     contactValue: 'privacy@inkduel.com',
     sections: [
       {
-        title: '1. Quien es responsable de InkDuel',
+        title: '1. Quién es responsable de InkDuel',
         paragraphs: [
-          'InkDuel es una plataforma para retos y duelos de escritura. Esta politica se aplica al sitio web, a la app movil y a los servicios relacionados publicados bajo la marca InkDuel.',
-          'Si utilizas InkDuel, aceptas que tratemos tu informacion segun lo descrito en esta politica y en la normativa aplicable en tu jurisdiccion.',
+          'InkDuel es una app móvil y una plataforma digital para retos y duelos de escritura. Esta política se aplica al sitio web, a la app móvil y a los servicios relacionados publicados bajo la marca InkDuel.',
+          'El objetivo de InkDuel es ayudar a los usuarios a desarrollar sus habilidades como escritores mediante retos creativos, feedback y progreso visible. El tratamiento de datos está orientado a sostener y mejorar esa experiencia.',
+          'El uso de InkDuel implica la aceptación de esta política. Trataremos tu información según lo descrito aquí y conforme a la normativa aplicable en tu jurisdicción.',
         ],
       },
       {
-        title: '2. Que informacion podemos recopilar',
+        title: '2. Qué información podemos recopilar',
         paragraphs: [
-          'La informacion que tratamos depende de como uses InkDuel y de las funciones que tengas activadas.',
+          'La información que tratamos depende de cómo uses InkDuel y de las funciones que tengas activadas.',
         ],
         bullets: [
-          'Datos de cuenta, como correo electronico, identificadores de autenticacion y proveedor de inicio de sesion.',
-          'Datos de perfil, como nombre de usuario, idioma preferido, biografia u otra informacion que decidas completar.',
-          'Contenido generado dentro de la app, como relatos, respuestas a prompts, resultados de duelos y reportes enviados por usuarios.',
-          'Datos tecnicos y de uso, como identificadores de dispositivo, registros basicos de actividad, informacion de errores y configuraciones generales de la app.',
-          'Datos de notificaciones, como el token necesario para enviarte avisos sobre resultados o actividad relevante.',
+          'Datos de cuenta, como correo electrónico, identificadores de autenticación y proveedor de inicio de sesión.',
+          'Datos de perfil, como nombre de usuario, idioma preferido, biografía, foto u otra información que decidas completar.',
+          'Datos de uso y actividad, como historial básico de interacción, participación en duelos, votos, rankings, resultados y preferencias dentro de la app.',
+          'Datos técnicos, como identificadores de dispositivo, registros básicos de actividad, información de errores, rendimiento, versión de la app y configuraciones generales.',
+          'Datos de notificaciones, como el token necesario para enviarte avisos sobre resultados, actividad relevante o mensajes operativos.',
         ],
       },
       {
-        title: '3. Como usamos tu informacion',
+        title: '3. Contenido generado por los usuarios',
         paragraphs: [
-          'Usamos la informacion para operar InkDuel, permitir el acceso a tu cuenta y ofrecer las funciones principales del producto.',
+          'El contenido generado por los usuarios, como relatos, respuestas a prompts, votos, resultados de duelos, estadísticas y reportes, puede ser tratado para operar las funcionalidades principales de InkDuel, incluyendo la participación en duelos, la evaluación de resultados, la generación de feedback, la prevención de abusos y la mejora de la experiencia creativa.',
+          'InkDuel no reclama la titularidad sobre los relatos o textos que los usuarios crean dentro de la plataforma. Sin embargo, al usar el servicio, el usuario nos autoriza a procesar, mostrar, almacenar y organizar dicho contenido en la medida necesaria para prestar las funciones de la app.',
+        ],
+      },
+      {
+        title: '4. Cómo usamos tu información',
+        paragraphs: [
+          'Usamos la información para operar InkDuel, permitir el acceso a tu cuenta y ofrecer las funciones principales del producto.',
+          'Algunas funciones de InkDuel pueden utilizar procesos automatizados para analizar contenido, comparar relatos, calcular resultados de duelos, generar feedback y mantener una experiencia justa y dinámica. Estos procesos se utilizan para operar el producto y ayudar a los usuarios a desarrollar sus habilidades como escritores.',
+          'También podemos utilizar información de forma agregada o anonimizada para analizar el funcionamiento de InkDuel, mejorar la calidad de los duelos, detectar errores, prevenir abusos y desarrollar nuevas funcionalidades.',
         ],
         bullets: [
           'Crear y mantener tu cuenta.',
-          'Emparejar duelos, mostrar resultados y guardar tu progreso.',
-          'Personalizar idioma, experiencia y configuraciones.',
+          'Emparejar duelos, mostrar resultados, rankings y guardar tu progreso.',
+          'Personalizar idioma, experiencia, prompts, configuraciones y visibilidad del perfil.',
           'Enviar comunicaciones operativas, incluidas notificaciones relacionadas con la actividad de la app.',
+          'Generar evaluaciones, feedback y resultados dentro de la experiencia de InkDuel.',
           'Prevenir fraude, abuso, accesos no autorizados y otros usos indebidos.',
-          'Analizar fallos, mejorar estabilidad y desarrollar nuevas funciones.',
+          'Utilizar herramientas de analítica básica, monitoreo de errores y rendimiento para entender cómo se usa la app, detectar fallos técnicos y mejorar la estabilidad del servicio.',
         ],
       },
       {
-        title: '4. Cuando compartimos informacion',
+        title: '5. Qué información puede ser visible para otros usuarios',
         paragraphs: [
-          'No vendemos tus datos personales. Podemos compartir informacion solo en los supuestos necesarios para prestar el servicio o cumplir obligaciones legales.',
+          'Algunas funciones de InkDuel implican que cierta información sea visible para otros usuarios, como nombre de usuario, perfil público, relatos publicados, participación en duelos, resultados, rankings, votos o estadísticas asociadas a la actividad dentro de la plataforma.',
+          'La visibilidad concreta puede depender de la configuración del producto, de la naturaleza pública o competitiva de determinadas funciones y de los ajustes de privacidad que ofrezca la app en cada momento.',
+        ],
+      },
+      {
+        title: '6. Cuándo compartimos información',
+        paragraphs: [
+          'No vendemos tus datos personales. Podemos compartir información solo en los supuestos necesarios para prestar el servicio, operar funciones específicas o cumplir obligaciones legales.',
+          'Para operar ciertas funciones, InkDuel puede procesar contenido mediante sistemas automatizados propios o de proveedores externos. Esto puede incluir el análisis de relatos, comparación de respuestas, generación de feedback, detección de abuso y cálculo de resultados de duelos.',
         ],
         bullets: [
-          'Con proveedores de infraestructura y autenticacion que nos ayudan a operar InkDuel, como servicios de Firebase, Google Cloud o proveedores de inicio de sesion.',
-          'Con proveedores que intervienen en notificaciones, almacenamiento seguro, analitica basica o soporte tecnico.',
-          'Cuando exista una obligacion legal, requerimiento valido de autoridad o necesidad de proteger derechos, seguridad y funcionamiento de InkDuel.',
-          'Como parte de una reorganizacion, fusion o transferencia del negocio, si eso llegara a ocurrir.',
+          'Con proveedores de infraestructura y autenticación que nos ayudan a operar InkDuel, como Firebase, Google Cloud y proveedores de inicio de sesión.',
+          'Con proveedores que intervienen en notificaciones, almacenamiento seguro, analítica básica, monitoreo de errores, rendimiento o soporte técnico.',
+          'Con proveedores externos de procesamiento automatizado, cuando sea necesario para operar funciones del producto.',
+          'Cuando exista una obligación legal, un requerimiento válido de autoridad o una necesidad razonable de proteger derechos, seguridad y funcionamiento de InkDuel, de sus usuarios o de terceros.',
+          'Como parte de una reorganización, fusión o transferencia del negocio, si eso llegara a ocurrir.',
         ],
       },
       {
-        title: '5. Conservacion y eliminacion de datos',
+        title: '7. Edad mínima',
         paragraphs: [
-          'Conservamos la informacion durante el tiempo necesario para operar InkDuel, mantener la seguridad del servicio y cumplir obligaciones legales o de prevencion de fraude.',
-          'Si solicitas eliminar tu cuenta desde la app o a traves de nuestros canales de privacidad, eliminaremos o anonimizaremos la informacion asociada, salvo cuando debamos conservar ciertos datos por motivos legales, de seguridad o defensa frente a abusos.',
-          'La opcion de eliminacion de cuenta dentro de la app es el canal principal para iniciar este proceso. Tambien puedes escribir a privacy@inkduel.com.',
+          'InkDuel no está dirigida a menores de 13 años ni a personas que no alcancen la edad mínima requerida para consentir el tratamiento de datos personales en su jurisdicción.',
+          'Si detectamos que recopilamos información de un menor sin el consentimiento correspondiente, tomaremos medidas razonables para eliminarla.',
         ],
       },
       {
-        title: '6. Tus opciones y derechos',
+        title: '8. Conservación y eliminación de datos',
         paragraphs: [
-          'Segun tu pais o region, puedes tener derecho a acceder, corregir, eliminar u oponerte a determinados tratamientos de datos personales.',
-          'Tambien puedes actualizar parte de tu informacion desde la propia app, como idioma, ajustes del perfil y solicitud de eliminacion de cuenta.',
+          'Conservamos la información durante el tiempo necesario para operar InkDuel, mantener la seguridad del servicio y cumplir obligaciones legales o de prevención de fraude.',
+          'Si solicitas eliminar tu cuenta desde la app o a través de nuestros canales de privacidad, eliminaremos o anonimizaremos la información asociada, salvo cuando debamos conservar ciertos datos por motivos legales, de seguridad o defensa frente a abusos.',
+          'Cuando una cuenta sea eliminada, podremos eliminar o anonimizar la información asociada. En algunos casos, ciertos registros vinculados a duelos, rankings, reportes, seguridad o prevención de abuso podrían conservarse de forma limitada o anonimizada para preservar la integridad del servicio.',
+          'También puedes solicitar la eliminación de tu cuenta o datos desde nuestro canal web.',
+        ],
+        cta: {
+          href: '/delete-account',
+          label: 'Solicitar eliminación de cuenta o datos',
+        },
+      },
+      {
+        title: '9. Tus opciones y derechos',
+        paragraphs: [
+          'Según tu país o región, puedes tener derecho a acceder, corregir, eliminar u oponerte a determinados tratamientos de datos personales.',
+          'También puedes actualizar parte de tu información desde la propia app, como idioma, ajustes del perfil y solicitud de eliminación de cuenta.',
         ],
       },
       {
-        title: '7. Seguridad',
+        title: '10. Seguridad',
         paragraphs: [
-          'Aplicamos medidas tecnicas y organizativas razonables para proteger la informacion contra acceso no autorizado, perdida, alteracion o divulgacion indebida.',
-          'Aun asi, ningun sistema es completamente infalible, por lo que no podemos garantizar seguridad absoluta.',
+          'Aplicamos medidas técnicas y organizativas razonables para proteger la información contra acceso no autorizado, pérdida, alteración o divulgación indebida.',
+          'Aun así, ningún sistema es completamente infalible, por lo que no podemos garantizar seguridad absoluta.',
         ],
       },
       {
-        title: '8. Transferencias internacionales',
+        title: '11. Transferencias internacionales',
         paragraphs: [
-          'Algunos de nuestros proveedores pueden procesar informacion en distintos paises. Cuando eso ocurre, adoptamos medidas razonables para que la transferencia y el tratamiento mantengan un nivel adecuado de proteccion.',
+          'Algunos de nuestros proveedores pueden procesar información en distintos países. Cuando eso ocurre, adoptamos medidas razonables para que la transferencia y el tratamiento mantengan un nivel adecuado de protección.',
         ],
       },
       {
-        title: '9. Cambios en esta politica',
+        title: '12. Cambios en esta política',
         paragraphs: [
-          'Podemos actualizar esta politica cuando cambien nuestras practicas, el producto o los requisitos legales. Publicaremos la version vigente en esta misma pagina e indicaremos la fecha de ultima actualizacion.',
+          'Podemos actualizar esta política cuando cambien nuestras prácticas, el producto o los requisitos legales. Publicaremos la versión vigente en esta misma página e indicaremos la fecha de última actualización.',
         ],
       },
     ],
@@ -131,7 +171,7 @@ const copies: Record<Locale, PolicyCopy> = {
     intro:
       'This policy explains what data we may process when you use InkDuel, why we process it, and what choices you have over your information.',
     lastUpdatedLabel: 'Last updated',
-    lastUpdatedValue: 'April 23, 2026',
+    lastUpdatedValue: 'April 24, 2026',
     contactLabel: 'Privacy contact',
     contactValue: 'privacy@inkduel.com',
     sections: [
@@ -224,7 +264,7 @@ const copies: Record<Locale, PolicyCopy> = {
     intro:
       'Esta politica explica quais dados podemos tratar quando voce usa o InkDuel, por que tratamos esses dados e quais escolhas voce tem sobre as suas informacoes.',
     lastUpdatedLabel: 'Ultima atualizacao',
-    lastUpdatedValue: '23 de abril de 2026',
+    lastUpdatedValue: '24 de abril de 2026',
     contactLabel: 'Contato de privacidade',
     contactValue: 'privacy@inkduel.com',
     sections: [
@@ -362,7 +402,7 @@ export default function PrivacyPage() {
 
       <section className="policy-shell">
         <div className="policy-topbar">
-          <a className="policy-backlink" href={`/?lang=${locale}`}>
+          <a className="policy-backlink" href={withLocalePath('/', locale)}>
             {copy.backToHome}
           </a>
 
@@ -415,6 +455,11 @@ export default function PrivacyPage() {
                     <li key={bullet}>{bullet}</li>
                   ))}
                 </ul>
+              ) : null}
+              {section.cta ? (
+                <p>
+                  <a href={withLocalePath(section.cta.href, locale)}>{section.cta.label}</a>
+                </p>
               ) : null}
             </section>
           ))}
