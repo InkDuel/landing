@@ -56,7 +56,10 @@ type Copy = {
     line3: string;
     body: string;
   };
-  footer: string;
+  footer: {
+    tagline: string;
+    privacyPolicy: string;
+  };
 };
 
 const languageOptions: {
@@ -144,7 +147,10 @@ const copies: Record<Locale, Copy> = {
       line3: 'ESCRITOR.',
       body: 'Entra en la arena. Pon a prueba tus palabras. Sube de rango.',
     },
-    footer: 'Acepta el duelo.',
+    footer: {
+      tagline: 'Acepta el duelo.',
+      privacyPolicy: 'Politica de privacidad',
+    },
   },
   en: {
     nav: {
@@ -219,7 +225,10 @@ const copies: Record<Locale, Copy> = {
       line3: 'WRITER.',
       body: 'Enter the arena. Test your words. Climb the ranks.',
     },
-    footer: 'Accept the duel.',
+    footer: {
+      tagline: 'Accept the duel.',
+      privacyPolicy: 'Privacy Policy',
+    },
   },
   pt: {
     nav: {
@@ -295,13 +304,22 @@ const copies: Record<Locale, Copy> = {
       line3: 'UM ESCRITOR MELHOR.',
       body: 'Entre na arena. Teste suas palavras. Suba de rank.',
     },
-    footer: 'Aceite o duelo.',
+    footer: {
+      tagline: 'Aceite o duelo.',
+      privacyPolicy: 'Politica de Privacidade',
+    },
   },
 };
 
 const getInitialLocale = (): Locale => {
   if (typeof window === 'undefined') {
     return 'en';
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const queryLocale = params.get('lang');
+  if (queryLocale === 'es' || queryLocale === 'en' || queryLocale === 'pt') {
+    return queryLocale;
   }
 
   const storedLocale = window.localStorage.getItem('inkduel-locale');
@@ -530,8 +548,9 @@ export default function Home() {
 
       <footer className="footer-bar">
         <span>
-          © {new Date().getFullYear()} INKDUEL. {copy.footer}
+          © {new Date().getFullYear()} INKDUEL. {copy.footer.tagline}
         </span>
+        <a href={`/privacy?lang=${locale}`}>{copy.footer.privacyPolicy}</a>
       </footer>
     </main>
   );
