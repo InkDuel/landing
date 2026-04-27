@@ -140,8 +140,13 @@ const copyByLocale: Record<Locale, Copy> = {
   },
 };
 
-function normalizeLocale(value: string | null): Locale {
-  const code = value?.toLowerCase().split('-')[0];
+function resolveLocale(value: string | null): Locale {
+  const code =
+    value?.toLowerCase().split('-')[0] ??
+    (typeof navigator !== 'undefined'
+        ? navigator.language.toLowerCase().split('-')[0]
+        : null);
+
   if (code === 'en' || code === 'pt') {
     return code;
   }
@@ -178,7 +183,7 @@ function mapFirebaseError(message: string | undefined, copy: Copy): string {
 
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams();
-  const locale = normalizeLocale(searchParams.get('lang'));
+  const locale = resolveLocale(searchParams.get('lang'));
   const copy = copyByLocale[locale];
 
   const apiKey = searchParams.get('apiKey');
