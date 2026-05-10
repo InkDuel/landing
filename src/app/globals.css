@@ -1547,6 +1547,33 @@ h1, h2, h3, h4, h5, .logo {
   color: rgba(255, 255, 255, 0.4);
 }
 
+.public-duel-prompt {
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  background: rgba(255, 215, 0, 0.05);
+  border: 1px solid rgba(255, 215, 0, 0.12);
+  border-radius: 0.75rem;
+}
+
+.public-duel-prompt-label {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.public-duel-prompt-text {
+  font-family: var(--font-instrument), serif;
+  font-size: 1.1rem;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+  line-height: 1.5;
+}
+
 @media (max-width: 480px) {
   .public-card {
     padding: 2rem 1.5rem;
