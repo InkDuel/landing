@@ -59,6 +59,7 @@ type Copy = {
   footer: {
     tagline: string;
     privacyPolicy: string;
+    challengeTerms: string;
   };
 };
 
@@ -150,6 +151,7 @@ const copies: Record<Locale, Copy> = {
     footer: {
       tagline: 'Acepta el duelo.',
       privacyPolicy: 'Politica de privacidad',
+      challengeTerms: 'Bases y condiciones',
     },
   },
   en: {
@@ -228,6 +230,7 @@ const copies: Record<Locale, Copy> = {
     footer: {
       tagline: 'Accept the duel.',
       privacyPolicy: 'Privacy Policy',
+      challengeTerms: 'Challenge Terms',
     },
   },
   pt: {
@@ -307,6 +310,7 @@ const copies: Record<Locale, Copy> = {
     footer: {
       tagline: 'Aceite o duelo.',
       privacyPolicy: 'Politica de Privacidade',
+      challengeTerms: 'Termos do desafio',
     },
   },
 };
@@ -550,7 +554,12 @@ export default function Home() {
         <span>
           © {new Date().getFullYear()} INKDUEL. {copy.footer.tagline}
         </span>
-        <a href={`/privacy?lang=${locale}`}>{copy.footer.privacyPolicy}</a>
+        <div className="footer-links">
+          <a href={`/challenge/demo-desafio-especial?lang=${locale}`}>
+            {copy.footer.challengeTerms}
+          </a>
+          <a href={`/privacy?lang=${locale}`}>{copy.footer.privacyPolicy}</a>
+        </div>
       </footer>
     </main>
   );
