@@ -21,6 +21,10 @@ const instrument = Instrument_Serif({
 export const metadata: Metadata = {
   title: "InkDuel | Escribir mejor",
   description: "InkDuel no es una app para escribir más. Es una app para escribir mejor.",
+  icons: {
+    icon: "/app-icon.png",
+    apple: "/app-icon.png",
+  },
 };
 
 export default function RootLayout({
