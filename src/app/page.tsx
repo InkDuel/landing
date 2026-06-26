@@ -11,6 +11,7 @@ type Copy = {
     duel: string;
     judge: string;
     ranks: string;
+    about: string;
   };
   cta: string;
   stores: {
@@ -92,6 +93,7 @@ const copies: Record<Locale, Copy> = {
       duel: 'El duelo',
       judge: 'El jurado',
       ranks: 'Rangos',
+      about: 'Sobre InkDuel',
     },
     cta: 'Unirse a la beta',
     stores: {
@@ -195,6 +197,7 @@ const copies: Record<Locale, Copy> = {
       duel: 'The duel',
       judge: 'The judge',
       ranks: 'Ranks',
+      about: 'About',
     },
     cta: 'Join the beta',
     stores: {
@@ -298,6 +301,7 @@ const copies: Record<Locale, Copy> = {
       duel: 'O duelo',
       judge: 'O júri',
       ranks: 'Ranks',
+      about: 'Sobre',
     },
     cta: 'Entrar na beta',
     stores: {
@@ -461,6 +465,7 @@ export default function Home() {
           <a href="#duelo">{copy.nav.duel}</a>
           <a href="#jurado">{copy.nav.judge}</a>
           <a href="#rangos">{copy.nav.ranks}</a>
+          <a href={`/about?lang=${locale}`}>{copy.nav.about}</a>
         </nav>
 
         <div className="header-actions">
@@ -500,6 +505,9 @@ export default function Home() {
           <p className="hero-subtitle">{copy.hero.subtitle}</p>
           <div className="hero-actions">
             <button className="cta-button primary large">{copy.cta}</button>
+            <a className="cta-button about-landing-button" href={`/about?lang=${locale}`}>
+              {copy.nav.about}
+            </a>
             <div className="store-buttons">
               <div className="store-btn">
                 <div className="s-icon"></div>
@@ -704,6 +712,7 @@ export default function Home() {
           © {new Date().getFullYear()} INKDUEL. {copy.footer.tagline}
         </span>
         <div className="footer-links">
+          <a href={`/about?lang=${locale}`}>{copy.nav.about}</a>
           <a href={`/challenge/demo-desafio-especial?lang=${locale}`}>
             {copy.footer.challengeTerms}
           </a>
