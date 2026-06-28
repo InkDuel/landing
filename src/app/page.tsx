@@ -128,7 +128,7 @@ const copies: Record<Locale, Copy> = {
         {
           icon: '🎲',
           title: 'Tema al azar',
-          body: 'Lo revelamos cuando entras. Sin tiempo para el bloqueo del escritor.',
+          body: 'Lo revelamos cuando entras. Sin tiempo para el bloqueo creativo.',
         },
         {
           icon: '⏱️',
@@ -181,8 +181,8 @@ const copies: Record<Locale, Copy> = {
       currentElo: 'Tu rango actual',
     },
     finalCta: {
-      line: 'Cada duelo te hace',
-      accent: 'mejor escritor.',
+      line: 'Cada duelo mejora',
+      accent: 'tu escritura.',
       body: 'Entra en la arena. Pon a prueba tus palabras. Sube de rango.',
       micro: 'Una vez dentro, el tiempo corre.',
     },
@@ -389,8 +389,8 @@ const copies: Record<Locale, Copy> = {
       currentElo: 'Seu rank atual',
     },
     finalCta: {
-      line: 'Cada duelo faz de você',
-      accent: 'um escritor melhor.',
+      line: 'Cada duelo melhora',
+      accent: 'sua escrita.',
       body: 'Entre na arena. Teste suas palavras. Suba de rank.',
       micro: 'Uma vez dentro, o relógio corre.',
     },

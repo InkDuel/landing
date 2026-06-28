@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: `Rango ${user.rankTier} ${user.rankDivision}. Lee sus relatos y acepta el duelo.`,
     openGraph: {
       title: `${user.username} en InkDuel`,
-      description: `Rango ${user.rankTier} ${user.rankDivision}. ${user.wins} victorias. Nivel de escritor ${user.writerLevel}.`,
+      description: `Rango ${user.rankTier} ${user.rankDivision}. ${user.wins} victorias. Nivel de escritura ${user.writerLevel}.`,
       type: "profile",
       url: `https://inkduel.com/u/${userId}`,
     },

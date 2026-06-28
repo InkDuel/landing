@@ -58,7 +58,7 @@ const copies: Record<Locale, PolicyCopy> = {
         title: '1. Quién es responsable de InkDuel',
         paragraphs: [
           'InkDuel es una app móvil y una plataforma digital para retos y duelos de escritura. Esta política se aplica al sitio web, a la app móvil y a los servicios relacionados publicados bajo la marca InkDuel.',
-          'El objetivo de InkDuel es ayudar a los usuarios a desarrollar sus habilidades como escritores mediante retos creativos, retroalimentación y progreso visible. El tratamiento de datos está orientado a sostener y mejorar esa experiencia.',
+          'El objetivo de InkDuel es ayudar a los usuarios a desarrollar sus habilidades de escritura mediante retos creativos, retroalimentación y progreso visible. El tratamiento de datos está orientado a sostener y mejorar esa experiencia.',
           'Al usar InkDuel, trataremos tu información según lo descrito en esta política y conforme a la normativa aplicable en tu jurisdicción.',
         ],
       },
@@ -86,7 +86,7 @@ const copies: Record<Locale, PolicyCopy> = {
         title: '4. Cómo usamos tu información',
         paragraphs: [
           'Usamos la información para operar InkDuel, permitir el acceso a tu cuenta y ofrecer las funciones principales del producto.',
-          'Algunas funciones de InkDuel pueden utilizar procesos automatizados para analizar contenido, comparar relatos, calcular resultados de duelos, generar retroalimentación y mantener una experiencia justa y dinámica. Estos procesos se utilizan para operar el producto y ayudar a los usuarios a desarrollar sus habilidades como escritores.',
+          'Algunas funciones de InkDuel pueden utilizar procesos automatizados para analizar contenido, comparar relatos, calcular resultados de duelos, generar retroalimentación y mantener una experiencia justa y dinámica. Estos procesos se utilizan para operar el producto y ayudar a los usuarios a desarrollar sus habilidades de escritura.',
           'Los resultados de los duelos pueden generarse total o parcialmente mediante procesos automatizados. Estos resultados forman parte de la experiencia competitiva de InkDuel y no producen efectos legales sobre los usuarios.',
           'También podemos utilizar información de forma agregada o anonimizada para analizar el funcionamiento de InkDuel, mejorar la calidad de los duelos, detectar errores, prevenir abusos y desarrollar nuevas funcionalidades.',
         ],
@@ -312,7 +312,7 @@ const copies: Record<Locale, PolicyCopy> = {
         title: '1. Quem e responsavel pelo InkDuel',
         paragraphs: [
           'InkDuel e um app movel e uma plataforma digital para desafios e duelos de escrita. Esta politica se aplica ao site, ao app movel e aos servicos relacionados publicados sob a marca InkDuel.',
-          'O objetivo do InkDuel e ajudar usuarios a desenvolver suas habilidades como escritores por meio de desafios criativos, feedback e progresso visivel. O tratamento de dados e orientado a sustentar e melhorar essa experiencia.',
+          'O objetivo do InkDuel e ajudar usuarios a desenvolver suas habilidades de escrita por meio de desafios criativos, feedback e progresso visivel. O tratamento de dados e orientado a sustentar e melhorar essa experiencia.',
           'Ao usar o InkDuel, trataremos suas informacoes conforme descrito nesta politica e de acordo com a legislacao aplicavel na sua jurisdicao.',
         ],
       },
