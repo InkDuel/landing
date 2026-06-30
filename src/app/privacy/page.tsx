@@ -80,6 +80,7 @@ const copies: Record<Locale, PolicyCopy> = {
         paragraphs: [
           'El contenido generado por los usuarios, como relatos, respuestas a consignas, votos, resultados de duelos, estadísticas y reportes, puede ser tratado para operar las funcionalidades principales de InkDuel, incluyendo la participación en duelos, la evaluación de resultados, la generación de retroalimentación, la prevención de abusos y la mejora de la experiencia creativa.',
           'InkDuel no reclama la titularidad sobre los relatos o textos que los usuarios crean dentro de la plataforma. Sin embargo, al usar el servicio, el usuario nos autoriza a procesar, mostrar, almacenar y organizar dicho contenido en la medida necesaria para prestar las funciones de la app.',
+          'Los relatos enviados en modos solitarios (como Sprint de Tinta) pueden ser reutilizados como la respuesta del rival en duelos posteriores de otros usuarios. En esos casos puede mostrarse tu nombre de usuario como autor original. Estos relatos pueden retirarse en cualquier momento mediante el sistema de reportes o por decisiones de moderación.',
         ],
       },
       {
@@ -207,6 +208,7 @@ const copies: Record<Locale, PolicyCopy> = {
         paragraphs: [
           'User-generated content, such as stories, responses to prompts, votes, duel results, statistics, and reports, may be processed in order to operate InkDuel’s core features, including duel participation, result evaluation, feedback generation, abuse prevention, and improvement of the creative experience.',
           'InkDuel does not claim ownership over the stories or texts that users create within the platform. However, by using the service, the user authorizes us to process, display, store, and organize that content to the extent necessary to provide the app’s features.',
+          'Stories submitted in solo modes (such as Tinta Sprint) may be reused as the rival’s response in later duels played by other users. In such cases, your username may be shown as the original author. These stories can be removed at any time through the reporting system or moderation decisions.',
         ],
       },
       {
@@ -334,6 +336,7 @@ const copies: Record<Locale, PolicyCopy> = {
         paragraphs: [
           'O conteudo gerado pelos usuarios, como historias, respostas a consignas, votos, resultados de duelos, estatisticas e denuncias, pode ser tratado para operar as funcionalidades principais do InkDuel, incluindo participacao em duelos, avaliacao de resultados, geracao de feedback, prevencao de abusos e melhoria da experiencia criativa.',
           'O InkDuel nao reivindica a titularidade sobre as historias ou textos criados pelos usuarios dentro da plataforma. No entanto, ao usar o servico, o usuario nos autoriza a processar, exibir, armazenar e organizar esse conteudo na medida necessaria para prestar as funcoes do app.',
+          'Os textos enviados em modos solo (como o Sprint de Tinta) podem ser reutilizados como a resposta do rival em duelos posteriores de outros usuarios. Nesses casos, seu nome de usuario pode ser exibido como autor original. Esses textos podem ser removidos a qualquer momento pelo sistema de denuncias ou por decisoes de moderacao.',
         ],
       },
       {
