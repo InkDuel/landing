@@ -252,13 +252,6 @@ h1, h2, h3, h4, h5, .logo {
   .language-current span:not(.language-flag) {
     display: none;
   }
-  .site-header .cta-button {
-    padding: 0.75rem 1rem;
-    font-size: 0.72rem;
-    max-width: 130px;
-    white-space: normal;
-    line-height: 1.1;
-  }
 }
 
 /* Buttons — pill shape, butter yellow primary like the app's BUSCAR DUELO */
@@ -425,48 +418,89 @@ h1, h2, h3, h4, h5, .logo {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.5rem;
+  gap: 0.9rem;
 }
 
 .store-buttons {
   display: flex;
-  gap: 1rem;
-  margin-top: 1.6rem;
+  gap: 0.8rem;
   flex-wrap: wrap;
 }
 
-.store-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: rgba(246, 241, 231, 0.04);
-  border: 1px solid var(--line-color);
-  padding: 0.8rem 1.5rem;
-  border-radius: 16px;
-  color: var(--fg);
-  text-decoration: none;
-  transition: all 0.3s;
+.hero-footer-cta .store-buttons {
+  justify-content: center;
+  margin: 0 0 1.6rem;
 }
 
-.store-btn:hover {
-  background: rgba(246, 241, 231, 0.08);
-  border-color: rgba(246, 241, 231, 0.25);
+.store-badge {
+  width: 176px;
+  min-height: 56px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.72rem;
+  background: #050507;
+  border: 1px solid rgba(246, 241, 231, 0.22);
+  border-radius: 9px;
+  color: #fff;
+  text-decoration: none;
+  box-sizing: border-box;
+  padding: 0.55rem 0.95rem;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.store-badge:hover {
+  background: #111116;
+  border-color: rgba(246, 241, 231, 0.38);
   transform: translateY(-2px);
 }
 
-.store-btn .s-icon {
-  font-size: 1.5rem;
+.store-logo {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
 }
 
-.store-btn .s-text {
+.apple-logo {
+  width: 30px;
+  height: 30px;
+}
+
+.google-play-logo {
+  width: 29px;
+  height: 29px;
+}
+
+.store-badge-text {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  line-height: 1.2;
+  justify-content: center;
+  min-width: 0;
+  line-height: 1.05;
 }
 
-.store-btn .s-small { font-size: 0.7rem; color: var(--muted); }
-.store-btn .s-large { font-size: 1.05rem; font-weight: 600; font-family: var(--font-inter); }
+.store-badge-kicker {
+  color: rgba(255, 255, 255, 0.82);
+  font-family: var(--font-inter);
+  font-size: 0.66rem;
+  font-weight: 600;
+}
+
+.store-badge-name {
+  color: #fff;
+  font-family: var(--font-inter);
+  font-size: 1.08rem;
+  font-weight: 800;
+}
+
+.play-blue { fill: #55aaff; }
+.play-green { fill: #5be387; }
+.play-yellow { fill: #ffd75e; }
+.play-red { fill: #ff5f7f; }
 
 /* HERO VISUAL — the duel flow, built from real app UI patterns */
 .hero-visual {
@@ -1306,12 +1340,6 @@ h1, h2, h3, h4, h5, .logo {
   letter-spacing: -0.01em;
   margin: 0 auto 1.6rem;
   max-width: 900px;
-}
-
-.large-mega {
-  padding: 1.4rem 4rem;
-  font-size: 1.1rem;
-  margin-top: 0.6rem;
 }
 
 .hero-footer-cta p {

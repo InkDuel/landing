@@ -13,9 +13,11 @@ type Copy = {
     ranks: string;
     about: string;
   };
-  cta: string;
   stores: {
-    soon: string;
+    appStoreKicker: string;
+    googlePlayKicker: string;
+    appStoreAria: string;
+    googlePlayAria: string;
   };
   hero: {
     badge: string;
@@ -87,6 +89,9 @@ const languageOptions: {
   { code: 'pt', label: 'Português', flag: '🇧🇷' },
 ];
 
+const appStoreUrl = 'https://apps.apple.com/app/inkduel-duelos-de-escritura/id6761736355';
+const googlePlayUrl = 'https://play.google.com/store/apps/details?id=com.inkduel.app';
+
 const copies: Record<Locale, Copy> = {
   es: {
     nav: {
@@ -95,9 +100,11 @@ const copies: Record<Locale, Copy> = {
       ranks: 'Rangos',
       about: 'Sobre InkDuel',
     },
-    cta: 'Unirse a la beta',
     stores: {
-      soon: 'Próximamente en',
+      appStoreKicker: 'Descargar en',
+      googlePlayKicker: 'Disponible en',
+      appStoreAria: 'Descargar InkDuel en App Store',
+      googlePlayAria: 'Descargar InkDuel en Google Play',
     },
     hero: {
       badge: 'Duelos de escritura · 5 minutos',
@@ -199,9 +206,11 @@ const copies: Record<Locale, Copy> = {
       ranks: 'Ranks',
       about: 'About',
     },
-    cta: 'Join the beta',
     stores: {
-      soon: 'Coming soon to',
+      appStoreKicker: 'Download on the',
+      googlePlayKicker: 'Get it on',
+      appStoreAria: 'Download InkDuel on the App Store',
+      googlePlayAria: 'Get InkDuel on Google Play',
     },
     hero: {
       badge: 'Writing duels · 5 minutes',
@@ -303,9 +312,11 @@ const copies: Record<Locale, Copy> = {
       ranks: 'Ranks',
       about: 'Sobre',
     },
-    cta: 'Entrar na beta',
     stores: {
-      soon: 'Em breve na',
+      appStoreKicker: 'Baixar na',
+      googlePlayKicker: 'Disponivel no',
+      appStoreAria: 'Baixar InkDuel na App Store',
+      googlePlayAria: 'Baixar InkDuel no Google Play',
     },
     hero: {
       badge: 'Duelos de escrita · 5 minutos',
@@ -426,6 +437,66 @@ const getInitialLocale = (): Locale => {
   return 'en';
 };
 
+function StoreBadges({ copy }: { copy: Copy }) {
+  return (
+    <div
+      className="store-buttons"
+      role="group"
+      aria-label={`${copy.stores.appStoreAria} / ${copy.stores.googlePlayAria}`}
+    >
+      <a
+        className="store-badge"
+        href={appStoreUrl}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={copy.stores.appStoreAria}
+      >
+        <AppleLogo />
+        <span className="store-badge-text">
+          <span className="store-badge-kicker">{copy.stores.appStoreKicker}</span>
+          <span className="store-badge-name">App Store</span>
+        </span>
+      </a>
+
+      <a
+        className="store-badge"
+        href={googlePlayUrl}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={copy.stores.googlePlayAria}
+      >
+        <GooglePlayLogo />
+        <span className="store-badge-text">
+          <span className="store-badge-kicker">{copy.stores.googlePlayKicker}</span>
+          <span className="store-badge-name">Google Play</span>
+        </span>
+      </a>
+    </div>
+  );
+}
+
+function AppleLogo() {
+  return (
+    <svg className="store-logo apple-logo" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M16.4 12.6c0-2 1.6-3 1.7-3.1-.9-1.4-2.3-1.6-2.8-1.6-1.2-.1-2.3.7-2.9.7s-1.5-.7-2.5-.7c-1.3 0-2.5.8-3.2 2-1.4 2.4-.4 6 1 8 .7 1 1.5 2.1 2.6 2.1 1 0 1.4-.7 2.6-.7s1.6.7 2.7.7 1.8-1 2.5-2c.8-1.2 1.1-2.3 1.1-2.4 0 0-2.2-.9-2.2-3zM14.5 6.6c.6-.7 1-1.7.9-2.6-.9 0-1.9.6-2.5 1.3-.6.6-1 1.6-.9 2.5 1 .1 2-.5 2.5-1.2z"
+      />
+    </svg>
+  );
+}
+
+function GooglePlayLogo() {
+  return (
+    <svg className="store-logo google-play-logo" viewBox="0 0 24 24" aria-hidden="true">
+      <path className="play-shape play-blue" d="M4.5 3.4c-.3.3-.5.8-.5 1.4v14.4c0 .6.2 1.1.5 1.4l8-8.6-8-8.6z" />
+      <path className="play-shape play-green" d="m13.1 11.4 2.3-2.5L6.5 3.8c-.6-.4-1.1-.5-1.6-.5l8.2 8.1z" />
+      <path className="play-shape play-yellow" d="m13.1 12.6-8.2 8.1c.5.1 1-.1 1.6-.5l8.9-5.1-2.3-2.5z" />
+      <path className="play-shape play-red" d="m19.3 11-3.2-1.8-2.5 2.8 2.5 2.8 3.2-1.8c1-.6 1-1.4 0-2z" />
+    </svg>
+  );
+}
+
 export default function Home() {
   const [locale, setLocale] = useState<Locale>('en');
   const copy = copies[locale];
@@ -486,10 +557,6 @@ export default function Home() {
               ))}
             </select>
           </label>
-
-          <button className="cta-button primary">
-            <span>{copy.cta}</span>
-          </button>
         </div>
       </header>
 
@@ -504,26 +571,10 @@ export default function Home() {
           <p className="hero-tagline">{copy.hero.tagline}</p>
           <p className="hero-subtitle">{copy.hero.subtitle}</p>
           <div className="hero-actions">
-            <button className="cta-button primary large">{copy.cta}</button>
+            <StoreBadges copy={copy} />
             <a className="cta-button about-landing-button" href={`/about?lang=${locale}`}>
               {copy.nav.about}
             </a>
-            <div className="store-buttons">
-              <div className="store-btn">
-                <div className="s-icon"></div>
-                <div className="s-text">
-                  <span className="s-small">{copy.stores.soon}</span>
-                  <span className="s-large">App Store</span>
-                </div>
-              </div>
-              <div className="store-btn">
-                <div className="s-icon">▶</div>
-                <div className="s-text">
-                  <span className="s-small">{copy.stores.soon}</span>
-                  <span className="s-large">Google Play</span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -703,7 +754,7 @@ export default function Home() {
           {copy.finalCta.line} <em className="accent-italic">{copy.finalCta.accent}</em>
         </h2>
         <p>{copy.finalCta.body}</p>
-        <button className="cta-button primary large large-mega">{copy.cta}</button>
+        <StoreBadges copy={copy} />
         <p className="final-micro">🔒 {copy.finalCta.micro}</p>
       </section>
 
