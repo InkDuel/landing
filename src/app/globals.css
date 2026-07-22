@@ -2051,6 +2051,51 @@ h1, h2, h3, h4, h5, .logo {
   color: var(--accent);
 }
 
+.friend-challenge-icon {
+  display: grid;
+  place-items: center;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+  border-radius: 1.25rem;
+  background: var(--accent-dim);
+  font-size: 2.4rem;
+}
+
+.friend-challenge-install-note {
+  margin: 1.5rem 0 1rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.friend-challenge-store-links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.friend-challenge-store-links a {
+  padding: 0.75rem;
+  border: 1px solid var(--card-border);
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--fg);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.friend-challenge-store-links a:hover {
+  border-color: var(--accent);
+}
+
+@media (max-width: 420px) {
+  .friend-challenge-store-links {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Story-specific */
 
 .public-story-header {
