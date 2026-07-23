@@ -1941,6 +1941,12 @@ h1, h2, h3, h4, h5, .logo {
   text-align: left;
 }
 
+.public-topbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1.5rem;
+}
+
 .public-avatar {
   width: 80px;
   height: 80px;

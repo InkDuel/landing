@@ -112,7 +112,7 @@ const copies: Record<Locale, Copy> = {
       titleAccent: 'Un oponente.',
       tagline: 'La mejor historia gana.',
       subtitle:
-        'InkDuel es la arena donde escribir deja de ser solitario. Recibís una consigna, escribís contra el reloj y un jurado de tinta decide quién contó la mejor historia.',
+        'InkDuel es la arena donde escribir deja de ser solitario. Recibes una consigna, escribes contra el reloj y un jurado de tinta decide quién contó la mejor historia.',
       searching: 'Afilando plumas…',
       searchingSub: 'Buscamos a alguien de tu nivel',
       promptLabel: 'Tu prompt',

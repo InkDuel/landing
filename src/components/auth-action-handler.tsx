@@ -65,11 +65,11 @@ const PASSWORD_REGEX = /^(?=.*?[a-zA-Z])(?=.*?[0-9]).{8,}$/;
 const resetCopyByLocale: Record<Locale, ResetCopy> = {
   es: {
     eyebrow: 'Recupero de cuenta',
-    title: 'Elegí una nueva contraseña.',
+    title: 'Elige una nueva contraseña.',
     subtitle:
-      'Restablecé tu acceso con una contraseña nueva y volvés a la arena.',
+      'Restablece tu acceso con una contraseña nueva y vuelves a la arena.',
     invalidLink:
-      'Este enlace no es válido o ya no puede usarse. Pedí uno nuevo desde la app.',
+      'Este enlace no es válido o ya no puede usarse. Pide uno nuevo desde la app.',
     checking: 'Verificando enlace...',
     passwordLabel: 'Nueva contraseña',
     passwordHint: 'Usa al menos 8 caracteres e incluye 1 numero.',

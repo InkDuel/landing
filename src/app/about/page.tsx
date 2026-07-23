@@ -54,7 +54,7 @@ const copies: Record<Locale, AboutCopy> = {
       'InkDuel todavía está en crecimiento: se vienen nuevas ideas, mejoras y formas de vivir los duelos. Cada persona que escribe, participa o deja feedback ayuda a que la app siga evolucionando día a día y a construir una comunidad más creativa.',
       'Gracias por ser parte de esta primera etapa.',
     ],
-    followTitle: 'Seguí el proyecto',
+    followTitle: 'Sigue el proyecto',
     links: [
       {
         title: 'Instagram de InkDuel',

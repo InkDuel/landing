@@ -1,53 +1,60 @@
 import type { Metadata } from "next";
 
-const appStoreUrl =
-  "https://apps.apple.com/app/inkduel-duelos-de-escritura/id6761736355";
-const googlePlayUrl =
-  "https://play.google.com/store/apps/details?id=com.inkduel.app";
-
-export const metadata: Metadata = {
-  title: "Te retaron a escribir — InkDuel",
-  description:
-    "Abrí InkDuel para aceptar un reto privado de escritura de 5 minutos.",
-};
+import FriendChallengeClient, { type Locale } from "./friend-challenge-client";
 
 type Props = {
   params: Promise<{ token: string }>;
+  searchParams?: Promise<{ lang?: string | string[] }>;
 };
 
-export default async function FriendChallengePage({ params }: Props) {
+const getQueryLocale = (value: string | string[] | undefined): Locale | null => {
+  const candidate = Array.isArray(value) ? value[0] : value;
+  if (candidate === "es" || candidate === "en" || candidate === "pt") {
+    return candidate;
+  }
+
+  return null;
+};
+
+const metadataCopy: Record<Locale, { title: string; description: string }> = {
+  es: {
+    title: "Te han retado a escribir — InkDuel",
+    description:
+      "Abre InkDuel para descubrir quién te retó y aceptar un duelo privado de escritura de 5 minutos.",
+  },
+  en: {
+    title: "You've been challenged to write — InkDuel",
+    description:
+      "Open InkDuel to discover who challenged you and accept a private 5-minute writing duel.",
+  },
+  pt: {
+    title: "Desafiaram você a escrever — InkDuel",
+    description:
+      "Abra o InkDuel para descobrir quem desafiou você e aceitar um duelo privado de escrita de 5 minutos.",
+  },
+};
+
+export async function generateMetadata({
+  searchParams,
+}: Props): Promise<Metadata> {
+  const resolvedSearchParams = await searchParams;
+  const locale = getQueryLocale(resolvedSearchParams?.lang) ?? "en";
+  return metadataCopy[locale];
+}
+
+export default async function FriendChallengePage({
+  params,
+  searchParams,
+}: Props) {
   const { token } = await params;
-  const appLink = `inkduel://friend-challenge/${encodeURIComponent(token)}`;
+  const resolvedSearchParams = await searchParams;
+  const queryLocale = getQueryLocale(resolvedSearchParams?.lang);
 
   return (
-    <main className="public-page">
-      <div className="public-card">
-        <div className="friend-challenge-icon" aria-hidden="true">
-          🤝
-        </div>
-        <h1 className="public-title">Te retaron a escribir</h1>
-        <p className="public-subtitle">
-          Abrí InkDuel para descubrir quién te retó y aceptar un duelo privado
-          de escritura de 5 minutos.
-        </p>
-
-        <a href={appLink} className="public-cta">
-          Abrir en InkDuel
-        </a>
-
-        <p className="friend-challenge-install-note">
-          ¿Todavía no tenés la app? Instalá InkDuel y después volvé a abrir este
-          enlace para aceptar el reto.
-        </p>
-        <div className="friend-challenge-store-links">
-          <a href={appStoreUrl} target="_blank" rel="noreferrer">
-            Descargar en App Store
-          </a>
-          <a href={googlePlayUrl} target="_blank" rel="noreferrer">
-            Descargar en Google Play
-          </a>
-        </div>
-      </div>
-    </main>
+    <FriendChallengeClient
+      token={token}
+      initialLocale={queryLocale ?? "en"}
+      resolveLocaleOnClient={queryLocale === null}
+    />
   );
 }
