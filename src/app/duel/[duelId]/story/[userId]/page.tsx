@@ -88,7 +88,7 @@ export default async function DuelStoryPage({ params }: Props) {
       <div className="public-card public-card--story">
         {/* Prompt */}
         <div className="public-duel-prompt">
-          <span className="public-duel-prompt-label">Prompt del duelo</span>
+          <span className="public-duel-prompt-label">Premisa del duelo</span>
           <p className="public-duel-prompt-text">{data.prompt}</p>
         </div>
 

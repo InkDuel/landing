@@ -89,10 +89,10 @@ const copies: Record<Locale, AboutCopy> = {
     intro: 'An independent project for writing more, practicing, and improving your writing.',
     storyTitle: 'The story behind the app',
     paragraphs: [
-      'InkDuel is a space to write short stories, compete in creative duels, and discover how different people imagine new worlds from the same prompt.',
+      'InkDuel is a space to write short stories, compete in creative duels, and discover how different people imagine new worlds from the same premise.',
       'The project was born independently and is being developed by one Argentinian dev with a simple idea: make writing feel like a game, a challenge, and a way to connect with others again.',
       'You do not need to write perfectly. You do not need experience. In InkDuel, ideas, creativity, and the courage to participate matter most.',
-      'The app also aims to help you improve your writing: practicing with prompts, reading other stories, receiving feedback, and learning from every duel.',
+      'The app also aims to help you improve your writing: practicing with premises, reading other stories, receiving feedback, and learning from every duel.',
       'InkDuel is still growing: new ideas, improvements, and ways to experience duels are on the way. Every person who writes, participates, or leaves feedback helps the app keep evolving day by day and build a more creative community.',
       'Thank you for being part of this first stage.',
     ],

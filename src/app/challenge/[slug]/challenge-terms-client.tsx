@@ -170,7 +170,7 @@ const copies: Record<Locale, ChallengeTermsCopy> = {
         title: '1. Organizer and scope',
         paragraphs: [
           'Special challenges are organized by InkDuel and, when indicated in the app, may involve a creator, author, brand, or special guest.',
-          'Each challenge may display a description, dates, prompt teaser, summary rules, prize or recognition, and result status inside the app or on this page.',
+          'Each challenge may display a description, dates, premise teaser, summary rules, prize or recognition, and result status inside the app or on this page.',
           'By participating, you accept these terms, the specific rules shown for the challenge, and InkDuel’s general policies.',
         ],
       },
@@ -189,7 +189,7 @@ const copies: Record<Locale, ChallengeTermsCopy> = {
       {
         title: '3. Challenge mechanics',
         paragraphs: [
-          'To participate, the user must start the challenge from the app. Once started, the full prompt is revealed and the writing timer begins.',
+          'To participate, the user must start the challenge from the app. Once started, the full premise is revealed and the writing timer begins.',
           'The first pilot of special challenges does not consume energy, does not affect competitive ranking, and may grant normal writing XP if the current InkDuel flow allows it.',
           'If a user starts before the general closing time, they keep their full individual writing window even if the general close happens during the attempt. The close blocks new starts, but does not cut off attempts already started.',
         ],
@@ -211,15 +211,15 @@ const copies: Record<Locale, ChallengeTermsCopy> = {
         title: '5. Privacy and publication',
         paragraphs: [
           'Stories submitted to a special challenge are not automatically published in Gallery or in public views for non-participants.',
-          'Until a result is published, the story and full prompt remain visible only to the author and to the teams or people needed to operate, moderate, and select the challenge.',
-          'If a story wins or receives a published mention, InkDuel may display the text, prompt, username, and minimal result-related data inside the app, on the landing page, or in challenge communications.',
+          'Until a result is published, the story and full premise remain visible only to the author and to the teams or people needed to operate, moderate, and select the challenge.',
+          'If a story wins or receives a published mention, InkDuel may display the text, premise, username, and minimal result-related data inside the app, on the landing page, or in challenge communications.',
         ],
       },
       {
         title: '6. Winner selection and mentions',
         paragraphs: [
           'Selection may be performed manually by InkDuel, by the guest creator, or by the team designated for the campaign.',
-          'Criteria may include creativity, fit to prompt, narrative impact, style, clarity, ending, originality, and rule compliance.',
+          'Criteria may include creativity, fit to premise, narrative impact, style, clarity, ending, originality, and rule compliance.',
           'The final selection decision belongs to InkDuel or the team indicated in the challenge. Selection may be declared void if there are no valid or eligible entries.',
         ],
       },
@@ -227,7 +227,7 @@ const copies: Record<Locale, ChallengeTermsCopy> = {
         title: '7. Publication of results',
         paragraphs: [
           'A result is considered published when InkDuel enables the winner or mentions in the app or on the corresponding page.',
-          'For the MVP, InkDuel may internally register the winning duel identifier and the backend will resolve the necessary information to show the winning story, prompt, and author on the frontend.',
+          'For the MVP, InkDuel may internally register the winning duel identifier and the backend will resolve the necessary information to show the winning story, premise, and author on the frontend.',
           'Participants may learn about the result through the app, notifications, challenge views, or campaign-related communications.',
         ],
       },

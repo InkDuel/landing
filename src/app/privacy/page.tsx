@@ -206,7 +206,7 @@ const copies: Record<Locale, PolicyCopy> = {
       {
         title: '3. User-generated content',
         paragraphs: [
-          'User-generated content, such as stories, responses to prompts, votes, duel results, statistics, and reports, may be processed in order to operate InkDuel’s core features, including duel participation, result evaluation, feedback generation, abuse prevention, and improvement of the creative experience.',
+          'User-generated content, such as stories, responses to premises, votes, duel results, statistics, and reports, may be processed in order to operate InkDuel’s core features, including duel participation, result evaluation, feedback generation, abuse prevention, and improvement of the creative experience.',
           'InkDuel does not claim ownership over the stories or texts that users create within the platform. However, by using the service, the user authorizes us to process, display, store, and organize that content to the extent necessary to provide the app’s features.',
           'Stories submitted in solo modes (such as Tinta Sprint) may be reused as the rival’s response in later duels played by other users. In such cases, your username may be shown as the original author. These stories can be removed at any time through the reporting system or moderation decisions.',
         ],
@@ -222,7 +222,7 @@ const copies: Record<Locale, PolicyCopy> = {
         bullets: [
           'Create and maintain your account.',
           'Match duels, show results, rankings, and store your progress.',
-          'Personalize language, experience, prompts, settings, and profile visibility.',
+          'Personalize language, experience, premises, settings, and profile visibility.',
           'Send operational communications, including notifications related to app activity.',
           'Generate evaluations, recommendations, and results within the InkDuel experience.',
           'Prevent fraud, abuse, unauthorized access, and other misuse.',

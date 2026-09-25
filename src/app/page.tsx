@@ -115,7 +115,7 @@ const copies: Record<Locale, Copy> = {
         'InkDuel es la arena donde escribir deja de ser solitario. Recibes una consigna, escribes contra el reloj y un jurado de tinta decide quién contó la mejor historia.',
       searching: 'Afilando plumas…',
       searchingSub: 'Buscamos a alguien de tu nivel',
-      promptLabel: 'Tu prompt',
+      promptLabel: 'Tu premisa',
       prompt:
         '«Una persona recibe una carta escrita por alguien que murió hace años. La carta dice: “No confíes en la versión de mí que todavía está viva”.»',
       writingLabel: 'Escribiendo',
@@ -145,7 +145,7 @@ const copies: Record<Locale, Copy> = {
         {
           icon: '⚔️',
           title: 'Un rival de tu nivel',
-          body: 'Del otro lado, la presión es simétrica: tu oponente pelea el mismo prompt.',
+          body: 'Del otro lado, la presión es simétrica: tu oponente pelea la misma premisa.',
         },
         {
           icon: '✒️',
@@ -214,14 +214,14 @@ const copies: Record<Locale, Copy> = {
     },
     hero: {
       badge: 'Writing duels · 5 minutes',
-      titleTop: 'One prompt.',
+      titleTop: 'One premise.',
       titleAccent: 'One opponent.',
       tagline: 'Best story wins.',
       subtitle:
-        'InkDuel is the arena where writing stops being solitary. You get a prompt, write against the clock, and an ink judge decides who told the better story.',
+        'InkDuel is the arena where writing stops being solitary. You get a premise, write against the clock, and an ink judge decides who told the better story.',
       searching: 'Sharpening quills…',
       searchingSub: 'Finding someone at your level',
-      promptLabel: 'Your prompt',
+      promptLabel: 'Your premise',
       prompt:
         '“Someone receives a letter written by a person who died years ago. It reads: ‘Don’t trust the version of me that is still alive.’”',
       writingLabel: 'Writing',
@@ -240,7 +240,7 @@ const copies: Record<Locale, Copy> = {
       steps: [
         {
           icon: '🎲',
-          title: 'Random prompt',
+          title: 'Random premise',
           body: 'Revealed the moment you enter. No time for writer’s block.',
         },
         {
@@ -251,7 +251,7 @@ const copies: Record<Locale, Copy> = {
         {
           icon: '⚔️',
           title: 'A rival at your level',
-          body: 'On the other side, the pressure is symmetrical: your opponent fights the same prompt.',
+          body: 'On the other side, the pressure is symmetrical: your opponent fights the same premise.',
         },
         {
           icon: '✒️',
@@ -327,7 +327,7 @@ const copies: Record<Locale, Copy> = {
         'InkDuel é a arena onde escrever deixa de ser solitário. Você recebe um tema, escreve contra o relógio e um júri de tinta decide quem contou a melhor história.',
       searching: 'Afiando as penas…',
       searchingSub: 'Procurando alguém do seu nível',
-      promptLabel: 'Seu prompt',
+      promptLabel: 'Sua premissa',
       prompt:
         '«Uma pessoa recebe uma carta escrita por alguém que morreu há anos. A carta diz: “Não confie na versão de mim que ainda está viva”.»',
       writingLabel: 'Escrevendo',
@@ -357,7 +357,7 @@ const copies: Record<Locale, Copy> = {
         {
           icon: '⚔️',
           title: 'Um rival do seu nível',
-          body: 'Do outro lado, a pressão é simétrica: seu oponente enfrenta o mesmo prompt.',
+          body: 'Do outro lado, a pressão é simétrica: seu oponente enfrenta a mesma premissa.',
         },
         {
           icon: '✒️',
