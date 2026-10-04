@@ -1,12 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import {
-  Bricolage_Grotesque,
-  Figtree,
-  Inter,
-  Instrument_Serif,
-  Literata,
-  Outfit,
-} from "next/font/google";
+import { Bricolage_Grotesque, Figtree, Literata } from "next/font/google";
 import "./globals.css";
 
 // 2026 system (04 - Tipografía): Bricolage for the brand voice, Figtree for
@@ -32,23 +25,6 @@ const literata = Literata({
   display: "swap",
 });
 
-// Legacy fonts, still used by the pages that have not migrated yet.
-const outfit = Outfit({
-  variable: "--font-outfit",
-  subsets: ["latin"],
-});
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
-
-const instrument = Instrument_Serif({
-  variable: "--font-instrument",
-  weight: "400",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
   title: "InkDuel | Escribir mejor",
   description: "InkDuel no es una app para escribir más. Es una app para escribir mejor.",
@@ -70,7 +46,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const fonts = [bricolage, figtree, literata, outfit, inter, instrument]
+  const fonts = [bricolage, figtree, literata]
     .map((font) => font.variable)
     .join(" ");
 
