@@ -29,7 +29,6 @@ const contentSecurityPolicy = [
 ].join("; ");
 
 const securityHeaders = [
-  { key: "Content-Security-Policy", value: contentSecurityPolicy },
   // No includeSubDomains: not every inkduel.com subdomain is verified to be
   // HTTPS-only (www does not complete a TLS handshake today).
   { key: "Strict-Transport-Security", value: "max-age=63072000" },
@@ -48,7 +47,16 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // The static CSP covers every public page. The signed-in area
+      // (/login, /me, /stories, /profile/*, /work/*) gets a stricter policy
+      // with a per-request nonce from src/proxy.ts instead.
+      {
+        source: "/((?!login$|me$|stories$|profile/|work/).*)",
+        headers: [{ key: "Content-Security-Policy", value: contentSecurityPolicy }],
+      },
+    ];
   },
 };
 
