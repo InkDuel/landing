@@ -1,55 +1,23 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { InkInlineBanner } from '@/components/ink/ink-inline-banner';
 import { InkSkeleton, InkTextAction } from '@/components/ink/ink-states';
-import { Kicker } from '@/components/ink/kicker';
 import { ReadingNotFound } from '@/components/reading/story-parts';
-import { HistoriasDivider, WorkItem } from '@/components/session/historias';
-import { ProfileIdentity, ProfileStats, RankCard } from '@/components/session/profile-parts';
+import { AuthorWorks } from '@/components/session/author-works';
+import { ProfileIdentity, ProfileLayout, ProfileStats, RankCard } from '@/components/session/profile-parts';
 import { RequireSession, SessionPage } from '@/components/session/session-page';
 import { useSessionLocale } from '@/components/session/session-root';
 import { withLang } from '@/lib/i18n';
 import { ApiError, apiGet, apiPath, decodeParam } from '@/lib/session/api';
 import { useSession } from '@/lib/session/auth-context';
 import { SESSION_COPY } from '@/lib/session/copy';
-import { type ProfileUser, parseGalleryWorks, parseProfileUser } from '@/lib/session/models';
-import { usePagedList } from '@/lib/session/use-paged-list';
+import { type ProfileUser, parseProfileUser } from '@/lib/session/models';
 
 // Another writer's profile (11, ajeno): identity → compact rank, no pencil →
 // Obras → stats. Retar, Seguir and the history are not part of phase 1.
-
-function AuthorWorks({ authorId }: { authorId: string }) {
-  const { locale } = useSessionLocale();
-  const copy = SESSION_COPY[locale].profile;
-  const fetchPage = useCallback(
-    async (cursor: string | null, signal: AbortSignal) =>
-      parseGalleryWorks(
-        await apiGet('/api/gallery/works', { locale, query: { authorId, cursor: cursor ?? undefined }, signal }),
-      ),
-    [authorId, locale],
-  );
-  const works = usePagedList(fetchPage);
-  if (works.status !== 'ready' || works.items.length === 0) return null;
-  return (
-    <section aria-labelledby="author-works" className="flex flex-col">
-      <Kicker as="h2" className="mb-1">
-        {copy.works}
-      </Kicker>
-      <p id="author-works" className="type-caption text-secondary">
-        {copy.worksSubtitle}
-      </p>
-      {works.items.map((work, index) => (
-        <div key={work.id}>
-          {index > 0 ? <HistoriasDivider /> : null}
-          <WorkItem work={work} locale={locale} />
-        </div>
-      ))}
-    </section>
-  );
-}
 
 function ProfileView({ userId }: { userId: string }) {
   const { locale } = useSessionLocale();
@@ -106,19 +74,20 @@ function ProfileView({ userId }: { userId: string }) {
 
   const user = state.user;
   return (
-    <div className="flex flex-col gap-6 pt-4">
-      <ProfileIdentity user={user} locale={locale} />
-      <RankCard user={user} locale={locale} own={false} />
-      <AuthorWorks authorId={user.id} />
-      <ProfileStats user={user} locale={locale} own={false} />
-    </div>
+    <ProfileLayout
+      variant="other"
+      identity={<ProfileIdentity user={user} locale={locale} />}
+      rank={<RankCard user={user} locale={locale} own={false} />}
+      works={<AuthorWorks authorId={user.id} locale={locale} />}
+      stats={<ProfileStats user={user} locale={locale} own={false} />}
+    />
   );
 }
 
 export default function ProfilePage() {
   const params = useParams<{ userId: string }>();
   return (
-    <SessionPage context="arena">
+    <SessionPage context="arena" width="wide">
       <RequireSession>
         <ProfileView userId={decodeParam(params.userId)} />
       </RequireSession>
