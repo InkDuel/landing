@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 import { InkButton } from '@/components/ink/ink-button';
 import { InkDialog } from '@/components/ink/ink-dialog';
-import { LevelBar, ProfileIdentity, ProfileStats, RankCard } from '@/components/session/profile-parts';
+import { LevelBar, ProfileIdentity, ProfileLayout, ProfileStats, RankCard } from '@/components/session/profile-parts';
 import { RequireSession, SessionPage } from '@/components/session/session-page';
 import { useSessionLocale } from '@/components/session/session-root';
 import { useSession } from '@/lib/session/auth-context';
@@ -32,16 +32,19 @@ function MeView() {
   }
 
   return (
-    <div className="flex flex-col gap-6 pt-4">
-      <ProfileIdentity user={user} locale={locale} />
-      <RankCard user={user} locale={locale} own />
-      <LevelBar user={user} locale={locale} />
-      <ProfileStats user={user} locale={locale} own />
-      <div className="pt-4">
-        <InkButton variant="ghost" fullWidth={false} onClick={() => setConfirming(true)}>
-          {copy.signOut}
-        </InkButton>
-      </div>
+    <>
+      <ProfileLayout
+        variant="own"
+        identity={<ProfileIdentity user={user} locale={locale} />}
+        rank={<RankCard user={user} locale={locale} own />}
+        level={<LevelBar user={user} locale={locale} />}
+        stats={<ProfileStats user={user} locale={locale} own />}
+        footer={
+          <InkButton variant="ghost" fullWidth={false} onClick={() => setConfirming(true)}>
+            {copy.signOut}
+          </InkButton>
+        }
+      />
       <InkDialog open={confirming} onClose={() => setConfirming(false)} title={copy.signOutTitle} body={copy.signOutBody}>
         <InkButton variant="secondary" onClick={() => setConfirming(false)}>
           {copy.cancel}
@@ -50,13 +53,13 @@ function MeView() {
           {copy.signOutConfirm}
         </InkButton>
       </InkDialog>
-    </div>
+    </>
   );
 }
 
 export default function MePage() {
   return (
-    <SessionPage context="arena">
+    <SessionPage context="arena" width="wide">
       <RequireSession>
         <MeView />
       </RequireSession>

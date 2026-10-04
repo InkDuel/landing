@@ -210,3 +210,58 @@ export function ProfileStats({ user, locale, own }: { user: ProfileUser; locale:
     </section>
   );
 }
+
+/**
+ * Perfil composition. Mobile keeps the app's single column and order (own:
+ * identity → rank → level → stats; other: identity → rank → Obras → stats).
+ * From desktop the same pieces split in two: identity, bio and links on the
+ * left; rank, progress, level and stats on the right; Obras and the footer
+ * below, full width.
+ */
+const LAYOUT = {
+  own: cx(
+    "grid [grid-template-areas:'identity'_'rank'_'level'_'stats'_'footer']",
+    'lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:grid-rows-[auto_auto_1fr_auto] lg:gap-x-14',
+    "lg:[grid-template-areas:'identity_rank'_'identity_level'_'identity_stats'_'footer_footer']",
+  ),
+  other: cx(
+    "grid [grid-template-areas:'identity'_'rank'_'works'_'stats']",
+    'lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:grid-rows-[auto_1fr_auto] lg:gap-x-14',
+    "lg:[grid-template-areas:'identity_rank'_'identity_stats'_'works_works']",
+  ),
+};
+
+function Slot({ area, children }: { area: string; children: React.ReactNode }) {
+  if (!children) return null;
+  // Spacing lives on the slots (24 px under each), so an absent area adds no gap.
+  return <div className={cx('min-w-0 self-start pb-6', area)}>{children}</div>;
+}
+
+export function ProfileLayout({
+  variant,
+  identity,
+  rank,
+  level,
+  works,
+  stats,
+  footer,
+}: {
+  variant: 'own' | 'other';
+  identity: React.ReactNode;
+  rank: React.ReactNode;
+  level?: React.ReactNode;
+  works?: React.ReactNode;
+  stats: React.ReactNode;
+  footer?: React.ReactNode;
+}) {
+  return (
+    <div className={cx(LAYOUT[variant], 'pt-4 lg:pt-8')}>
+      <Slot area="[grid-area:identity]">{identity}</Slot>
+      <Slot area="[grid-area:rank]">{rank}</Slot>
+      {variant === 'own' ? <Slot area="[grid-area:level]">{level}</Slot> : null}
+      {variant === 'other' ? <Slot area="[grid-area:works] lg:pt-6">{works}</Slot> : null}
+      <Slot area="[grid-area:stats]">{stats}</Slot>
+      {variant === 'own' ? <Slot area="[grid-area:footer]">{footer}</Slot> : null}
+    </div>
+  );
+}
