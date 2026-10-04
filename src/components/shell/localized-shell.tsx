@@ -33,7 +33,7 @@ export function LocalizedShell({
       <main className="flex-1 pt-4 pb-16">
         <PageColumn width={width}>{children(locale)}</PageColumn>
       </main>
-      <SiteFooter locale={locale} width={width} />
+      <SiteFooter locale={locale} />
     </InkPage>
   );
 }
