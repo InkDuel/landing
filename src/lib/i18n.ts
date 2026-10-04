@@ -53,3 +53,18 @@ export const INTL_LOCALE: Record<Locale, string> = {
   en: 'en-US',
   pt: 'pt-BR',
 };
+
+/**
+ * «4 de octubre de 2026». UTC so the server render and the client agree;
+ * empty when the date is missing or invalid.
+ */
+export function formatDate(iso: string, locale: Locale): string {
+  const date = new Date(iso);
+  if (!iso || Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString(INTL_LOCALE[locale], {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
+}
