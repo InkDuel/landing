@@ -1,120 +1,53 @@
-import type { Metadata } from "next";
+import type { Metadata } from 'next';
 
-const API_BASE = "https://inkduel-backend-production.up.railway.app";
+import { fetchPublicDuelStory } from '@/lib/public-api';
+import { resolveRequestLocale } from '@/lib/request-locale';
 
-type PublicDuelStory = {
-  duelId: string;
-  prompt: string;
-  text: string;
-  textExcerpt: string;
-  author: {
-    id: string;
-    username: string;
-    avatar: string;
-  };
-  createdAt: string;
-};
-
-async function fetchDuelStory(
-  duelId: string,
-  userId: string
-): Promise<PublicDuelStory | null> {
-  try {
-    const res = await fetch(
-      `${API_BASE}/public/duels/${duelId}/story/${userId}`,
-      { next: { revalidate: 60 } }
-    );
-    if (!res.ok) return null;
-    return res.json();
-  } catch {
-    return null;
-  }
-}
+import { DUEL_STORY_COPY } from './duel-story-copy';
+import { DuelStoryView } from './duel-story-view';
 
 type Props = {
   params: Promise<{ duelId: string; userId: string }>;
+  searchParams: Promise<{ lang?: string | string[] }>;
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { duelId, userId } = await params;
-  const data = await fetchDuelStory(duelId, userId);
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+  const [{ duelId, userId }, { lang }] = await Promise.all([params, searchParams]);
+  const [data, { locale }] = await Promise.all([fetchPublicDuelStory(duelId, userId), resolveRequestLocale(lang)]);
+  const copy = DUEL_STORY_COPY[locale];
   if (!data) {
-    return { title: "Relato no encontrado — InkDuel" };
+    return { title: copy.metaNotFound };
   }
-  const excerpt =
-    data.textExcerpt.length > 160
-      ? data.textExcerpt.slice(0, 160) + "…"
-      : data.textExcerpt;
+  const excerpt = data.textExcerpt.length > 160 ? data.textExcerpt.slice(0, 160) + '…' : data.textExcerpt;
   return {
-    title: `${data.author.username} en InkDuel — Duelo`,
+    title: copy.metaTitle(data.author.username),
     description: excerpt,
     openGraph: {
-      title: `Relato de @${data.author.username} en InkDuel`,
+      title: copy.ogTitle(data.author.username),
       description: excerpt,
-      type: "article",
-      url: `https://inkduel.com/duel/${duelId}/story/${userId}`,
+      type: 'article',
+      url: `https://inkduel.com/duel/${encodeURIComponent(duelId)}/story/${encodeURIComponent(userId)}`,
     },
   };
 }
 
-export default async function DuelStoryPage({ params }: Props) {
-  const { duelId, userId } = await params;
-  const data = await fetchDuelStory(duelId, userId);
-
-  if (!data) {
-    return (
-      <main className="public-page">
-        <div className="public-card">
-          <h1 className="public-title">Relato no encontrado</h1>
-          <p className="public-subtitle">
-            Este relato no existe o el duelo aún no terminó.
-          </p>
-          <a href="https://inkduel.com" className="public-cta">
-            Ir a InkDuel
-          </a>
-        </div>
-      </main>
-    );
-  }
-
-  const date = new Date(data.createdAt).toLocaleDateString("es-ES", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+export default async function DuelStoryPage({ params, searchParams }: Props) {
+  const [{ duelId, userId }, { lang }] = await Promise.all([params, searchParams]);
+  const [data, { locale, explicit }] = await Promise.all([
+    fetchPublicDuelStory(duelId, userId),
+    resolveRequestLocale(lang),
+  ]);
 
   return (
-    <main className="public-page">
-      <div className="public-card public-card--story">
-        {/* Prompt */}
-        <div className="public-duel-prompt">
-          <span className="public-duel-prompt-label">Premisa del duelo</span>
-          <p className="public-duel-prompt-text">{data.prompt}</p>
-        </div>
-
-        {/* Header */}
-        <div className="public-story-header">
-          <p className="public-story-byline">
-            por <strong>@{data.author.username}</strong> · {date}
-          </p>
-        </div>
-
-        {/* Story text */}
-        <div className="public-story-content">
-          <p>{data.text}</p>
-        </div>
-
-        {/* CTAs */}
-        <a
-          href={`inkduel://duel/result/${duelId}`}
-          className="public-cta"
-        >
-          Ver resultado en InkDuel
-        </a>
-        <a href="https://inkduel.com" className="public-cta-secondary">
-          Escribir mi primer duelo
-        </a>
-      </div>
-    </main>
+    <DuelStoryView
+      duelId={duelId}
+      initialLocale={locale}
+      resolveOnClient={!explicit}
+      story={
+        data
+          ? { prompt: data.prompt, text: data.text, createdAt: data.createdAt, username: data.author.username }
+          : null
+      }
+    />
   );
 }
