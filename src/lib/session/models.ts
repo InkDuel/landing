@@ -123,13 +123,20 @@ function parseChapter(data: unknown): Chapter | null {
   return { id: str(data.id), orderIndex: nonNegative(data.orderIndex), title: str(data.title), content: str(data.content) };
 }
 
+/** ChapterSummaryPublicDTO: id, title and orderIndex, never the text. */
+function parseChapterSummary(data: unknown): ChapterSummary | null {
+  if (!isRecord(data) || !str(data.id)) return null;
+  return { id: str(data.id), orderIndex: nonNegative(data.orderIndex), title: str(data.title) };
+}
+
 export type WorkDetail = {
   id: string;
   title: string;
   authorId: string;
   authorDisplayName: string;
   publishedChapterCount: number;
-  firstPublishedChapter: Chapter | null;
+  /** A summary only: the chapter text comes from the chapter endpoint. */
+  firstPublishedChapter: ChapterSummary | null;
 };
 
 export function parseWorkDetail(data: unknown): WorkDetail | null {
@@ -140,16 +147,15 @@ export function parseWorkDetail(data: unknown): WorkDetail | null {
     authorId: str(data.authorId),
     authorDisplayName: str(data.authorDisplayName),
     publishedChapterCount: nonNegative(data.publishedChapterCount),
-    firstPublishedChapter: parseChapter(data.firstPublishedChapter),
+    firstPublishedChapter: parseChapterSummary(data.firstPublishedChapter),
   };
 }
 
 export function parseChapterSummaries(data: unknown): Page<ChapterSummary> {
   if (!isRecord(data)) return { items: [], nextCursor: null };
   const items = list(data.items)
-    .map(parseChapter)
-    .filter((item): item is Chapter => item !== null)
-    .map(({ id, orderIndex, title }) => ({ id, orderIndex, title }));
+    .map(parseChapterSummary)
+    .filter((item): item is ChapterSummary => item !== null);
   return { items, nextCursor: cursor(data.nextCursor) };
 }
 
