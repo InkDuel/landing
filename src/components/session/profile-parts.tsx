@@ -212,11 +212,16 @@ export function ProfileStats({ user, locale, own }: { user: ProfileUser; locale:
 }
 
 /**
- * Perfil composition. Mobile keeps the app's single column and order (own:
- * identity → rank → level → stats; other: identity → rank → Obras → stats).
- * From desktop the same pieces split in two: identity, bio and links on the
- * left; rank, progress, level and stats on the right; Obras and the footer
- * below, full width.
+ * Perfil composition. Mobile is a single column (own: identity → rank →
+ * level → stats; other: identity → rank → stats → Obras). From desktop the
+ * same pieces split in two: identity, bio and links on the left; rank,
+ * progress, level and stats on the right; Obras and the footer below, full
+ * width.
+ *
+ * Web-specific (founder decision, 2026-10-04): on another writer's profile
+ * the stats come before Obras, unlike the app. Rank and stats are the
+ * finite summary of the person; Obras is an infinite feed and goes last,
+ * so its pages never push the stats down.
  */
 const LAYOUT = {
   own: cx(
@@ -225,7 +230,7 @@ const LAYOUT = {
     "lg:[grid-template-areas:'identity_rank'_'identity_level'_'identity_stats'_'footer_footer']",
   ),
   other: cx(
-    "grid [grid-template-areas:'identity'_'rank'_'works'_'stats']",
+    "grid [grid-template-areas:'identity'_'rank'_'stats'_'works']",
     'lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:grid-rows-[auto_1fr_auto] lg:gap-x-14',
     "lg:[grid-template-areas:'identity_rank'_'identity_stats'_'works_works']",
   ),

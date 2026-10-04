@@ -17,7 +17,8 @@ import { SESSION_COPY } from '@/lib/session/copy';
 import { type ProfileUser, parseProfileUser } from '@/lib/session/models';
 
 // Another writer's profile (11, ajeno): identity → compact rank, no pencil →
-// Obras → stats. Retar, Seguir and the history are not part of phase 1.
+// stats → Obras (on the web Obras goes last: see ProfileLayout). Retar,
+// Seguir and the history are not part of phase 1.
 
 function ProfileView({ userId }: { userId: string }) {
   const { locale } = useSessionLocale();
