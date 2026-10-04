@@ -1,32 +1,19 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-
-export type Locale = 'es' | 'en' | 'pt';
+import { InkButton } from '@/components/ink/ink-button';
+import { InkCard } from '@/components/ink/ink-card';
+import { InkHeadline } from '@/components/ink/ink-headline';
+import { PlayerIdentity } from '@/components/ink/player-identity';
+import { LocalizedShell } from '@/components/shell/localized-shell';
+import { StoreButtons } from '@/components/shell/store-buttons';
+import type { Locale } from '@/lib/i18n';
 
 type FriendChallengeCopy = {
   title: string;
   subtitle: string;
   cta: string;
   installNote: string;
-  appStoreLabel: string;
-  googlePlayLabel: string;
 };
-
-const appStoreUrl =
-  'https://apps.apple.com/app/inkduel-duelos-de-escritura/id6761736355';
-const googlePlayUrl =
-  'https://play.google.com/store/apps/details?id=com.inkduel.app';
-
-const languageOptions: {
-  code: Locale;
-  label: string;
-  flag: string;
-}[] = [
-  { code: 'es', label: 'Español', flag: '🇪🇸' },
-  { code: 'en', label: 'English', flag: '🇺🇸' },
-  { code: 'pt', label: 'Português', flag: '🇧🇷' },
-];
 
 const copies: Record<Locale, FriendChallengeCopy> = {
   es: {
@@ -36,18 +23,12 @@ const copies: Record<Locale, FriendChallengeCopy> = {
     cta: 'Abrir InkDuel',
     installNote:
       '¿Aún no tienes la app? Instala InkDuel y luego vuelve a abrir este enlace para aceptar el reto.',
-    appStoreLabel: 'Descargar en App Store',
-    googlePlayLabel: 'Descargar en Google Play',
   },
   en: {
     title: "You've been challenged to write",
-    subtitle:
-      'Open InkDuel to discover who challenged you and accept a private 5-minute writing duel.',
+    subtitle: 'Open InkDuel to discover who challenged you and accept a private 5-minute writing duel.',
     cta: 'Open InkDuel',
-    installNote:
-      "Don't have the app yet? Install InkDuel, then open this link again to accept the challenge.",
-    appStoreLabel: 'Download on the App Store',
-    googlePlayLabel: 'Get it on Google Play',
+    installNote: "Don't have the app yet? Install InkDuel, then open this link again to accept the challenge.",
   },
   pt: {
     title: 'Desafiaram você a escrever',
@@ -56,33 +37,7 @@ const copies: Record<Locale, FriendChallengeCopy> = {
     cta: 'Abrir o InkDuel',
     installNote:
       'Ainda não tem o app? Instale o InkDuel e depois abra este link novamente para aceitar o desafio.',
-    appStoreLabel: 'Baixar na App Store',
-    googlePlayLabel: 'Baixar no Google Play',
   },
-};
-
-const getInitialLocale = (): Locale => {
-  if (typeof window === 'undefined') {
-    return 'en';
-  }
-
-  const params = new URLSearchParams(window.location.search);
-  const queryLocale = params.get('lang');
-  if (queryLocale === 'es' || queryLocale === 'en' || queryLocale === 'pt') {
-    return queryLocale;
-  }
-
-  const storedLocale = window.localStorage.getItem('inkduel-locale');
-  if (storedLocale === 'es' || storedLocale === 'en' || storedLocale === 'pt') {
-    return storedLocale;
-  }
-
-  const browserLocale = window.navigator.language.slice(0, 2);
-  if (browserLocale === 'es' || browserLocale === 'en' || browserLocale === 'pt') {
-    return browserLocale;
-  }
-
-  return 'en';
 };
 
 type FriendChallengeClientProps = {
@@ -91,74 +46,33 @@ type FriendChallengeClientProps = {
   resolveLocaleOnClient: boolean;
 };
 
-export default function FriendChallengeClient({
-  token,
-  initialLocale,
-  resolveLocaleOnClient,
-}: FriendChallengeClientProps) {
-  const [locale, setLocale] = useState<Locale>(initialLocale);
-  const copy = copies[locale];
-  const currentLanguage = useMemo(
-    () => languageOptions.find((option) => option.code === locale) ?? languageOptions[0],
-    [locale],
-  );
-
+export default function FriendChallengeClient({ token, initialLocale, resolveLocaleOnClient }: FriendChallengeClientProps) {
   const appLink = `inkduel://friend-challenge/${encodeURIComponent(token)}`;
 
-  useEffect(() => {
-    if (resolveLocaleOnClient) {
-      setLocale(getInitialLocale());
-    }
-  }, [resolveLocaleOnClient]);
-
-  useEffect(() => {
-    document.documentElement.lang = locale;
-    window.localStorage.setItem('inkduel-locale', locale);
-  }, [locale]);
-
   return (
-    <main className="public-page">
-      <div className="public-card">
-        <div className="public-topbar">
-          <label className="language-picker" aria-label="Select language">
-            <span className="language-current" aria-hidden="true">
-              <span className="language-flag">{currentLanguage.flag}</span>
-              <span>{currentLanguage.label}</span>
-            </span>
-            <select
-              value={locale}
-              onChange={(event) => setLocale(event.target.value as Locale)}
-              aria-label="Select language"
-            >
-              {languageOptions.map((option) => (
-                <option key={option.code} value={option.code}>
-                  {option.flag} {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+    <LocalizedShell initialLocale={initialLocale} resolveOnClient={resolveLocaleOnClient} context="arena" width="product">
+      {(locale) => {
+        const copy = copies[locale];
+        return (
+          <div className="flex flex-col gap-6 pt-6">
+            <InkCard tone="brand" padding="p-6" className="flex flex-col items-center gap-5 text-center">
+              {/* The rival is still a mystery: a pink sticker behind an unknown identity. */}
+              <span aria-hidden="true" className="relative mt-2 inline-flex">
+                <span className="absolute -inset-2 rotate-[-6deg] rounded-control border-brand border-outline bg-pink" />
+                <PlayerIdentity name="?" size={96} className="relative" />
+              </span>
+              <InkHeadline text={copy.title} size="title-page" band="pink" />
+              <p className="type-body text-secondary">{copy.subtitle}</p>
+              <InkButton href={appLink}>{copy.cta}</InkButton>
+            </InkCard>
 
-        <div className="friend-challenge-icon" aria-hidden="true">
-          🤝
-        </div>
-        <h1 className="public-title">{copy.title}</h1>
-        <p className="public-subtitle">{copy.subtitle}</p>
-
-        <a href={appLink} className="public-cta">
-          {copy.cta}
-        </a>
-
-        <p className="friend-challenge-install-note">{copy.installNote}</p>
-        <div className="friend-challenge-store-links">
-          <a href={appStoreUrl} target="_blank" rel="noreferrer">
-            {copy.appStoreLabel}
-          </a>
-          <a href={googlePlayUrl} target="_blank" rel="noreferrer">
-            {copy.googlePlayLabel}
-          </a>
-        </div>
-      </div>
-    </main>
+            <div className="flex flex-col gap-3">
+              <p className="type-caption text-secondary">{copy.installNote}</p>
+              <StoreButtons locale={locale} />
+            </div>
+          </div>
+        );
+      }}
+    </LocalizedShell>
   );
 }
