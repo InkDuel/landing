@@ -81,75 +81,78 @@
   --ink-league-leyenda-tint: #f2e8c9;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
+/*
+ * The web is light only (founder decision, 2026-10-04): it does not follow
+ * the system theme. The dark values stay here, unused, in case a manual
+ * toggle ever arrives; nothing sets data-theme today.
+ */
+:root[data-theme='dark'] {
+  color-scheme: dark;
 
-    --ink-bg-primary: #12162b;
-    --ink-bg-secondary: #0e1224;
-    --ink-bg-surface: #1b2140;
-    --ink-bg-elevated: #232a4d;
-    --ink-bg-arena: #12162b;
-    --ink-bg-reader: #1b1915;
+  --ink-bg-primary: #12162b;
+  --ink-bg-secondary: #0e1224;
+  --ink-bg-surface: #1b2140;
+  --ink-bg-elevated: #232a4d;
+  --ink-bg-arena: #12162b;
+  --ink-bg-reader: #1b1915;
 
-    --ink-text-primary: #d5d6e2;
-    --ink-text-secondary: #9ea3c0;
-    --ink-text-tertiary: #8288a9;
-    --ink-text-inverse: #12162b;
-    --ink-text-disabled: #5b6181;
-    --ink-text-on-accent: #131a3a;
-    --ink-text-on-brand-ink: #d5d6e2;
+  --ink-text-primary: #d5d6e2;
+  --ink-text-secondary: #9ea3c0;
+  --ink-text-tertiary: #8288a9;
+  --ink-text-inverse: #12162b;
+  --ink-text-disabled: #5b6181;
+  --ink-text-on-accent: #131a3a;
+  --ink-text-on-brand-ink: #d5d6e2;
 
-    --ink-surface-inverse: #d5d6e2;
+  --ink-surface-inverse: #d5d6e2;
 
-    --ink-reader-text: #d2cabc;
-    --ink-reader-muted: #a69e8f;
-    --ink-reader-line: #36322b;
-    --ink-reader-surface: #24211c;
-    --ink-reader-border: #8a8272;
+  --ink-reader-text: #d2cabc;
+  --ink-reader-muted: #a69e8f;
+  --ink-reader-line: #36322b;
+  --ink-reader-surface: #24211c;
+  --ink-reader-border: #8a8272;
 
-    --ink-border-default: #465080;
-    --ink-border-strong: #6e78aa;
-    --ink-border-subtle: #2a3156;
-    --ink-shadow-hard: #05070f;
+  --ink-border-default: #465080;
+  --ink-border-strong: #6e78aa;
+  --ink-border-subtle: #2a3156;
+  --ink-shadow-hard: #05070f;
 
-    --ink-brand-ink: #0b0f22;
-    --ink-brand-yellow: #f2c94c;
-    --ink-brand-pink: #ff5c9e;
-    --ink-brand-blue: #8299ff;
-    --ink-brand-blue-fill: #3a55e6;
-    --ink-highlight: rgba(242, 201, 76, 0.32);
+  --ink-brand-ink: #0b0f22;
+  --ink-brand-yellow: #f2c94c;
+  --ink-brand-pink: #ff5c9e;
+  --ink-brand-blue: #8299ff;
+  --ink-brand-blue-fill: #3a55e6;
+  --ink-highlight: rgba(242, 201, 76, 0.32);
 
-    --ink-tint-yellow: #3d3514;
-    --ink-tint-pink: #4a1d36;
-    --ink-tint-blue: #1f2a5e;
-    --ink-tint-success: #17331f;
-    --ink-tint-danger: #3e1b1c;
+  --ink-tint-yellow: #3d3514;
+  --ink-tint-pink: #4a1d36;
+  --ink-tint-blue: #1f2a5e;
+  --ink-tint-success: #17331f;
+  --ink-tint-danger: #3e1b1c;
 
-    --ink-success: #5cc57e;
-    --ink-warning: #f0a65a;
-    --ink-danger: #ff7a6e;
+  --ink-success: #5cc57e;
+  --ink-warning: #f0a65a;
+  --ink-danger: #ff7a6e;
 
-    --ink-arena-dot: #262d52;
-    --ink-overlay-scrim: rgba(4, 6, 14, 0.64);
+  --ink-arena-dot: #262d52;
+  --ink-overlay-scrim: rgba(4, 6, 14, 0.64);
 
-    --ink-pencil-metal: #9aa2c0;
-    --ink-pencil-yellow-deep: #c9a12e;
-    --ink-pencil-wood: #e2c08f;
+  --ink-pencil-metal: #9aa2c0;
+  --ink-pencil-yellow-deep: #c9a12e;
+  --ink-pencil-wood: #e2c08f;
 
-    --ink-league-aprendiz: #c98ae6;
-    --ink-league-aprendiz-tint: #35234a;
-    --ink-league-escriba: #5bbe6d;
-    --ink-league-escriba-tint: #1d3a24;
-    --ink-league-narrador: #43aecb;
-    --ink-league-narrador-tint: #173640;
-    --ink-league-duelista: #d4884a;
-    --ink-league-duelista-tint: #3e2c1a;
-    --ink-league-maestro: #ee6a5e;
-    --ink-league-maestro-tint: #45201d;
-    --ink-league-leyenda: #d4ae3a;
-    --ink-league-leyenda-tint: #3b321a;
-  }
+  --ink-league-aprendiz: #c98ae6;
+  --ink-league-aprendiz-tint: #35234a;
+  --ink-league-escriba: #5bbe6d;
+  --ink-league-escriba-tint: #1d3a24;
+  --ink-league-narrador: #43aecb;
+  --ink-league-narrador-tint: #173640;
+  --ink-league-duelista: #d4884a;
+  --ink-league-duelista-tint: #3e2c1a;
+  --ink-league-maestro: #ee6a5e;
+  --ink-league-maestro-tint: #45201d;
+  --ink-league-leyenda: #d4ae3a;
+  --ink-league-leyenda-tint: #3b321a;
 }
 
 /* ── Visual contexts (02 - Design System) ──────────────────────────────── */
