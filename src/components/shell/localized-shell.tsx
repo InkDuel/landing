@@ -28,7 +28,7 @@ export function LocalizedShell({
 }) {
   const [locale, setLocale] = useLocale({ initial: initialLocale, resolveOnClient });
   return (
-    <InkPage context={context}>
+    <InkPage context={context} lang={locale}>
       <SiteHeader locale={locale} onLocaleChange={setLocale} width={width} />
       <main className="flex-1 pt-4 pb-16">
         <PageColumn width={width}>{children(locale)}</PageColumn>

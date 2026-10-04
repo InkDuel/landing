@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Figtree, Literata } from "next/font/google";
+import { DEFAULT_LOCALE } from "@/lib/i18n";
+
 import "./globals.css";
 
 // 2026 system (04 - Tipografía): Bricolage for the brand voice, Figtree for
@@ -25,9 +27,12 @@ const literata = Literata({
   display: "swap",
 });
 
+// The site's fallback language is English (DEFAULT_LOCALE), like the app:
+// static pages render it first and switch on the client. Each page
+// container declares its real language with lang={locale}.
 export const metadata: Metadata = {
-  title: "InkDuel | Escribir mejor",
-  description: "InkDuel no es una app para escribir más. Es una app para escribir mejor.",
+  title: "InkDuel | Write better",
+  description: "InkDuel isn't an app for writing more. It's an app for writing better.",
   icons: {
     icon: "/app-icon.png",
     apple: "/app-icon.png",
@@ -50,7 +55,7 @@ export default function RootLayout({
     .join(" ");
 
   return (
-    <html lang="es" suppressHydrationWarning>
+    <html lang={DEFAULT_LOCALE} suppressHydrationWarning>
       <body className={`${fonts} antialiased`}>{children}</body>
     </html>
   );
