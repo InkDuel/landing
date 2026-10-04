@@ -321,6 +321,7 @@ export default function AuthActionHandler() {
   const [error, setError] = useState('');
 
   const continueHref = useMemo(() => safeRedirectHref(continueUrl), [continueUrl]);
+  const hasContinueTarget = continueHref !== '/';
 
   useEffect(() => {
     async function handleAction() {
@@ -520,7 +521,7 @@ export default function AuthActionHandler() {
                 )}
                 <div className="reset-success-actions">
                   <a className="cta-button primary" href={continueHref}>
-                    {continueUrl ? verifyCopy.continueCta : verifyCopy.openApp}
+                    {hasContinueTarget ? verifyCopy.continueCta : verifyCopy.openApp}
                   </a>
                   <Link href="/" className="cta-button">
                     {verifyCopy.backHome}
@@ -636,7 +637,7 @@ export default function AuthActionHandler() {
               <p>{resetCopy.successBody}</p>
               <div className="reset-success-actions">
                 <a className="cta-button primary" href={continueHref}>
-                  {continueUrl ? resetCopy.continueCta : resetCopy.backHome}
+                  {hasContinueTarget ? resetCopy.continueCta : resetCopy.backHome}
                 </a>
                 <Link href="/" className="cta-button">
                   {resetCopy.backHome}
