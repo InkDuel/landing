@@ -4,6 +4,14 @@ import Link from 'next/link';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
+import { InkAppIcon, InkWordmark } from '@/components/ink/brand';
+import { InkButton } from '@/components/ink/ink-button';
+import { InkChip } from '@/components/ink/ink-chip';
+import { InkHeadline } from '@/components/ink/ink-headline';
+import { InkInlineBanner } from '@/components/ink/ink-inline-banner';
+import { InkTextField } from '@/components/ink/ink-text-field';
+import { Kicker } from '@/components/ink/kicker';
+import { InkPage, PageColumn } from '@/components/shell/ink-page';
 import { safeRedirectHref } from '@/lib/safe-redirect';
 
 type Locale = 'es' | 'en' | 'pt';
@@ -479,190 +487,167 @@ export default function AuthActionHandler() {
 
   if (actionMode === 'verifyEmail') {
     return (
-      <main className="reset-shell">
-        <div className="mesh-bg">
-          <div className="blob blob-1" />
-          <div className="blob blob-2" />
-        </div>
+      <AuthFrame eyebrow={verifyCopy.eyebrow} title={verifyCopy.title} subtitle={verifyCopy.subtitle} legal={verifyCopy.legalHint}>
+        {status === 'checking' && <CheckingLine label={verifyCopy.checking} />}
 
-        <div className="reset-frame">
-          <div className="reset-brand">
-            <Link href="/" className="logo reset-logo">
-              Ink<span className="accent">Duel</span>
-            </Link>
-            <span className="reset-eyebrow">{verifyCopy.eyebrow}</span>
-          </div>
-
-          <section className="reset-card">
-            <div className="reset-card-top">
-              <p className="reset-kicker">{verifyCopy.eyebrow}</p>
-              <h1 className="reset-title">{verifyCopy.title}</h1>
-              <p className="reset-subtitle">{verifyCopy.subtitle}</p>
+        {status === 'success' && (
+          <div className="flex flex-col gap-4">
+            <InkInlineBanner tone="success" title={verifyCopy.successTitle} detail={verifyCopy.successBody} />
+            <div className="flex flex-wrap items-center gap-2">
+              <InkChip tone="success">{verifyCopy.chip}</InkChip>
+              {email && (
+                <span className="type-caption text-secondary">
+                  {verifyCopy.openApp} · <span className="font-extrabold break-all text-primary">{email}</span>
+                </span>
+              )}
             </div>
+            <div className="flex flex-col gap-2">
+              <InkButton href={continueHref}>
+                {hasContinueTarget ? verifyCopy.continueCta : verifyCopy.openApp}
+              </InkButton>
+              <InkButton href="/" variant="ghost" fullWidth={false} className="self-center">
+                {verifyCopy.backHome}
+              </InkButton>
+            </div>
+          </div>
+        )}
 
-            {status === 'checking' && (
-              <div className="reset-state">
-                <div className="reset-spinner" />
-                <p>{verifyCopy.checking}</p>
-              </div>
-            )}
-
-            {status === 'success' && (
-              <div className="reset-success">
-                <div className="reset-success-badge">✓</div>
-                <div className="verify-chip">{verifyCopy.chip}</div>
-                <h2>{verifyCopy.successTitle}</h2>
-                <p>{verifyCopy.successBody}</p>
-                {email && (
-                  <div className="reset-email-chip">
-                    <span>{verifyCopy.openApp}</span>
-                    <strong>{email}</strong>
-                  </div>
-                )}
-                <div className="reset-success-actions">
-                  <a className="cta-button primary" href={continueHref}>
-                    {hasContinueTarget ? verifyCopy.continueCta : verifyCopy.openApp}
-                  </a>
-                  <Link href="/" className="cta-button">
-                    {verifyCopy.backHome}
-                  </Link>
-                </div>
-              </div>
-            )}
-
-            {status === 'error' && (
-              <div className="reset-error-state">
-                <h2 className="verify-error-title">{verifyCopy.invalidTitle}</h2>
-                <p>{verifyCopy.invalidBody}</p>
-                <p className="reset-error">{error}</p>
-                <div className="reset-success-actions">
-                  <Link href="/" className="cta-button primary">
-                    {verifyCopy.backHome}
-                  </Link>
-                </div>
-              </div>
-            )}
-
-            <p className="reset-legal">{verifyCopy.legalHint}</p>
-          </section>
-        </div>
-      </main>
+        {status === 'error' && (
+          <div className="flex flex-col gap-4">
+            <InkInlineBanner
+              tone="error"
+              title={verifyCopy.invalidTitle}
+              detail={
+                <>
+                  <span className="block">{verifyCopy.invalidBody}</span>
+                  {error && <span className="mt-1 block font-bold text-danger">{error}</span>}
+                </>
+              }
+            />
+            <InkButton href="/" variant="secondary">
+              {verifyCopy.backHome}
+            </InkButton>
+          </div>
+        )}
+      </AuthFrame>
     );
   }
 
   return (
-    <main className="reset-shell">
-      <div className="mesh-bg">
-        <div className="blob blob-1" />
-        <div className="blob blob-2" />
-      </div>
+    <AuthFrame
+      eyebrow={resetCopy.eyebrow}
+      title={resetCopy.title}
+      subtitle={status === 'error' ? resetCopy.invalidLink : resetCopy.subtitle}
+      legal={resetCopy.legalHint}
+    >
+      {status === 'checking' && <CheckingLine label={resetCopy.checking} />}
 
-      <div className="reset-frame">
-        <div className="reset-brand">
-          <Link href="/" className="logo reset-logo">
-            Ink<span className="accent">Duel</span>
-          </Link>
-          <span className="reset-eyebrow">{resetCopy.eyebrow}</span>
-        </div>
+      {(status === 'ready' || status === 'submitting') && (
+        <form className="flex flex-col gap-4" onSubmit={handleResetSubmit} noValidate>
+          <p className="type-caption text-secondary">
+            {resetCopy.codeFor} <span className="font-extrabold text-primary">{maskEmail(email)}</span>
+          </p>
+          <InkTextField
+            label={resetCopy.passwordLabel}
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete="new-password"
+            disabled={status === 'submitting'}
+          />
+          <InkTextField
+            label={resetCopy.confirmLabel}
+            type="password"
+            value={confirmPassword}
+            onChange={(event) => setConfirmPassword(event.target.value)}
+            autoComplete="new-password"
+            disabled={status === 'submitting'}
+            hint={resetCopy.passwordHint}
+          />
+          {error && <InkInlineBanner tone="error" title={error} />}
+          <InkButton type="submit" busy={status === 'submitting'} busyLabel={resetCopy.submitting} className="mt-2">
+            {resetCopy.submit}
+          </InkButton>
+        </form>
+      )}
 
-        <section className="reset-card">
-          <div className="reset-card-top">
-            <p className="reset-kicker">{resetCopy.eyebrow}</p>
-            <h1 className="reset-title">{resetCopy.title}</h1>
-            <p className="reset-subtitle">
-              {status === 'error' ? resetCopy.invalidLink : resetCopy.subtitle}
-            </p>
+      {status === 'success' && (
+        <div className="flex flex-col gap-4">
+          <InkInlineBanner tone="success" title={resetCopy.successTitle} detail={resetCopy.successBody} />
+          <div className="flex flex-col gap-2">
+            <InkButton href={continueHref}>
+              {hasContinueTarget ? resetCopy.continueCta : resetCopy.backHome}
+            </InkButton>
+            <InkButton href="/" variant="ghost" fullWidth={false} className="self-center">
+              {resetCopy.backHome}
+            </InkButton>
           </div>
+        </div>
+      )}
 
-          {status === 'checking' && (
-            <div className="reset-state">
-              <div className="reset-spinner" />
-              <p>{resetCopy.checking}</p>
-            </div>
-          )}
+      {status === 'error' && (
+        <div className="flex flex-col gap-4">
+          {error && <InkInlineBanner tone="error" title={error} />}
+          <div className="flex flex-col gap-2">
+            <InkButton href="/">{resetCopy.tryAgain}</InkButton>
+            <InkButton href="/" variant="ghost" fullWidth={false} className="self-center">
+              {resetCopy.backHome}
+            </InkButton>
+          </div>
+        </div>
+      )}
+    </AuthFrame>
+  );
+}
 
-          {(status === 'ready' || status === 'submitting') && (
-            <>
-              <div className="reset-email-chip">
-                <span>{resetCopy.codeFor}</span>
-                <strong>{maskEmail(email)}</strong>
-              </div>
+/** Acceso (15): plain paper, no navigation, one column. */
+function AuthFrame({
+  eyebrow,
+  title,
+  subtitle,
+  legal,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  legal: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <InkPage context="product">
+      <header className="py-4">
+        <PageColumn width="product">
+          <Link href="/" className="ink-focus inline-flex min-h-11 items-center gap-3 rounded-control">
+            <InkAppIcon size={36} />
+            <InkWordmark size="sm" />
+          </Link>
+        </PageColumn>
+      </header>
+      <main className="flex-1 pt-6 pb-16">
+        <PageColumn width="product" className="flex flex-col gap-6">
+          <div className="flex flex-col gap-3">
+            <Kicker>{eyebrow}</Kicker>
+            <InkHeadline text={title} size="title-page" />
+            <p className="type-body text-secondary">{subtitle}</p>
+          </div>
+          <div aria-live="polite">{children}</div>
+          <p className="type-caption text-tertiary">{legal}</p>
+        </PageColumn>
+      </main>
+    </InkPage>
+  );
+}
 
-              <form className="reset-form" onSubmit={handleResetSubmit}>
-                <label className="reset-field">
-                  <span>{resetCopy.passwordLabel}</span>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    placeholder={resetCopy.passwordHint}
-                    autoComplete="new-password"
-                    disabled={status === 'submitting'}
-                  />
-                </label>
-
-                <label className="reset-field">
-                  <span>{resetCopy.confirmLabel}</span>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(event) => setConfirmPassword(event.target.value)}
-                    placeholder={resetCopy.confirmLabel}
-                    autoComplete="new-password"
-                    disabled={status === 'submitting'}
-                  />
-                </label>
-
-                <p className="reset-hint">{resetCopy.passwordHint}</p>
-
-                {error && <p className="reset-error">{error}</p>}
-
-                <button
-                  type="submit"
-                  className="cta-button primary large reset-submit"
-                  disabled={status === 'submitting'}
-                >
-                  {status === 'submitting'
-                    ? resetCopy.submitting
-                    : resetCopy.submit}
-                </button>
-              </form>
-            </>
-          )}
-
-          {status === 'success' && (
-            <div className="reset-success">
-              <div className="reset-success-badge">✓</div>
-              <h2>{resetCopy.successTitle}</h2>
-              <p>{resetCopy.successBody}</p>
-              <div className="reset-success-actions">
-                <a className="cta-button primary" href={continueHref}>
-                  {hasContinueTarget ? resetCopy.continueCta : resetCopy.backHome}
-                </a>
-                <Link href="/" className="cta-button">
-                  {resetCopy.backHome}
-                </Link>
-              </div>
-            </div>
-          )}
-
-          {status === 'error' && (
-            <div className="reset-error-state">
-              <p className="reset-error">{error}</p>
-              <div className="reset-success-actions">
-                <Link href="/" className="cta-button primary">
-                  {resetCopy.tryAgain}
-                </Link>
-                <Link href="/" className="cta-button">
-                  {resetCopy.backHome}
-                </Link>
-              </div>
-            </div>
-          )}
-
-          <p className="reset-legal">{resetCopy.legalHint}</p>
-        </section>
-      </div>
-    </main>
+/** Inline wait while the link is checked (no full-screen spinner). */
+function CheckingLine({ label }: { label: string }) {
+  return (
+    <p role="status" className="flex items-center gap-3 type-body text-secondary">
+      <span
+        aria-hidden="true"
+        className="size-[18px] shrink-0 animate-spin rounded-full border-[2.5px] border-divider border-t-[var(--ink-brand-yellow)] motion-reduce:animate-none"
+      />
+      {label}
+    </p>
   );
 }
