@@ -66,6 +66,14 @@
   --ink-pencil-yellow-deep: #d6ab1c;
   --ink-pencil-wood: #f0d3a6;
 
+  /* Spine papers of Obras in Historias (historias_items.dart): muted brand
+     hues, stable per work id, carrying no data. Same in both themes. */
+  --ink-spine-1: #e9b4c4;
+  --ink-spine-2: #b4c1ee;
+  --ink-spine-3: #ead592;
+  --ink-spine-4: #7c88b8;
+  --ink-spine-5: #ede4cf;
+
   /* Leagues (strong · tint). Only for identity and the league card. */
   --ink-league-aprendiz: #b565d9;
   --ink-league-aprendiz-tint: #f2e4fa;
