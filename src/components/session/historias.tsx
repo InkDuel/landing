@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import { cx } from '@/components/ink/cx';
+import { InkSkeleton, InkTextAction } from '@/components/ink/ink-states';
 import { DashedLine } from '@/components/ink/numbered-rule';
 import { PlayerIdentity } from '@/components/ink/player-identity';
 import { formatDate, type Locale } from '@/lib/i18n';
@@ -104,13 +105,69 @@ export function HistoriasDivider() {
   return <DashedLine className="ml-[34px] [--line:var(--ink-arena-dot)]" />;
 }
 
-/** «Lo último»: the only card of the list. */
-export function LeadCard({ kicker, children }: { kicker: string; children: ReactNode }) {
+/**
+ * «Lo último»: the only card of the list and the editorial lead. On desktop
+ * its own pieces sit side by side: what was written on the left, the
+ * context (consigna, reason, author) on the right.
+ */
+export function LeadCard({ kicker, main, aside }: { kicker: string; main: ReactNode; aside: ReactNode }) {
   return (
-    <article className="relative flex flex-col gap-2.5 rounded-[18px] border-brand border-outline bg-surface px-[18px] py-4 ink-shadow-lift">
+    <article className="relative flex flex-col gap-2.5 rounded-[18px] border-brand border-outline bg-surface px-[18px] py-4 ink-shadow-lift lg:px-7 lg:py-6">
       <p className="type-label text-[11px] tracking-[0.09em] text-secondary">{kicker}</p>
-      {children}
+      <div className="flex flex-col gap-2.5 lg:grid lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] lg:items-end lg:gap-x-12">
+        <div className="min-w-0">{main}</div>
+        <div className="flex min-w-0 flex-col gap-2.5">{aside}</div>
+      </div>
     </article>
+  );
+}
+
+/**
+ * The index under «Lo último»: one column on mobile, an editorial grid of
+ * two from desktop. Dashed separators start at the text column, between
+ * rows only.
+ */
+export function HistoriasIndex({ items }: { items: { key: string; node: ReactNode }[] }) {
+  return (
+    <div className="grid lg:grid-cols-2 lg:gap-x-12">
+      {items.map((item, index) => (
+        <div key={item.key} className="min-w-0">
+          {index === 0 ? null : (
+            <div className={index === 1 ? 'lg:hidden' : undefined}>
+              <HistoriasDivider />
+            </div>
+          )}
+          {item.node}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Infinite scroll anchor, the next page loading and its retry. */
+export function ListFooter({
+  sentinel,
+  loadingMore,
+  failed,
+  onRetry,
+  locale,
+}: {
+  sentinel: React.Ref<HTMLDivElement>;
+  loadingMore: boolean;
+  failed: boolean;
+  onRetry: () => void;
+  locale: Locale;
+}) {
+  return (
+    <>
+      <div ref={sentinel} aria-hidden="true" />
+      {loadingMore ? <InkSkeleton className="mt-3" lines={1} label={SESSION_COPY[locale].common.loading} /> : null}
+      {failed ? (
+        <div className="mt-3">
+          <InkTextAction onClick={onRetry}>{SESSION_COPY[locale].common.retry}</InkTextAction>
+        </div>
+      ) : null}
+    </>
   );
 }
 
@@ -163,22 +220,29 @@ export function RelatoItem({ story, locale, lead = false }: { story: GalleryStor
 
   if (lead) {
     return (
-      <LeadCard kicker={copy.latest}>
-        <div className="flex items-start gap-2.5">
-          <QuoteMark />
-          <Link href={href} className="ink-focus min-w-0 flex-1 rounded-control after:absolute after:inset-0 after:content-['']">
-            <RelatoQuote text={story.storyPreview} lead />
-          </Link>
-        </div>
-        {prompt ? <PromptLine label={copy.promptLead} prompt={prompt} /> : null}
-        {reason ? <p className="type-caption text-[13.5px] text-secondary">{reason}</p> : null}
-        <ByLine
-          name={story.authorDisplayName}
-          authorId={story.authorId || undefined}
-          size="md"
-          trailing={<ReadPill href={href} label={copy.read} />}
-        />
-      </LeadCard>
+      <LeadCard
+        kicker={copy.latest}
+        main={
+          <div className="flex items-start gap-2.5">
+            <QuoteMark />
+            <Link href={href} className="ink-focus min-w-0 flex-1 rounded-control after:absolute after:inset-0 after:content-['']">
+              <RelatoQuote text={story.storyPreview} lead />
+            </Link>
+          </div>
+        }
+        aside={
+          <>
+            {prompt ? <PromptLine label={copy.promptLead} prompt={prompt} /> : null}
+            {reason ? <p className="type-caption text-[13.5px] text-secondary">{reason}</p> : null}
+            <ByLine
+              name={story.authorDisplayName}
+              authorId={story.authorId || undefined}
+              size="md"
+              trailing={<ReadPill href={href} label={copy.read} />}
+            />
+          </>
+        }
+      />
     );
   }
 
@@ -222,19 +286,24 @@ export function WorkItem({ work, locale, lead = false }: { work: GalleryWork; lo
   if (lead) {
     const date = work.firstPublishedAt ? formatDate(work.firstPublishedAt, locale) : '';
     return (
-      <LeadCard kicker={date ? storiesCopy.latestDated(date) : storiesCopy.latest}>
-        <div className="flex items-start gap-2.5">
-          <Spine workId={work.id} tall />
-          {titleEl}
-        </div>
-        <ByLine
-          name={work.authorDisplayName}
-          authorId={work.authorId || undefined}
-          extra={chapters}
-          size="md"
-          trailing={<ReadPill href={href} label={storiesCopy.read} />}
-        />
-      </LeadCard>
+      <LeadCard
+        kicker={date ? storiesCopy.latestDated(date) : storiesCopy.latest}
+        main={
+          <div className="flex items-start gap-2.5">
+            <Spine workId={work.id} tall />
+            {titleEl}
+          </div>
+        }
+        aside={
+          <ByLine
+            name={work.authorDisplayName}
+            authorId={work.authorId || undefined}
+            extra={chapters}
+            size="md"
+            trailing={<ReadPill href={href} label={storiesCopy.read} />}
+          />
+        }
+      />
     );
   }
 
