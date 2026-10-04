@@ -46,7 +46,7 @@ export function InkHeadline({ text, as, size = 'title-page', highlight, band = '
   const Component: ElementType = as ?? 'h1';
   const [head, last] = splitHeadline(text, highlight);
   return (
-    <Component id={id} className={cx(SIZE[size], 'text-primary text-balance', className)}>
+    <Component id={id} className={cx(SIZE[size], 'text-primary text-balance whitespace-pre-line', className)}>
       {head}
       <span className={cx('ink-highlight', BAND[band])}>{last}</span>
     </Component>
