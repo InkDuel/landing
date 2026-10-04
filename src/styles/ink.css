@@ -154,76 +154,90 @@
 
 /* ── Visual contexts (02 - Design System) ──────────────────────────────── */
 /*
+ * In cascade layers so Tailwind utilities (layer utilities) always win.
  * The contextual surface set mirrors Flutter's InkSurfaces: components use
  * these, and the reading context swaps them for the warm reader tokens.
  */
 
-.ink-page {
-  --ink-c-bg: var(--ink-bg-primary);
-  --ink-c-surface: var(--ink-bg-surface);
-  --ink-c-outline: var(--ink-border-strong);
-  --ink-c-divider: var(--ink-border-subtle);
-  --ink-c-sunken: var(--ink-bg-secondary);
-  --ink-c-content: var(--ink-text-primary);
-  --ink-c-placeholder: var(--ink-text-tertiary);
-  --ink-c-control: var(--ink-border-default);
+@layer base {
+  .ink-page :where(h1, h2, h3, h4, h5, h6) {
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    margin: 0;
+  }
 
-  min-height: 100dvh;
-  background-color: var(--ink-c-bg);
-  color: var(--ink-text-primary);
-  font-family: var(--font-figtree), system-ui, sans-serif;
-  font-weight: 500;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
+  .ink-page :where(p, ul, ol, figure, blockquote, dl, dd) {
+    margin: 0;
+  }
+
+  .ink-page :where(a) {
+    color: inherit;
+  }
 }
 
-.ink-page :is(h1, h2, h3, h4, h5, h6) {
-  font-family: inherit;
-  margin: 0;
-}
+@layer components {
+  
+  .ink-page {
+    --ink-c-bg: var(--ink-bg-primary);
+    --ink-c-surface: var(--ink-bg-surface);
+    --ink-c-outline: var(--ink-border-strong);
+    --ink-c-divider: var(--ink-border-subtle);
+    --ink-c-sunken: var(--ink-bg-secondary);
+    --ink-c-content: var(--ink-text-primary);
+    --ink-c-placeholder: var(--ink-text-tertiary);
+    --ink-c-control: var(--ink-border-default);
 
-.ink-page :is(p, ul, ol, figure, blockquote) {
-  margin: 0;
-}
+    min-height: 100dvh;
+    background-color: var(--ink-c-bg);
+    color: var(--ink-text-primary);
+    font-family: var(--font-figtree), system-ui, sans-serif;
+    font-weight: 500;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
 
-.ctx-arena {
-  --ink-c-bg: var(--ink-bg-arena);
-  /* 1 px dots every 18 px, first dot at the centre of the first cell. */
-  background-image: radial-gradient(
-    circle at center,
-    var(--ink-arena-dot) 1.2px,
-    transparent 1.3px
-  );
-  background-size: 18px 18px;
-}
 
-.ctx-product {
-  --ink-c-bg: var(--ink-bg-primary);
-}
+  .ctx-arena {
+    --ink-c-bg: var(--ink-bg-arena);
+    /* 1 px dots every 18 px, first dot at the centre of the first cell. */
+    background-image: radial-gradient(
+      circle at center,
+      var(--ink-arena-dot) 1.2px,
+      transparent 1.3px
+    );
+    background-size: 18px 18px;
+  }
 
-.ctx-reading {
-  --ink-c-bg: var(--ink-bg-reader);
-  --ink-c-surface: var(--ink-reader-surface);
-  --ink-c-outline: var(--ink-reader-border);
-  --ink-c-divider: var(--ink-reader-line);
-  --ink-c-sunken: var(--ink-reader-line);
-  --ink-c-content: var(--ink-reader-text);
-  --ink-c-placeholder: var(--ink-reader-muted);
-  --ink-c-control: var(--ink-reader-line);
-}
+  .ctx-product {
+    --ink-c-bg: var(--ink-bg-primary);
+  }
 
-/* The navy brand moment (launch, «Rival encontrado»). */
-.ctx-brand {
-  --ink-c-bg: var(--ink-brand-ink);
-  color: var(--ink-text-on-brand-ink);
-}
+  .ctx-reading {
+    --ink-c-bg: var(--ink-bg-reader);
+    --ink-c-surface: var(--ink-reader-surface);
+    --ink-c-outline: var(--ink-reader-border);
+    --ink-c-divider: var(--ink-reader-line);
+    --ink-c-sunken: var(--ink-reader-line);
+    --ink-c-content: var(--ink-reader-text);
+    --ink-c-placeholder: var(--ink-reader-muted);
+    --ink-c-control: var(--ink-reader-line);
+  }
 
-.ctx-arena,
-.ctx-product,
-.ctx-reading,
-.ctx-brand {
-  background-color: var(--ink-c-bg);
+  /* The navy brand moment (launch, «Rival encontrado»). */
+  .ctx-brand {
+    --ink-c-bg: var(--ink-brand-ink);
+    color: var(--ink-text-on-brand-ink);
+  }
+
+  .ctx-arena,
+  .ctx-product,
+  .ctx-reading,
+  .ctx-brand {
+    background-color: var(--ink-c-bg);
+  }
+
 }
 
 /* League colour of an identity or league card, set from data-league. */
@@ -497,8 +511,8 @@
 @utility ink-highlight {
   background-image: linear-gradient(
     to bottom,
-    transparent 55%,
-    var(--band, var(--ink-highlight)) 55%,
+    transparent var(--band-start, 55%),
+    var(--band, var(--ink-highlight)) var(--band-start, 55%),
     var(--band, var(--ink-highlight)) 92%,
     transparent 92%
   );
