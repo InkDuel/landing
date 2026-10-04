@@ -621,7 +621,7 @@ function AuthFrame({
   return (
     <InkPage context="product" lang={locale}>
       <header className="py-4">
-        <PageColumn width="product">
+        <PageColumn width="wide">
           <Link href="/" className="ink-focus inline-flex min-h-11 items-center gap-3 rounded-control">
             <InkAppIcon size={36} />
             <InkWordmark size="sm" />

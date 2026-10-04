@@ -27,8 +27,10 @@ export function InkPage({
 }
 
 /**
- * Centred column. Desktop widths are a web decision (no mockups): reading
- * keeps the text at most 680 px, product forms ~560 px, the landing ~1120 px.
+ * Centred column. Desktop widths are a web decision (no mockups): «wide»
+ * (1160) is the shell of every page (header, footer) and the exploration
+ * screens (landing, Historias, Perfil); reading keeps the text at most
+ * 680 px and product forms stay narrow on purpose.
  */
 export function PageColumn({
   width = 'product',

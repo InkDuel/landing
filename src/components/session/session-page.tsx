@@ -18,8 +18,11 @@ import { useSessionLocale } from './session-root';
 
 type Width = 'reading' | 'product' | 'wide';
 
-/** Header of the signed-in area: logo, Historias · Perfil, language. */
-function SessionHeader({ width }: { width: Width }) {
+/**
+ * Header of the signed-in area: logo, Historias · Perfil, language. Always
+ * the shell's desktop width; the content below keeps its own.
+ */
+function SessionHeader() {
   const { locale, setLocale } = useSessionLocale();
   const { status } = useSession();
   const pathname = usePathname();
@@ -34,7 +37,7 @@ function SessionHeader({ width }: { width: Width }) {
 
   return (
     <header className="py-3">
-      <PageColumn width={width} className="flex items-center gap-3">
+      <PageColumn width="wide" className="flex items-center gap-3">
         <Link
           href="/"
           aria-label={SITE_COPY[locale].homeAria}
@@ -79,7 +82,7 @@ export function SessionPage({
   const { locale } = useSessionLocale();
   return (
     <InkPage context={context} lang={locale}>
-      <SessionHeader width={width} />
+      <SessionHeader />
       <main className={cx('flex-1 pb-20', className)}>
         <PageColumn width={width}>{children}</PageColumn>
       </main>
