@@ -22,7 +22,7 @@ export function SiteFooter({
     { href: withLang('/privacy', locale), label: copy.privacyPolicy },
   ];
   return (
-    <footer className={cx('mt-auto border-t border-hairline border-divider py-6', className)}>
+    <footer className={cx('mt-auto border-t border-divider py-6', className)}>
       <PageColumn width={width} className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <p className="type-caption text-secondary">
           © {new Date().getFullYear()} InkDuel. {copy.footerTagline}
