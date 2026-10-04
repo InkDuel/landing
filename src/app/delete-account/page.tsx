@@ -1,42 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-
-type Locale = 'es' | 'en' | 'pt';
-
-type DeleteAccountCopy = {
-  backToHome: string;
-  eyebrow: string;
-  title: string;
-  intro: string;
-  lastUpdatedLabel: string;
-  lastUpdatedValue: string;
-  contactLabel: string;
-  contactValue: string;
-  sections: {
-    title: string;
-    paragraphs: string[];
-    bullets?: string[];
-  }[];
-};
+import { type LegalCopy, LegalPage } from '@/components/legal/legal-page';
+import type { Locale } from '@/lib/i18n';
 
 const CONTACT_EMAIL = 'inkduel.app@gmail.com';
 const PRIVACY_URL = 'https://inkduel.com/privacy';
 const DELETE_ACCOUNT_URL = 'https://inkduel.com/delete-account';
 
-const languageOptions: {
-  code: Locale;
-  label: string;
-  flag: string;
-}[] = [
-  { code: 'es', label: 'Español', flag: '🇪🇸' },
-  { code: 'en', label: 'English', flag: '🇺🇸' },
-  { code: 'pt', label: 'Português', flag: '🇧🇷' },
-];
-
-const withLocalePath = (path: string, locale: Locale) => `${path}?lang=${locale}`;
-
-const copies: Record<Locale, DeleteAccountCopy> = {
+const copies: Record<Locale, LegalCopy> = {
   es: {
     backToHome: 'Volver al inicio',
     eyebrow: 'Eliminación de cuenta',
@@ -240,114 +211,6 @@ const copies: Record<Locale, DeleteAccountCopy> = {
   },
 };
 
-const getInitialLocale = (): Locale => {
-  if (typeof window === 'undefined') {
-    return 'en';
-  }
-
-  const params = new URLSearchParams(window.location.search);
-  const queryLocale = params.get('lang');
-  if (queryLocale === 'es' || queryLocale === 'en' || queryLocale === 'pt') {
-    return queryLocale;
-  }
-
-  const storedLocale = window.localStorage.getItem('inkduel-locale');
-  if (storedLocale === 'es' || storedLocale === 'en' || storedLocale === 'pt') {
-    return storedLocale;
-  }
-
-  const browserLocale = window.navigator.language.slice(0, 2);
-  if (browserLocale === 'es' || browserLocale === 'en' || browserLocale === 'pt') {
-    return browserLocale;
-  }
-
-  return 'en';
-};
-
 export default function DeleteAccountPage() {
-  const [locale, setLocale] = useState<Locale>('en');
-  const copy = copies[locale];
-  const currentLanguage = useMemo(
-    () => languageOptions.find((option) => option.code === locale) ?? languageOptions[0],
-    [locale],
-  );
-
-  useEffect(() => {
-    setLocale(getInitialLocale());
-  }, []);
-
-  useEffect(() => {
-    document.documentElement.lang = locale;
-    window.localStorage.setItem('inkduel-locale', locale);
-  }, [locale]);
-
-  return (
-    <main className="policy-page">
-      <div className="mesh-bg">
-        <div className="blob blob-1"></div>
-        <div className="blob blob-2"></div>
-      </div>
-
-      <section className="policy-shell">
-        <div className="policy-topbar">
-          <a className="policy-backlink" href={withLocalePath('/', locale)}>
-            {copy.backToHome}
-          </a>
-
-          <label className="language-picker" aria-label="Select language">
-            <span className="language-current" aria-hidden="true">
-              <span className="language-flag">{currentLanguage.flag}</span>
-              <span>{currentLanguage.label}</span>
-            </span>
-            <select
-              value={locale}
-              onChange={(event) => setLocale(event.target.value as Locale)}
-              aria-label="Select language"
-            >
-              {languageOptions.map((option) => (
-                <option key={option.code} value={option.code}>
-                  {option.flag} {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        <header className="policy-hero">
-          <span className="policy-eyebrow">{copy.eyebrow}</span>
-          <h1>{copy.title}</h1>
-          <p>{copy.intro}</p>
-
-          <div className="policy-meta">
-            <div className="policy-meta-card">
-              <span>{copy.lastUpdatedLabel}</span>
-              <strong>{copy.lastUpdatedValue}</strong>
-            </div>
-            <div className="policy-meta-card">
-              <span>{copy.contactLabel}</span>
-              <a href={`mailto:${copy.contactValue}`}>{copy.contactValue}</a>
-            </div>
-          </div>
-        </header>
-
-        <div className="policy-content">
-          {copy.sections.map((section) => (
-            <section key={section.title} className="policy-section">
-              <h2>{section.title}</h2>
-              {section.paragraphs.map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
-              {section.bullets ? (
-                <ul>
-                  {section.bullets.map((bullet) => (
-                    <li key={bullet}>{bullet}</li>
-                  ))}
-                </ul>
-              ) : null}
-            </section>
-          ))}
-        </div>
-      </section>
-    </main>
-  );
+  return <LegalPage copies={copies} />;
 }
