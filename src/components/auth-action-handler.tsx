@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
+import { safeRedirectHref } from '@/lib/safe-redirect';
+
 type Locale = 'es' | 'en' | 'pt';
 type Status = 'checking' | 'ready' | 'submitting' | 'success' | 'error';
 type ActionMode = 'resetPassword' | 'verifyEmail';
@@ -318,17 +320,8 @@ export default function AuthActionHandler() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
 
-  const continueHref = useMemo(() => {
-    if (!continueUrl) {
-      return '/';
-    }
-
-    try {
-      return decodeURIComponent(continueUrl);
-    } catch {
-      return continueUrl;
-    }
-  }, [continueUrl]);
+  const continueHref = useMemo(() => safeRedirectHref(continueUrl), [continueUrl]);
+  const hasContinueTarget = continueHref !== '/';
 
   useEffect(() => {
     async function handleAction() {
@@ -528,7 +521,7 @@ export default function AuthActionHandler() {
                 )}
                 <div className="reset-success-actions">
                   <a className="cta-button primary" href={continueHref}>
-                    {continueUrl ? verifyCopy.continueCta : verifyCopy.openApp}
+                    {hasContinueTarget ? verifyCopy.continueCta : verifyCopy.openApp}
                   </a>
                   <Link href="/" className="cta-button">
                     {verifyCopy.backHome}
@@ -644,7 +637,7 @@ export default function AuthActionHandler() {
               <p>{resetCopy.successBody}</p>
               <div className="reset-success-actions">
                 <a className="cta-button primary" href={continueHref}>
-                  {continueUrl ? resetCopy.continueCta : resetCopy.backHome}
+                  {hasContinueTarget ? resetCopy.continueCta : resetCopy.backHome}
                 </a>
                 <Link href="/" className="cta-button">
                   {resetCopy.backHome}
