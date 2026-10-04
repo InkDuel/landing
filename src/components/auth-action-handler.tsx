@@ -12,6 +12,7 @@ import { InkInlineBanner } from '@/components/ink/ink-inline-banner';
 import { InkTextField } from '@/components/ink/ink-text-field';
 import { Kicker } from '@/components/ink/kicker';
 import { InkPage, PageColumn } from '@/components/shell/ink-page';
+import { DEFAULT_LOCALE } from '@/lib/i18n';
 import { safeRedirectHref } from '@/lib/safe-redirect';
 
 type Locale = 'es' | 'en' | 'pt';
@@ -262,10 +263,10 @@ function resolveLocale(value: string | null): Locale {
       ? navigator.language.toLowerCase().split('-')[0]
       : null);
 
-  if (code === 'en' || code === 'pt') {
+  if (code === 'es' || code === 'en' || code === 'pt') {
     return code;
   }
-  return 'es';
+  return DEFAULT_LOCALE;
 }
 
 function maskEmail(email: string): string {
@@ -487,7 +488,7 @@ export default function AuthActionHandler() {
 
   if (actionMode === 'verifyEmail') {
     return (
-      <AuthFrame eyebrow={verifyCopy.eyebrow} title={verifyCopy.title} subtitle={verifyCopy.subtitle} legal={verifyCopy.legalHint}>
+      <AuthFrame locale={locale} eyebrow={verifyCopy.eyebrow} title={verifyCopy.title} subtitle={verifyCopy.subtitle} legal={verifyCopy.legalHint}>
         {status === 'checking' && <CheckingLine label={verifyCopy.checking} />}
 
         {status === 'success' && (
@@ -535,6 +536,7 @@ export default function AuthActionHandler() {
 
   return (
     <AuthFrame
+      locale={locale}
       eyebrow={resetCopy.eyebrow}
       title={resetCopy.title}
       subtitle={status === 'error' ? resetCopy.invalidLink : resetCopy.subtitle}
@@ -602,12 +604,14 @@ export default function AuthActionHandler() {
 
 /** Acceso (15): plain paper, no navigation, one column. */
 function AuthFrame({
+  locale,
   eyebrow,
   title,
   subtitle,
   legal,
   children,
 }: {
+  locale: Locale;
   eyebrow: string;
   title: string;
   subtitle: string;
@@ -615,7 +619,7 @@ function AuthFrame({
   children: React.ReactNode;
 }) {
   return (
-    <InkPage context="product">
+    <InkPage context="product" lang={locale}>
       <header className="py-4">
         <PageColumn width="product">
           <Link href="/" className="ink-focus inline-flex min-h-11 items-center gap-3 rounded-control">

@@ -356,7 +356,7 @@ export default function Home() {
   ];
 
   return (
-    <InkPage context="arena">
+    <InkPage context="arena" lang={locale}>
       <SiteHeader locale={locale} onLocaleChange={setLocale} nav={nav} />
 
       <main id="top">

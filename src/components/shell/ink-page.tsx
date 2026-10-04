@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { cx } from '@/components/ink/cx';
+import type { Locale } from '@/lib/i18n';
 
 // The three visual contexts of 02 - Design System, plus the navy brand
 // moment. A page picks one; components below follow its surface tokens.
@@ -8,14 +9,21 @@ export type VisualContext = 'arena' | 'product' | 'reading' | 'brand';
 
 export function InkPage({
   context,
+  lang,
   className,
   children,
 }: {
   context: VisualContext;
+  /** Language the page is rendered in; <html lang> stays the site default. */
+  lang: Locale;
   className?: string;
   children: ReactNode;
 }) {
-  return <div className={cx('ink-page flex flex-col', `ctx-${context}`, className)}>{children}</div>;
+  return (
+    <div lang={lang} className={cx('ink-page flex flex-col', `ctx-${context}`, className)}>
+      {children}
+    </div>
+  );
 }
 
 /**
