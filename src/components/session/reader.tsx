@@ -32,7 +32,7 @@ import { useSessionLocale } from './session-root';
 
 const MAX_SUMMARY_PAGES = 20;
 
-type Load =
+export type Load =
   | { status: 'loading' }
   | { status: 'unavailable' }
   | { status: 'error' }
@@ -43,6 +43,30 @@ export function chapterHref(workId: string, chapterId: string): string {
   return `/work/${encodeURIComponent(workId)}/chapter/${encodeURIComponent(chapterId)}`;
 }
 
+/**
+ * The work, then the chapter to read: [chapterId], or the work's first
+ * published chapter. The work only carries a summary of that chapter
+ * (ChapterSummaryPublicDTO), so its text always comes from the same chapter
+ * endpoint as /work/{id}/chapter/{cid}.
+ */
+export async function loadReaderContent(
+  workId: string,
+  chapterId: string | null,
+  get: (path: string) => Promise<unknown>,
+): Promise<Load> {
+  try {
+    const work = parseWorkDetail(await get(apiPath('api', 'gallery', 'works', workId)));
+    if (!work) return { status: 'unavailable' };
+    const targetId = chapterId ?? work.firstPublishedChapter?.id ?? null;
+    if (!targetId) return { status: 'empty', work };
+    const chapter = parsePublicChapter(await get(apiPath('api', 'gallery', 'works', workId, 'chapters', targetId)));
+    return chapter ? { status: 'ready', work, chapter } : { status: 'unavailable' };
+  } catch (error) {
+    const gone = error instanceof ApiError && (error.status === 404 || error.status === 403 || error.status === 410);
+    return { status: gone ? 'unavailable' : 'error' };
+  }
+}
+
 function useReader(workId: string, chapterId: string | null, locale: Locale, attempt: number) {
   const [load, setLoad] = useState<Load>({ status: 'loading' });
   const [summaries, setSummaries] = useState<ChapterSummary[]>([]);
@@ -51,26 +75,13 @@ function useReader(workId: string, chapterId: string | null, locale: Locale, att
     const controller = new AbortController();
     const { signal } = controller;
     setLoad({ status: 'loading' });
-    (async () => {
-      try {
-        const work = parseWorkDetail(await apiGet(apiPath('api', 'gallery', 'works', workId), { locale, signal }));
-        if (!work) return setLoad({ status: 'unavailable' });
-        let chapter: Chapter | null;
-        if (chapterId) {
-          chapter = parsePublicChapter(
-            await apiGet(apiPath('api', 'gallery', 'works', workId, 'chapters', chapterId), { locale, signal }),
-          );
-        } else {
-          chapter = work.firstPublishedChapter;
-        }
-        if (signal.aborted) return;
-        setLoad(chapter ? { status: 'ready', work, chapter } : chapterId ? { status: 'unavailable' } : { status: 'empty', work });
-      } catch (error) {
-        if (signal.aborted) return;
-        const gone = error instanceof ApiError && (error.status === 404 || error.status === 403 || error.status === 410);
-        setLoad({ status: gone ? 'unavailable' : 'error' });
-      }
-    })();
+    loadReaderContent(workId, chapterId, (path) => apiGet(path, { locale, signal }))
+      .then((result) => {
+        if (!signal.aborted) setLoad(result);
+      })
+      .catch(() => {
+        if (!signal.aborted) setLoad({ status: 'error' });
+      });
     return () => controller.abort();
   }, [workId, chapterId, locale, attempt]);
 
