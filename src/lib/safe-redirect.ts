@@ -61,3 +61,13 @@ export function safeRedirectHref(raw: string | null | undefined): string {
 
   return FALLBACK;
 }
+
+/**
+ * Where to go after signing in: only a same-origin path inside the site,
+ * never back to /login. Anything else lands on Historias.
+ */
+export function postLoginHref(raw: string | null | undefined): string {
+  const href = safeRedirectHref(raw);
+  if (!href.startsWith('/') || href === '/' || href.startsWith('/login')) return '/stories';
+  return href;
+}
