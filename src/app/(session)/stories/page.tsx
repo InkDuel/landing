@@ -10,7 +10,7 @@ import { ChevronLeftIcon } from '@/components/ink/icons';
 import { InkInlineBanner } from '@/components/ink/ink-inline-banner';
 import { InkEmptyState, InkSkeleton, InkTextAction } from '@/components/ink/ink-states';
 import { StoryText } from '@/components/reading/story-parts';
-import { ByLine, HistoriasDivider, RelatoItem, WorkItem, winReason } from '@/components/session/historias';
+import { ByLine, HistoriasIndex, ListFooter, RelatoItem, WorkItem, winReason } from '@/components/session/historias';
 import { RequireSession, SessionPage } from '@/components/session/session-page';
 import { useSessionLocale } from '@/components/session/session-root';
 import type { Locale } from '@/lib/i18n';
@@ -55,26 +55,12 @@ function Tabs({ tab, onChange, locale, panelId }: { tab: Tab; onChange: (tab: Ta
   );
 }
 
-function ListFooter({ sentinel, loadingMore, failed, onRetry, locale }: { sentinel: React.Ref<HTMLDivElement>; loadingMore: boolean; failed: boolean; onRetry: () => void; locale: Locale }) {
-  return (
-    <>
-      <div ref={sentinel} aria-hidden="true" />
-      {loadingMore ? <InkSkeleton className="mt-3" lines={1} label={SESSION_COPY[locale].common.loading} /> : null}
-      {failed ? (
-        <div className="mt-3">
-          <InkTextAction onClick={onRetry}>{SESSION_COPY[locale].common.retry}</InkTextAction>
-        </div>
-      ) : null}
-    </>
-  );
-}
-
 function RelatoDetail({ story, locale }: { story: GalleryStory; locale: Locale }) {
   const copy = SESSION_COPY[locale].stories;
   const reason = winReason(story, locale);
   useEffect(() => window.scrollTo(0, 0), [story.key]);
   return (
-    <article className="flex flex-col gap-4 pt-2">
+    <article className="mx-auto flex w-full max-w-[680px] flex-col gap-4 pt-2">
       <Link
         href="/stories"
         className="ink-focus ink-dim -ml-2 inline-flex min-h-11 items-center gap-1 self-start rounded-control pr-3 pl-1 type-button-sm text-[14px] text-secondary"
@@ -162,23 +148,27 @@ function StoriesView() {
           )
         ) : null}
 
-        {tab === 'relatos' && relatos.status === 'ready'
-          ? relatos.items.map((story, index) => (
-              <div key={story.key} className={index === 0 ? 'mb-1.5' : undefined}>
-                {index > 1 ? <HistoriasDivider /> : null}
-                <RelatoItem story={story} locale={locale} lead={index === 0} />
-              </div>
-            ))
-          : null}
+        {tab === 'relatos' && relatos.status === 'ready' && relatos.items.length > 0 ? (
+          <>
+            <div className="mb-1.5 lg:mb-4">
+              <RelatoItem story={relatos.items[0]} locale={locale} lead />
+            </div>
+            <HistoriasIndex
+              items={relatos.items.slice(1).map((story) => ({ key: story.key, node: <RelatoItem story={story} locale={locale} /> }))}
+            />
+          </>
+        ) : null}
 
-        {tab === 'works' && works.status === 'ready'
-          ? works.items.map((work, index) => (
-              <div key={work.id} className={index === 0 ? 'mb-1.5' : undefined}>
-                {index > 1 ? <HistoriasDivider /> : null}
-                <WorkItem work={work} locale={locale} lead={index === 0} />
-              </div>
-            ))
-          : null}
+        {tab === 'works' && works.status === 'ready' && works.items.length > 0 ? (
+          <>
+            <div className="mb-1.5 lg:mb-4">
+              <WorkItem work={works.items[0]} locale={locale} lead />
+            </div>
+            <HistoriasIndex
+              items={works.items.slice(1).map((work) => ({ key: work.id, node: <WorkItem work={work} locale={locale} /> }))}
+            />
+          </>
+        ) : null}
 
         <ListFooter
           sentinel={sentinel}
@@ -194,7 +184,7 @@ function StoriesView() {
 
 export default function StoriesPage() {
   return (
-    <SessionPage context="reading" width="reading">
+    <SessionPage context="reading" width="wide">
       <RequireSession>
         <StoriesView />
       </RequireSession>
