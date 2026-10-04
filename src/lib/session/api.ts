@@ -80,3 +80,13 @@ export async function apiGet(
     throw new ApiError(response.status, 'parse');
   }
 }
+
+/** A route param as the user typed it (Next may hand it over encoded). */
+export function decodeParam(value: string | string[] | undefined): string {
+  const raw = Array.isArray(value) ? value[0] ?? '' : value ?? '';
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
