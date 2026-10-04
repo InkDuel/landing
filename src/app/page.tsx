@@ -1,35 +1,34 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-
-type Locale = 'es' | 'en' | 'pt';
-
-type ScoreTone = 'pink' | 'blue' | 'green' | 'orange';
+import { Consigna } from '@/components/ink/consigna';
+import { InkButton } from '@/components/ink/ink-button';
+import { InkCard } from '@/components/ink/ink-card';
+import { InkChip } from '@/components/ink/ink-chip';
+import { InkHeadline } from '@/components/ink/ink-headline';
+import { Kicker } from '@/components/ink/kicker';
+import { NumberedRule } from '@/components/ink/numbered-rule';
+import { PencilTrack } from '@/components/ink/pencil-track';
+import { PlayerIdentity } from '@/components/ink/player-identity';
+import { InkPage, PageColumn } from '@/components/shell/ink-page';
+import { SiteFooter } from '@/components/shell/site-footer';
+import { SiteHeader } from '@/components/shell/site-header';
+import { StoreButtons } from '@/components/shell/store-buttons';
+import { type Locale, withLang } from '@/lib/i18n';
+import { LEAGUE_NAMES, LEAGUE_ORDER } from '@/lib/league';
+import { useLocale } from '@/lib/use-locale';
 
 type Copy = {
-  nav: {
-    duel: string;
-    judge: string;
-    ranks: string;
-    about: string;
-  };
-  stores: {
-    appStoreKicker: string;
-    googlePlayKicker: string;
-    appStoreAria: string;
-    googlePlayAria: string;
-  };
+  nav: { duel: string; judge: string; ranks: string; about: string };
   hero: {
-    badge: string;
-    titleTop: string;
-    titleAccent: string;
+    kicker: string;
+    title: string;
     tagline: string;
     subtitle: string;
     searching: string;
     searchingSub: string;
-    promptLabel: string;
-    prompt: string;
-    writingLabel: string;
+    consignaLabel: string;
+    consigna: string;
+    timeLeft: string;
     verdictTitle: string;
     youLabel: string;
     rivalLabel: string;
@@ -37,88 +36,47 @@ type Copy = {
     rivalScore: string;
     victory: string;
   };
-  rules: {
-    kicker: string;
-    titleTop: string;
-    titleAccent: string;
-    intro: string;
-    steps: { icon: string; title: string; body: string }[];
-  };
+  rules: { kicker: string; title: string; intro: string; steps: { title: string; body: string }[] };
   judge: {
     kicker: string;
-    line: string;
+    title: string;
     highlight: string;
     body: string;
     adviceLabel: string;
     advice: string;
     breakdownLabel: string;
-    criteria: { label: string; score: string; tone: ScoreTone; width: number }[];
+    criteria: { label: string; score: number }[];
   };
   ranks: {
     kicker: string;
-    titleTop: string;
-    titleAccent: string;
+    title: string;
     body: string;
     divisionLabel: string;
     divisionRank: string;
-    divisionPts: string;
+    divisionLp: string;
     divisionNext: string;
-    list: string[];
-    currentElo: string;
+    trackLabel: string;
+    ladderLabel: string;
+    current: string;
   };
-  finalCta: {
-    line: string;
-    accent: string;
-    body: string;
-    micro: string;
-  };
-  footer: {
-    tagline: string;
-    privacyPolicy: string;
-    challengeTerms: string;
-  };
+  finalCta: { title: string; body: string; micro: string };
 };
-
-const languageOptions: {
-  code: Locale;
-  label: string;
-  flag: string;
-}[] = [
-  { code: 'es', label: 'Español', flag: '🇪🇸' },
-  { code: 'en', label: 'English', flag: '🇺🇸' },
-  { code: 'pt', label: 'Português', flag: '🇧🇷' },
-];
-
-const appStoreUrl = 'https://apps.apple.com/app/inkduel-duelos-de-escritura/id6761736355';
-const googlePlayUrl = 'https://play.google.com/store/apps/details?id=com.inkduel.app';
 
 const copies: Record<Locale, Copy> = {
   es: {
-    nav: {
-      duel: 'El duelo',
-      judge: 'El jurado',
-      ranks: 'Rangos',
-      about: 'Sobre InkDuel',
-    },
-    stores: {
-      appStoreKicker: 'Descargar en',
-      googlePlayKicker: 'Disponible en',
-      appStoreAria: 'Descargar InkDuel en App Store',
-      googlePlayAria: 'Descargar InkDuel en Google Play',
-    },
+    nav: { duel: 'El duelo', judge: 'El jurado', ranks: 'Rangos', about: 'Sobre InkDuel' },
     hero: {
-      badge: 'Duelos de escritura · 5 minutos',
-      titleTop: 'Un tema.',
-      titleAccent: 'Un oponente.',
+      kicker: 'Duelos de escritura · 5 minutos',
+      title: 'Una consigna.\nUn oponente.',
       tagline: 'La mejor historia gana.',
       subtitle:
         'InkDuel es la arena donde escribir deja de ser solitario. Recibes una consigna, escribes contra el reloj y un jurado de tinta decide quién contó la mejor historia.',
       searching: 'Afilando plumas…',
       searchingSub: 'Buscamos a alguien de tu nivel',
-      promptLabel: 'Tu premisa',
-      prompt:
-        '«Una persona recibe una carta escrita por alguien que murió hace años. La carta dice: “No confíes en la versión de mí que todavía está viva”.»',
-      writingLabel: 'Escribiendo',
+      consignaLabel: 'Consigna',
+      consigna:
+        'Una persona recibe una carta escrita por alguien que murió hace años. La carta dice: «No confíes en la versión de mí que todavía está viva».',
+      timeLeft: 'Tiempo restante',
       verdictTitle: 'Veredicto del jurado',
       youLabel: 'Tú',
       rivalLabel: 'Rival',
@@ -128,103 +86,67 @@ const copies: Record<Locale, Copy> = {
     },
     rules: {
       kicker: 'El duelo',
-      titleTop: 'Esto va',
-      titleAccent: 'en serio.',
+      title: 'Esto va en serio.',
       intro: '5 reglas. Nada más.',
       steps: [
+        { title: 'Consigna al azar', body: 'La revelamos cuando entras. Sin tiempo para el bloqueo creativo.' },
+        { title: '5 minutos', body: 'El reloj empieza al tocar el botón. Entregas todo lo que tienes.' },
         {
-          icon: '🎲',
-          title: 'Tema al azar',
-          body: 'Lo revelamos cuando entras. Sin tiempo para el bloqueo creativo.',
-        },
-        {
-          icon: '⏱️',
-          title: '5 minutos',
-          body: 'El reloj empieza al tocar el botón. Entregas todo lo que tienes.',
-        },
-        {
-          icon: '⚔️',
           title: 'Un rival de tu nivel',
-          body: 'Del otro lado, la presión es simétrica: tu oponente pelea la misma premisa.',
+          body: 'Del otro lado, la presión es simétrica: tu oponente pelea la misma consigna.',
         },
-        {
-          icon: '✒️',
-          title: 'Jurado de tinta',
-          body: 'Creatividad, estilo, emoción y desenlace. Solo una historia gana.',
-        },
-        {
-          icon: '⚡',
-          title: 'Veredicto al instante',
-          body: 'En segundos recibes un desglose exacto de tus aciertos y errores.',
-        },
+        { title: 'Jurado de tinta', body: 'Creatividad, estilo, emoción y desenlace. Solo una historia gana.' },
+        { title: 'Veredicto al instante', body: 'En segundos recibes un desglose exacto de tus aciertos y errores.' },
       ],
     },
     judge: {
       kicker: 'El jurado',
-      line: 'No compites para ganar.',
+      title: 'No compites para ganar.',
       highlight: 'Compites para mejorar.',
-      body: 'Cada duelo termina con feedback concreto: dónde tu relato fue más fuerte, dónde perdiste al lector y qué trabajar en el próximo. El progreso no es una sensación. Se mide.',
-      adviceLabel: 'Consejo para mejorar',
+      body: 'Cada duelo termina con un consejo concreto: dónde tu relato fue más fuerte, dónde perdiste al lector y qué trabajar en el próximo. El progreso no es una sensación. Se mide.',
+      adviceLabel: 'Para tu próximo duelo',
       advice:
-        'Tu mayor fortaleza es el gancho narrativo: generas intriga con muy pocas palabras. Para el próximo duelo, cuida el desenlace — un cierre más fuerte te habría dado la victoria.',
+        'Tu mayor fortaleza es el gancho narrativo: generas intriga con muy pocas palabras. Para el próximo duelo, cuida el desenlace: un cierre más fuerte te habría dado la victoria.',
       breakdownLabel: 'Desglose del jurado',
       criteria: [
-        { label: 'Creatividad', score: '9.2', tone: 'pink', width: 92 },
-        { label: 'Estilo', score: '8.5', tone: 'blue', width: 85 },
-        { label: 'Emoción', score: '7.8', tone: 'green', width: 78 },
-        { label: 'Desenlace', score: '6.4', tone: 'orange', width: 64 },
+        { label: 'Creatividad', score: 9.2 },
+        { label: 'Estilo', score: 8.5 },
+        { label: 'Emoción', score: 7.8 },
+        { label: 'Desenlace', score: 6.4 },
       ],
     },
     ranks: {
       kicker: 'Progresión',
-      titleTop: 'El estatus',
-      titleAccent: 'se gana.',
-      body: 'Subir no depende de jugar más horas: depende de escribir mejor. Seis rangos entre tu primer duelo y la leyenda.',
+      title: 'El estatus se gana.',
+      body: 'Subir no depende de jugar más horas: depende de escribir mejor. Seis ligas entre tu primer duelo y la leyenda.',
       divisionLabel: 'División actual',
       divisionRank: 'Aprendiz I',
-      divisionPts: '20 pts',
-      divisionNext: '80 pts para Aprendiz II →',
-      list: ['Aprendiz', 'Escriba', 'Narrador', 'Duellista', 'Maestro de Tinta', 'Leyenda'],
-      currentElo: 'Tu rango actual',
+      divisionLp: '20 LP',
+      divisionNext: 'Faltan 80 LP para Aprendiz II',
+      trackLabel: '20 LP · faltan 80 para Aprendiz II',
+      ladderLabel: 'Las seis ligas',
+      current: 'Tu liga',
     },
     finalCta: {
-      line: 'Cada duelo mejora',
-      accent: 'tu escritura.',
+      title: 'Cada duelo mejora tu escritura.',
       body: 'Entra en la arena. Pon a prueba tus palabras. Sube de rango.',
       micro: 'Una vez dentro, el tiempo corre.',
     },
-    footer: {
-      tagline: 'Acepta el duelo.',
-      privacyPolicy: 'Política de privacidad',
-      challengeTerms: 'Bases y condiciones',
-    },
   },
   en: {
-    nav: {
-      duel: 'The duel',
-      judge: 'The judge',
-      ranks: 'Ranks',
-      about: 'About',
-    },
-    stores: {
-      appStoreKicker: 'Download on the',
-      googlePlayKicker: 'Get it on',
-      appStoreAria: 'Download InkDuel on the App Store',
-      googlePlayAria: 'Get InkDuel on Google Play',
-    },
+    nav: { duel: 'The duel', judge: 'The judge', ranks: 'Ranks', about: 'About' },
     hero: {
-      badge: 'Writing duels · 5 minutes',
-      titleTop: 'One premise.',
-      titleAccent: 'One opponent.',
+      kicker: 'Writing duels · 5 minutes',
+      title: 'One prompt.\nOne opponent.',
       tagline: 'Best story wins.',
       subtitle:
-        'InkDuel is the arena where writing stops being solitary. You get a premise, write against the clock, and an ink judge decides who told the better story.',
+        'InkDuel is the arena where writing stops being solitary. You get a prompt, write against the clock, and an ink judge decides who told the better story.',
       searching: 'Sharpening quills…',
       searchingSub: 'Finding someone at your level',
-      promptLabel: 'Your premise',
-      prompt:
-        '“Someone receives a letter written by a person who died years ago. It reads: ‘Don’t trust the version of me that is still alive.’”',
-      writingLabel: 'Writing',
+      consignaLabel: 'Prompt',
+      consigna:
+        'Someone receives a letter written by a person who died years ago. It reads: “Don’t trust the version of me that is still alive.”',
+      timeLeft: 'Time left',
       verdictTitle: 'The judge’s verdict',
       youLabel: 'You',
       rivalLabel: 'Rival',
@@ -234,103 +156,67 @@ const copies: Record<Locale, Copy> = {
     },
     rules: {
       kicker: 'The duel',
-      titleTop: 'This is',
-      titleAccent: 'for real.',
+      title: 'This is for real.',
       intro: '5 rules. Nothing else.',
       steps: [
+        { title: 'Random prompt', body: 'Revealed the moment you enter. No time for writer’s block.' },
+        { title: '5 minutes', body: 'The clock starts when you tap the button. You give everything you have.' },
         {
-          icon: '🎲',
-          title: 'Random premise',
-          body: 'Revealed the moment you enter. No time for writer’s block.',
-        },
-        {
-          icon: '⏱️',
-          title: '5 minutes',
-          body: 'The clock starts when you tap the button. You give everything you have.',
-        },
-        {
-          icon: '⚔️',
           title: 'A rival at your level',
-          body: 'On the other side, the pressure is symmetrical: your opponent fights the same premise.',
+          body: 'On the other side, the pressure is symmetrical: your opponent fights the same prompt.',
         },
-        {
-          icon: '✒️',
-          title: 'Ink judge',
-          body: 'Creativity, style, emotion, and the ending. Only one story wins.',
-        },
-        {
-          icon: '⚡',
-          title: 'Instant verdict',
-          body: 'In seconds you get a precise breakdown of what worked and what didn’t.',
-        },
+        { title: 'Ink judge', body: 'Creativity, style, emotion, and the ending. Only one story wins.' },
+        { title: 'Instant verdict', body: 'In seconds you get a precise breakdown of what worked and what didn’t.' },
       ],
     },
     judge: {
       kicker: 'The judge',
-      line: 'You don’t compete to win.',
+      title: 'You don’t compete to win.',
       highlight: 'You compete to improve.',
-      body: 'Every duel ends with concrete feedback: where your story was strongest, where you lost the reader, and what to work on next. Progress isn’t a feeling. It’s measured.',
-      adviceLabel: 'Advice to improve',
+      body: 'Every duel ends with concrete advice: where your story was strongest, where you lost the reader, and what to work on next. Progress isn’t a feeling. It’s measured.',
+      adviceLabel: 'For your next duel',
       advice:
-        'Your greatest strength is the narrative hook: you create intrigue with very few words. Next duel, watch your ending — a stronger close would have won you the match.',
+        'Your greatest strength is the narrative hook: you create intrigue with very few words. Next duel, watch your ending: a stronger close would have won you the match.',
       breakdownLabel: 'Judge’s breakdown',
       criteria: [
-        { label: 'Creativity', score: '9.2', tone: 'pink', width: 92 },
-        { label: 'Style', score: '8.5', tone: 'blue', width: 85 },
-        { label: 'Emotion', score: '7.8', tone: 'green', width: 78 },
-        { label: 'Ending', score: '6.4', tone: 'orange', width: 64 },
+        { label: 'Creativity', score: 9.2 },
+        { label: 'Style', score: 8.5 },
+        { label: 'Emotion', score: 7.8 },
+        { label: 'Ending', score: 6.4 },
       ],
     },
     ranks: {
       kicker: 'Progression',
-      titleTop: 'Status is',
-      titleAccent: 'earned.',
-      body: 'Climbing isn’t about playing longer — it’s about writing better. Six ranks between your first duel and legend.',
+      title: 'Status is earned.',
+      body: 'Climbing isn’t about playing longer: it’s about writing better. Six leagues between your first duel and legend.',
       divisionLabel: 'Current division',
       divisionRank: 'Apprentice I',
-      divisionPts: '20 pts',
-      divisionNext: '80 pts to Apprentice II →',
-      list: ['Apprentice', 'Scribe', 'Narrator', 'Duelist', 'Ink Master', 'Legend'],
-      currentElo: 'Your current rank',
+      divisionLp: '20 LP',
+      divisionNext: '80 LP to Apprentice II',
+      trackLabel: '20 LP · 80 to Apprentice II',
+      ladderLabel: 'The six leagues',
+      current: 'Your league',
     },
     finalCta: {
-      line: 'Every duel makes you a',
-      accent: 'better writer.',
+      title: 'Every duel makes you a better writer.',
       body: 'Enter the arena. Test your words. Climb the ranks.',
       micro: 'Once you’re in, the clock is running.',
     },
-    footer: {
-      tagline: 'Accept the duel.',
-      privacyPolicy: 'Privacy Policy',
-      challengeTerms: 'Challenge Terms',
-    },
   },
   pt: {
-    nav: {
-      duel: 'O duelo',
-      judge: 'O júri',
-      ranks: 'Ranks',
-      about: 'Sobre',
-    },
-    stores: {
-      appStoreKicker: 'Baixar na',
-      googlePlayKicker: 'Disponivel no',
-      appStoreAria: 'Baixar InkDuel na App Store',
-      googlePlayAria: 'Baixar InkDuel no Google Play',
-    },
+    nav: { duel: 'O duelo', judge: 'O júri', ranks: 'Ranks', about: 'Sobre' },
     hero: {
-      badge: 'Duelos de escrita · 5 minutos',
-      titleTop: 'Um tema.',
-      titleAccent: 'Um oponente.',
+      kicker: 'Duelos de escrita · 5 minutos',
+      title: 'Uma proposta.\nUm oponente.',
       tagline: 'A melhor história vence.',
       subtitle:
-        'InkDuel é a arena onde escrever deixa de ser solitário. Você recebe um tema, escreve contra o relógio e um júri de tinta decide quem contou a melhor história.',
+        'InkDuel é a arena onde escrever deixa de ser solitário. Você recebe uma proposta, escreve contra o relógio e um júri de tinta decide quem contou a melhor história.',
       searching: 'Afiando as penas…',
       searchingSub: 'Procurando alguém do seu nível',
-      promptLabel: 'Sua premissa',
-      prompt:
-        '«Uma pessoa recebe uma carta escrita por alguém que morreu há anos. A carta diz: “Não confie na versão de mim que ainda está viva”.»',
-      writingLabel: 'Escrevendo',
+      consignaLabel: 'Proposta',
+      consigna:
+        'Uma pessoa recebe uma carta escrita por alguém que morreu há anos. A carta diz: «Não confie na versão de mim que ainda está viva».',
+      timeLeft: 'Tempo restante',
       verdictTitle: 'Veredito do júri',
       youLabel: 'Você',
       rivalLabel: 'Rival',
@@ -340,436 +226,262 @@ const copies: Record<Locale, Copy> = {
     },
     rules: {
       kicker: 'O duelo',
-      titleTop: 'Isto é',
-      titleAccent: 'pra valer.',
+      title: 'Isto é pra valer.',
       intro: '5 regras. Nada mais.',
       steps: [
+        { title: 'Proposta aleatória', body: 'Revelada quando você entra. Sem tempo para bloqueio criativo.' },
+        { title: '5 minutos', body: 'O relógio começa ao tocar o botão. Você entrega tudo o que tem.' },
         {
-          icon: '🎲',
-          title: 'Tema aleatório',
-          body: 'Revelado quando você entra. Sem tempo para bloqueio criativo.',
-        },
-        {
-          icon: '⏱️',
-          title: '5 minutos',
-          body: 'O relógio começa ao tocar o botão. Você entrega tudo o que tem.',
-        },
-        {
-          icon: '⚔️',
           title: 'Um rival do seu nível',
-          body: 'Do outro lado, a pressão é simétrica: seu oponente enfrenta a mesma premissa.',
+          body: 'Do outro lado, a pressão é simétrica: seu oponente enfrenta a mesma proposta.',
         },
-        {
-          icon: '✒️',
-          title: 'Júri de tinta',
-          body: 'Criatividade, estilo, emoção e desfecho. Só uma história vence.',
-        },
-        {
-          icon: '⚡',
-          title: 'Veredito na hora',
-          body: 'Em segundos você recebe uma análise exata dos seus acertos e erros.',
-        },
+        { title: 'Júri de tinta', body: 'Criatividade, estilo, emoção e desfecho. Só uma história vence.' },
+        { title: 'Veredito na hora', body: 'Em segundos você recebe uma análise exata dos seus acertos e erros.' },
       ],
     },
     judge: {
       kicker: 'O júri',
-      line: 'Você não compete para vencer.',
+      title: 'Você não compete para vencer.',
       highlight: 'Você compete para melhorar.',
-      body: 'Cada duelo termina com feedback concreto: onde sua história foi mais forte, onde você perdeu o leitor e o que trabalhar no próximo. Progresso não é sensação. É medido.',
-      adviceLabel: 'Conselho para melhorar',
+      body: 'Cada duelo termina com um conselho concreto: onde sua história foi mais forte, onde você perdeu o leitor e o que trabalhar no próximo. Progresso não é sensação. É medido.',
+      adviceLabel: 'Para o seu próximo duelo',
       advice:
-        'Sua maior força é o gancho narrativo: você cria intriga com pouquíssimas palavras. No próximo duelo, cuide do desfecho — um final mais forte teria garantido a vitória.',
+        'Sua maior força é o gancho narrativo: você cria intriga com pouquíssimas palavras. No próximo duelo, cuide do desfecho: um final mais forte teria garantido a vitória.',
       breakdownLabel: 'Análise do júri',
       criteria: [
-        { label: 'Criatividade', score: '9.2', tone: 'pink', width: 92 },
-        { label: 'Estilo', score: '8.5', tone: 'blue', width: 85 },
-        { label: 'Emoção', score: '7.8', tone: 'green', width: 78 },
-        { label: 'Desfecho', score: '6.4', tone: 'orange', width: 64 },
+        { label: 'Criatividade', score: 9.2 },
+        { label: 'Estilo', score: 8.5 },
+        { label: 'Emoção', score: 7.8 },
+        { label: 'Desfecho', score: 6.4 },
       ],
     },
     ranks: {
       kicker: 'Progressão',
-      titleTop: 'O status',
-      titleAccent: 'se conquista.',
-      body: 'Subir não depende de jogar por mais tempo: depende de escrever melhor. Seis ranks entre o seu primeiro duelo e a lenda.',
+      title: 'O status se conquista.',
+      body: 'Subir não depende de jogar por mais tempo: depende de escrever melhor. Seis ligas entre o seu primeiro duelo e a lenda.',
       divisionLabel: 'Divisão atual',
       divisionRank: 'Aprendiz I',
-      divisionPts: '20 pts',
-      divisionNext: '80 pts para Aprendiz II →',
-      list: ['Aprendiz', 'Escriba', 'Narrador', 'Duelista', 'Mestre da Tinta', 'Lenda'],
-      currentElo: 'Seu rank atual',
+      divisionLp: '20 LP',
+      divisionNext: 'Faltam 80 LP para Aprendiz II',
+      trackLabel: '20 LP · faltam 80 para Aprendiz II',
+      ladderLabel: 'As seis ligas',
+      current: 'Sua liga',
     },
     finalCta: {
-      line: 'Cada duelo melhora',
-      accent: 'sua escrita.',
+      title: 'Cada duelo melhora sua escrita.',
       body: 'Entre na arena. Teste suas palavras. Suba de rank.',
       micro: 'Uma vez dentro, o relógio corre.',
-    },
-    footer: {
-      tagline: 'Aceite o duelo.',
-      privacyPolicy: 'Política de Privacidade',
-      challengeTerms: 'Termos do desafio',
     },
   },
 };
 
-const getInitialLocale = (): Locale => {
-  if (typeof window === 'undefined') {
-    return 'en';
-  }
-
-  const params = new URLSearchParams(window.location.search);
-  const queryLocale = params.get('lang');
-  if (queryLocale === 'es' || queryLocale === 'en' || queryLocale === 'pt') {
-    return queryLocale;
-  }
-
-  const storedLocale = window.localStorage.getItem('inkduel-locale');
-  if (storedLocale === 'es' || storedLocale === 'en' || storedLocale === 'pt') {
-    return storedLocale;
-  }
-
-  const browserLocale = window.navigator.language.slice(0, 2);
-  if (browserLocale === 'es' || browserLocale === 'en' || browserLocale === 'pt') {
-    return browserLocale;
-  }
-
-  return 'en';
-};
-
-function StoreBadges({ copy }: { copy: Copy }) {
+function DuelPreview({ copy }: { copy: Copy['hero'] }) {
   return (
-    <div
-      className="store-buttons"
-      role="group"
-      aria-label={`${copy.stores.appStoreAria} / ${copy.stores.googlePlayAria}`}
-    >
-      <a
-        className="store-badge"
-        href={appStoreUrl}
-        target="_blank"
-        rel="noreferrer"
-        aria-label={copy.stores.appStoreAria}
-      >
-        <AppleLogo />
-        <span className="store-badge-text">
-          <span className="store-badge-kicker">{copy.stores.appStoreKicker}</span>
-          <span className="store-badge-name">App Store</span>
-        </span>
-      </a>
+    <div className="flex flex-col gap-4" aria-hidden="true">
+      <InkCard className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <PlayerIdentity name="L" rankTier="Aprendiz" size={56} emphasis="primary" />
+          <span className="type-label text-tertiary">vs</span>
+          <PlayerIdentity name="?" size={56} />
+        </div>
+        <div className="min-w-0">
+          <p className="type-body-strong text-primary">{copy.searching}</p>
+          <p className="type-caption text-secondary">{copy.searchingSub}</p>
+        </div>
+      </InkCard>
 
-      <a
-        className="store-badge"
-        href={googlePlayUrl}
-        target="_blank"
-        rel="noreferrer"
-        aria-label={copy.stores.googlePlayAria}
-      >
-        <GooglePlayLogo />
-        <span className="store-badge-text">
-          <span className="store-badge-kicker">{copy.stores.googlePlayKicker}</span>
-          <span className="store-badge-name">Google Play</span>
-        </span>
-      </a>
+      <div className="flex flex-col gap-3 rounded-card border-quiet border-divider bg-reader p-3 ctx-reading">
+        <Consigna label={copy.consignaLabel} text={copy.consigna} />
+        <div className="flex items-center gap-3 px-1">
+          <span className="type-numeric text-[17px] text-primary">04:55</span>
+          <span className="h-1.5 flex-1 overflow-hidden rounded-pill bg-sunken">
+            <span className="block h-full w-[98%] rounded-pill bg-inverse" />
+          </span>
+          <span className="sr-only">{copy.timeLeft}</span>
+        </div>
+      </div>
+
+      <InkCard tone="brand">
+        <div className="flex items-center justify-between gap-3">
+          <p className="type-title-section text-primary">{copy.verdictTitle}</p>
+          <InkChip tone="victory">{copy.victory}</InkChip>
+        </div>
+        <dl className="mt-4 grid grid-cols-[1fr_auto_1fr] items-end gap-3">
+          <div>
+            <dt className="type-caption text-secondary">{copy.youLabel}</dt>
+            <dd className="type-numeric text-[28px] text-primary">{copy.youScore}</dd>
+          </div>
+          <span className="pb-2 type-label text-tertiary">vs</span>
+          <div className="text-right">
+            <dt className="type-caption text-secondary">{copy.rivalLabel}</dt>
+            <dd className="type-numeric text-[28px] text-secondary">{copy.rivalScore}</dd>
+          </div>
+        </dl>
+      </InkCard>
     </div>
   );
 }
 
-function AppleLogo() {
+function SectionIntro({
+  id,
+  kicker,
+  title,
+  highlight,
+  children,
+}: {
+  id: string;
+  kicker: string;
+  title: string;
+  highlight?: string;
+  children?: React.ReactNode;
+}) {
   return (
-    <svg className="store-logo apple-logo" viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        fill="currentColor"
-        d="M16.4 12.6c0-2 1.6-3 1.7-3.1-.9-1.4-2.3-1.6-2.8-1.6-1.2-.1-2.3.7-2.9.7s-1.5-.7-2.5-.7c-1.3 0-2.5.8-3.2 2-1.4 2.4-.4 6 1 8 .7 1 1.5 2.1 2.6 2.1 1 0 1.4-.7 2.6-.7s1.6.7 2.7.7 1.8-1 2.5-2c.8-1.2 1.1-2.3 1.1-2.4 0 0-2.2-.9-2.2-3zM14.5 6.6c.6-.7 1-1.7.9-2.6-.9 0-1.9.6-2.5 1.3-.6.6-1 1.6-.9 2.5 1 .1 2-.5 2.5-1.2z"
-      />
-    </svg>
-  );
-}
-
-function GooglePlayLogo() {
-  return (
-    <svg className="store-logo google-play-logo" viewBox="0 0 24 24" aria-hidden="true">
-      <path className="play-shape play-blue" d="M4.5 3.4c-.3.3-.5.8-.5 1.4v14.4c0 .6.2 1.1.5 1.4l8-8.6-8-8.6z" />
-      <path className="play-shape play-green" d="m13.1 11.4 2.3-2.5L6.5 3.8c-.6-.4-1.1-.5-1.6-.5l8.2 8.1z" />
-      <path className="play-shape play-yellow" d="m13.1 12.6-8.2 8.1c.5.1 1-.1 1.6-.5l8.9-5.1-2.3-2.5z" />
-      <path className="play-shape play-red" d="m19.3 11-3.2-1.8-2.5 2.8 2.5 2.8 3.2-1.8c1-.6 1-1.4 0-2z" />
-    </svg>
+    <div className="flex flex-col gap-3">
+      <Kicker>{kicker}</Kicker>
+      <InkHeadline as="h2" id={id} text={title} highlight={highlight} size="title-page-lg" />
+      {children}
+    </div>
   );
 }
 
 export default function Home() {
-  const [locale, setLocale] = useState<Locale>('en');
+  const [locale, setLocale] = useLocale();
   const copy = copies[locale];
-  const currentLanguage = useMemo(
-    () => languageOptions.find((option) => option.code === locale) ?? languageOptions[0],
-    [locale],
-  );
 
-  useEffect(() => {
-    setLocale(getInitialLocale());
-  }, []);
-
-  useEffect(() => {
-    document.documentElement.lang = locale;
-    window.localStorage.setItem('inkduel-locale', locale);
-  }, [locale]);
+  const nav = [
+    { href: '#duelo', label: copy.nav.duel },
+    { href: '#jurado', label: copy.nav.judge },
+    { href: '#rangos', label: copy.nav.ranks },
+    { href: withLang('/about', locale), label: copy.nav.about },
+  ];
 
   return (
-    <main className="landing-container">
-      <div className="mesh-bg">
-        <div className="blob blob-1"></div>
-        <div className="blob blob-2"></div>
-      </div>
+    <InkPage context="arena">
+      <SiteHeader locale={locale} onLocaleChange={setLocale} nav={nav} />
 
-      <header className="site-header">
-        <a href="#top" className="logo-link" aria-label="InkDuel">
-          <span className="brand-icon" aria-hidden="true">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/app-icon.png" alt="" />
-          </span>
-          <span className="logo">
-            Ink<span className="accent">Duel</span>
-          </span>
-        </a>
-
-        <nav className="nav-links" aria-label="Main navigation">
-          <a href="#duelo">{copy.nav.duel}</a>
-          <a href="#jurado">{copy.nav.judge}</a>
-          <a href="#rangos">{copy.nav.ranks}</a>
-          <a href={`/about?lang=${locale}`}>{copy.nav.about}</a>
-        </nav>
-
-        <div className="header-actions">
-          <label className="language-picker" aria-label="Select language">
-            <span className="language-current" aria-hidden="true">
-              <span className="language-flag">{currentLanguage.flag}</span>
-              <span>{currentLanguage.label}</span>
-            </span>
-            <select
-              value={locale}
-              onChange={(event) => setLocale(event.target.value as Locale)}
-              aria-label="Select language"
-            >
-              {languageOptions.map((option) => (
-                <option key={option.code} value={option.code}>
-                  {option.flag} {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      </header>
-
-      <section className="hero-section">
-        <div className="hero-content">
-          <span className="hero-badge">{copy.hero.badge}</span>
-          <h1 className="hero-title">
-            {copy.hero.titleTop}
-            <br />
-            <em className="accent-italic">{copy.hero.titleAccent}</em>
-          </h1>
-          <p className="hero-tagline">{copy.hero.tagline}</p>
-          <p className="hero-subtitle">{copy.hero.subtitle}</p>
-          <div className="hero-actions">
-            <StoreBadges copy={copy} />
-            <a className="cta-button about-landing-button" href={`/about?lang=${locale}`}>
+      <main id="top">
+        {/* Hero */}
+        <PageColumn width="wide" className="grid items-center gap-10 pt-6 pb-16 lg:grid-cols-[1.1fr_1fr] lg:gap-16 lg:pt-12 lg:pb-24">
+          <div className="flex flex-col gap-5">
+            <Kicker>{copy.hero.kicker}</Kicker>
+            <InkHeadline text={copy.hero.title} size="display-lg" className="whitespace-pre-line" />
+            <p className="type-title-section-lg text-primary">{copy.hero.tagline}</p>
+            <p className="max-w-[52ch] type-body text-secondary">{copy.hero.subtitle}</p>
+            <StoreButtons locale={locale} className="mt-2" />
+            <InkButton href={withLang('/about', locale)} variant="ghost" fullWidth={false} className="self-start">
               {copy.nav.about}
-            </a>
+            </InkButton>
           </div>
-        </div>
-
-        <div className="hero-visual" aria-hidden="true">
-          <div className="duel-flow">
-            <div className="flow-card match-card">
-              <div className="match-row">
-                <div className="duel-avatar you">L</div>
-                <span className="vs-mark">vs</span>
-                <div className="duel-avatar unknown">?</div>
-              </div>
-              <p className="match-status">{copy.hero.searching}</p>
-              <p className="match-sub">{copy.hero.searchingSub}</p>
-              <div className="match-dots">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-            </div>
-
-            <div className="flow-card prompt-flow-card">
-              <div className="flow-label-row">
-                <span className="flow-icon-tile">🎲</span>
-                <span className="flow-label">{copy.hero.promptLabel}</span>
-              </div>
-              <p className="flow-prompt-text">{copy.hero.prompt}</p>
-              <div className="flow-timer-row">
-                <span className="timer-pill">04:55</span>
-                <div className="timer-track">
-                  <div className="timer-fill"></div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flow-card verdict-flow-card">
-              <div className="verdict-head">
-                <h4 className="verdict-title">{copy.hero.verdictTitle}</h4>
-                <span className="victory-chip">🏆 {copy.hero.victory}</span>
-              </div>
-              <div className="verdict-scores">
-                <div className="verdict-side winner">
-                  <span className="verdict-name">{copy.hero.youLabel}</span>
-                  <span className="verdict-pts">
-                    {copy.hero.youScore}
-                    <small> pts</small>
-                  </span>
-                </div>
-                <span className="verdict-vs">vs</span>
-                <div className="verdict-side">
-                  <span className="verdict-name">{copy.hero.rivalLabel}</span>
-                  <span className="verdict-pts">
-                    {copy.hero.rivalScore}
-                    <small> pts</small>
-                  </span>
-                </div>
-              </div>
-            </div>
+          <div className="mx-auto w-full max-w-[440px]">
+            <DuelPreview copy={copy.hero} />
           </div>
-        </div>
-      </section>
+        </PageColumn>
 
-      <section id="duelo" className="rules-section">
-        <span className="section-kicker">{copy.rules.kicker}</span>
-        <h2 className="section-title">
-          {copy.rules.titleTop} <em className="accent-italic">{copy.rules.titleAccent}</em>
-        </h2>
-        <p className="section-intro">{copy.rules.intro}</p>
-
-        <div className="rules-list">
-          {copy.rules.steps.map((step, index) => (
-            <div key={step.title} className="rule-row">
-              <span className="rule-icon" aria-hidden="true">
-                {step.icon}
-              </span>
-              <div className="rule-text">
-                <h3>{step.title}</h3>
-                <p>{step.body}</p>
-              </div>
-              <span className="rule-num">0{index + 1}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section id="jurado" className="judge-section">
-        <div className="judge-grid">
-          <div className="judge-text">
-            <span className="section-kicker">{copy.judge.kicker}</span>
-            <h2 className="section-title left">
-              {copy.judge.line}
-              <br />
-              <em className="accent-italic">{copy.judge.highlight}</em>
-            </h2>
-            <p className="judge-body">{copy.judge.body}</p>
-          </div>
-
-          <div className="judge-mock" aria-hidden="true">
-            <div className="advice-card">
-              <div className="advice-label">
-                <span>💡</span> {copy.judge.adviceLabel}
-              </div>
-              <p>{copy.judge.advice}</p>
-            </div>
-
-            <div className="breakdown-card">
-              <span className="breakdown-label">{copy.judge.breakdownLabel}</span>
-              {copy.judge.criteria.map((criterion) => (
-                <div key={criterion.label} className="score-row">
-                  <span className="score-label">{criterion.label}</span>
-                  <div className="s-bar">
-                    <div
-                      className={`fill tone-${criterion.tone}`}
-                      style={{ width: `${criterion.width}%` }}
-                    ></div>
-                  </div>
-                  <span className={`score-num tone-${criterion.tone}`}>{criterion.score}</span>
-                </div>
+        {/* The duel */}
+        <section aria-labelledby="duelo" className="scroll-mt-6 py-16">
+          <PageColumn width="wide" className="grid gap-8 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
+            <SectionIntro id="duelo" kicker={copy.rules.kicker} title={copy.rules.title}>
+              <p className="type-body text-secondary">{copy.rules.intro}</p>
+            </SectionIntro>
+            <ol className="m-0 p-0">
+              {copy.rules.steps.map((step, index) => (
+                <NumberedRule key={step.title} number={index + 1} title={step.title} body={step.body} divider={index > 0} />
               ))}
-            </div>
-          </div>
-        </div>
-      </section>
+            </ol>
+          </PageColumn>
+        </section>
 
-      <section id="rangos" className="progression-path">
-        <div className="progression-text">
-          <span className="section-kicker">{copy.ranks.kicker}</span>
-          <h2 className="section-title">
-            {copy.ranks.titleTop} <em className="accent-italic">{copy.ranks.titleAccent}</em>
-          </h2>
-          <p>{copy.ranks.body}</p>
-        </div>
-
-        <div className="division-card" aria-hidden="true">
-          <div className="division-top">
-            <span className="division-icon">✍️</span>
-            <div className="division-name">
-              <em>{copy.ranks.divisionRank}</em>
-              <span>{copy.ranks.divisionLabel}</span>
-            </div>
-            <span className="division-pts">{copy.ranks.divisionPts}</span>
-          </div>
-          <div className="division-track">
-            <div className="division-fill"></div>
-          </div>
-          <span className="division-next">{copy.ranks.divisionNext}</span>
-        </div>
-
-        <div className="ranks-timeline">
-          <div className="line-connector"></div>
-
-          {copy.ranks.list.map((rank, index) => (
-            <div
-              key={rank}
-              className={`rank-node ${
-                ['r-aprendiz', 'r-escriba', 'r-narrador', 'r-duellista', 'r-maestro', 'r-leyenda'][
-                  index
-                ]
-              } ${index === 0 ? 'focused' : ''} ${index > 0 ? 'dormant' : ''}`}
+        {/* The judge */}
+        <section aria-labelledby="jurado" className="scroll-mt-6 py-16">
+          <PageColumn width="wide" className="grid items-start gap-8 lg:grid-cols-2 lg:gap-16">
+            <SectionIntro
+              id="jurado"
+              kicker={copy.judge.kicker}
+              title={`${copy.judge.title}\n${copy.judge.highlight}`}
+              highlight={copy.judge.highlight}
             >
-              <div className="r-icon"></div>
-              <div className={index === 0 ? 'r-label glow-text' : 'r-label'}>{rank}</div>
-              {index === 0 ? <div className="focused-indicator">{copy.ranks.currentElo}</div> : null}
+              <p className="type-body text-secondary">{copy.judge.body}</p>
+            </SectionIntro>
+            <div className="flex flex-col gap-4" aria-hidden="true">
+              <InkCard>
+                <Kicker>{copy.judge.adviceLabel}</Kicker>
+                <p className="mt-2 type-body text-primary">{copy.judge.advice}</p>
+              </InkCard>
+              <InkCard>
+                <Kicker>{copy.judge.breakdownLabel}</Kicker>
+                <ul className="m-0 mt-3 flex list-none flex-col gap-3 p-0">
+                  {copy.judge.criteria.map((criterion) => (
+                    <li key={criterion.label} className="grid grid-cols-[96px_1fr_auto] items-center gap-3">
+                      <span className="type-caption text-secondary">{criterion.label}</span>
+                      <span className="h-1.5 overflow-hidden rounded-pill bg-sunken">
+                        <span
+                          className="block h-full rounded-pill bg-inverse"
+                          style={{ width: `${criterion.score * 10}%` }}
+                        />
+                      </span>
+                      <span className="type-numeric text-primary">{criterion.score.toFixed(1)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </InkCard>
             </div>
-          ))}
-        </div>
-      </section>
+          </PageColumn>
+        </section>
 
-      <section className="hero-footer-cta">
-        <div className="final-brand" aria-hidden="true">
-          <span className="brand-mark">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/app-icon.png" alt="" />
-            <span className="brand-vs">vs</span>
-          </span>
-        </div>
-        <h2 className="massive-cta">
-          {copy.finalCta.line} <em className="accent-italic">{copy.finalCta.accent}</em>
-        </h2>
-        <p>{copy.finalCta.body}</p>
-        <StoreBadges copy={copy} />
-        <p className="final-micro">🔒 {copy.finalCta.micro}</p>
-      </section>
+        {/* Ranks */}
+        <section aria-labelledby="rangos" className="scroll-mt-6 py-16">
+          <PageColumn width="wide" className="grid items-start gap-8 lg:grid-cols-2 lg:gap-16">
+            <SectionIntro id="rangos" kicker={copy.ranks.kicker} title={copy.ranks.title}>
+              <p className="type-body text-secondary">{copy.ranks.body}</p>
+            </SectionIntro>
+            <div className="flex flex-col gap-6">
+              <div data-league="aprendiz">
+                <InkCard tone="outlined" fill="bg-league-tint">
+                  <div className="flex items-center gap-3">
+                    <PlayerIdentity name="L" rankTier="Aprendiz" size={44} emphasis="primary" />
+                    <div className="min-w-0 flex-1">
+                      <Kicker>{copy.ranks.divisionLabel}</Kicker>
+                      <p className="type-title-section text-primary">{copy.ranks.divisionRank}</p>
+                    </div>
+                    <span className="type-numeric text-[22px] text-primary">{copy.ranks.divisionLp}</span>
+                  </div>
+                  <PencilTrack progress={0.2} stroke="league" goalLabel="II" label={copy.ranks.trackLabel} className="mt-4" />
+                  <p className="mt-2 type-caption text-secondary">{copy.ranks.divisionNext}</p>
+                </InkCard>
+              </div>
 
-      <footer className="footer-bar">
-        <span>
-          © {new Date().getFullYear()} INKDUEL. {copy.footer.tagline}
-        </span>
-        <div className="footer-links">
-          <a href={`/about?lang=${locale}`}>{copy.nav.about}</a>
-          <a href={`/challenge/demo-desafio-especial?lang=${locale}`}>
-            {copy.footer.challengeTerms}
-          </a>
-          <a href={`/privacy?lang=${locale}`}>{copy.footer.privacyPolicy}</a>
-        </div>
-      </footer>
-    </main>
+              <div>
+                <h3 className="sr-only">{copy.ranks.ladderLabel}</h3>
+                <ol className="m-0 grid list-none grid-cols-2 gap-x-4 gap-y-3 p-0 sm:grid-cols-3">
+                  {LEAGUE_ORDER.map((league, index) => (
+                    <li key={league} className="flex items-center gap-2">
+                      <PlayerIdentity name={LEAGUE_NAMES[league][locale]} rankTier={league} size={32} />
+                      <span className="flex min-w-0 flex-col">
+                        <span className={index === 0 ? 'type-body-strong text-primary' : 'type-body text-secondary'}>
+                          {LEAGUE_NAMES[league][locale]}
+                        </span>
+                        {index === 0 ? <span className="type-caption text-secondary">{copy.ranks.current}</span> : null}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </div>
+          </PageColumn>
+        </section>
+
+        {/* Final call */}
+        <section className="py-20">
+          <PageColumn width="product" className="flex flex-col items-center gap-5 text-center">
+            <InkHeadline as="h2" text={copy.finalCta.title} size="display" />
+            <p className="type-body text-secondary">{copy.finalCta.body}</p>
+            <StoreButtons locale={locale} className="justify-center" />
+            <p className="type-caption text-tertiary">{copy.finalCta.micro}</p>
+          </PageColumn>
+        </section>
+      </main>
+
+      <SiteFooter locale={locale} />
+    </InkPage>
   );
 }
