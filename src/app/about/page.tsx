@@ -1,8 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-
-type Locale = 'es' | 'en' | 'pt';
+import { InkAppIcon } from '@/components/ink/brand';
+import { ArrowUpRightIcon } from '@/components/ink/icons';
+import { InkHeadline } from '@/components/ink/ink-headline';
+import { Kicker } from '@/components/ink/kicker';
+import { BackLink } from '@/components/legal/legal-page';
+import { LocalizedShell } from '@/components/shell/localized-shell';
+import { type Locale, withLang } from '@/lib/i18n';
 
 type AboutLink = {
   title: string;
@@ -26,18 +30,6 @@ const inkduelInstagramUrl = 'https://www.instagram.com/inkduel/';
 const inkduelWebsiteUrl = 'https://inkduel.com';
 const creatorInstagramUrl = 'https://www.instagram.com/facovas/';
 const creatorLinkedinUrl = 'https://www.linkedin.com/in/facucovas/';
-
-const languageOptions: {
-  code: Locale;
-  label: string;
-  flag: string;
-}[] = [
-  { code: 'es', label: 'Español', flag: '🇪🇸' },
-  { code: 'en', label: 'English', flag: '🇺🇸' },
-  { code: 'pt', label: 'Português', flag: '🇧🇷' },
-];
-
-const withLocalePath = (path: string, locale: Locale) => `${path}?lang=${locale}`;
 
 const copies: Record<Locale, AboutCopy> = {
   es: {
@@ -64,7 +56,7 @@ const copies: Record<Locale, AboutCopy> = {
       },
       {
         title: 'Sitio web',
-        subtitle: 'Conocé más sobre el proyecto.',
+        subtitle: 'Conoce más sobre el proyecto.',
         href: inkduelWebsiteUrl,
         label: 'WEB',
       },
@@ -89,10 +81,10 @@ const copies: Record<Locale, AboutCopy> = {
     intro: 'An independent project for writing more, practicing, and improving your writing.',
     storyTitle: 'The story behind the app',
     paragraphs: [
-      'InkDuel is a space to write short stories, compete in creative duels, and discover how different people imagine new worlds from the same premise.',
+      'InkDuel is a space to write short stories, compete in creative duels, and discover how different people imagine new worlds from the same prompt.',
       'The project was born independently and is being developed by one Argentinian dev with a simple idea: make writing feel like a game, a challenge, and a way to connect with others again.',
       'You do not need to write perfectly. You do not need experience. In InkDuel, ideas, creativity, and the courage to participate matter most.',
-      'The app also aims to help you improve your writing: practicing with premises, reading other stories, receiving feedback, and learning from every duel.',
+      'The app also aims to help you improve your writing: practicing with prompts, reading other stories, receiving feedback, and learning from every duel.',
       'InkDuel is still growing: new ideas, improvements, and ways to experience duels are on the way. Every person who writes, participates, or leaves feedback helps the app keep evolving day by day and build a more creative community.',
       'Thank you for being part of this first stage.',
     ],
@@ -125,16 +117,16 @@ const copies: Record<Locale, AboutCopy> = {
     ],
   },
   pt: {
-    backToHome: 'Voltar ao inicio',
+    backToHome: 'Voltar ao início',
     eyebrow: 'Sobre o InkDuel',
     title: 'Sobre o InkDuel',
     intro: 'Um projeto independente para escrever mais, praticar e melhorar sua escrita.',
     storyTitle: 'A história por trás do app',
     paragraphs: [
-      'InkDuel é um espaço para escrever histórias curtas, competir em duelos criativos e descobrir como outras pessoas imaginam mundos diferentes a partir do mesmo tema.',
+      'InkDuel é um espaço para escrever histórias curtas, competir em duelos criativos e descobrir como outras pessoas imaginam mundos diferentes a partir da mesma proposta.',
       'O projeto nasceu de forma independente e está sendo desenvolvido por um dev argentino, com uma ideia simples: fazer a escrita voltar a parecer um jogo, um desafio e uma forma de conexão.',
       'Não é preciso escrever perfeitamente. Não é preciso ter experiência. No InkDuel importam as ideias, a criatividade e a coragem de participar.',
-      'O app também busca ajudar você a melhorar sua escrita: praticando com temas, lendo outros relatos, recebendo feedback e aprendendo a cada duelo.',
+      'O app também busca ajudar você a melhorar sua escrita: praticando com propostas, lendo outros relatos, recebendo feedback e aprendendo a cada duelo.',
       'O InkDuel ainda está crescendo: novas ideias, melhorias e formas de viver os duelos estão a caminho. Cada pessoa que escreve, participa ou deixa feedback ajuda o app a evoluir dia após dia e a construir uma comunidade mais criativa.',
       'Obrigado por fazer parte desta primeira etapa.',
     ],
@@ -168,120 +160,59 @@ const copies: Record<Locale, AboutCopy> = {
   },
 };
 
-const getInitialLocale = (): Locale => {
-  if (typeof window === 'undefined') {
-    return 'en';
-  }
-
-  const params = new URLSearchParams(window.location.search);
-  const queryLocale = params.get('lang');
-  if (queryLocale === 'es' || queryLocale === 'en' || queryLocale === 'pt') {
-    return queryLocale;
-  }
-
-  const storedLocale = window.localStorage.getItem('inkduel-locale');
-  if (storedLocale === 'es' || storedLocale === 'en' || storedLocale === 'pt') {
-    return storedLocale;
-  }
-
-  const browserLocale = window.navigator.language.slice(0, 2);
-  if (browserLocale === 'es' || browserLocale === 'en' || browserLocale === 'pt') {
-    return browserLocale;
-  }
-
-  return 'en';
-};
-
 export default function AboutPage() {
-  const [locale, setLocale] = useState<Locale>('en');
-  const copy = copies[locale];
-  const currentLanguage = useMemo(
-    () => languageOptions.find((option) => option.code === locale) ?? languageOptions[0],
-    [locale],
-  );
-
-  useEffect(() => {
-    setLocale(getInitialLocale());
-  }, []);
-
-  useEffect(() => {
-    document.documentElement.lang = locale;
-    window.localStorage.setItem('inkduel-locale', locale);
-  }, [locale]);
-
   return (
-    <main className="policy-page">
-      <div className="mesh-bg">
-        <div className="blob blob-1"></div>
-        <div className="blob blob-2"></div>
-      </div>
+    <LocalizedShell initialLocale="en" resolveOnClient context="product" width="reading">
+      {(locale) => {
+        const copy = copies[locale];
+        return (
+          <article className="flex flex-col gap-8 pt-2">
+            <header className="flex flex-col gap-4">
+              <BackLink href={withLang('/', locale)} label={copy.backToHome} />
+              <InkAppIcon size={56} />
+              <InkHeadline text={copy.title} size="title-page-lg" />
+              <p className="type-body text-secondary">{copy.intro}</p>
+            </header>
 
-      <section className="policy-shell">
-        <div className="policy-topbar">
-          <a className="policy-backlink" href={withLocalePath('/', locale)}>
-            {copy.backToHome}
-          </a>
-
-          <label className="language-picker" aria-label="Select language">
-            <span className="language-current" aria-hidden="true">
-              <span className="language-flag">{currentLanguage.flag}</span>
-              <span>{currentLanguage.label}</span>
-            </span>
-            <select
-              value={locale}
-              onChange={(event) => setLocale(event.target.value as Locale)}
-              aria-label="Select language"
-            >
-              {languageOptions.map((option) => (
-                <option key={option.code} value={option.code}>
-                  {option.flag} {option.label}
-                </option>
+            <section className="flex flex-col gap-4">
+              <h2 className="type-title-section text-primary">{copy.storyTitle}</h2>
+              {copy.paragraphs.map((paragraph) => (
+                <p key={paragraph} className="type-body text-primary">
+                  {paragraph}
+                </p>
               ))}
-            </select>
-          </label>
-        </div>
+            </section>
 
-        <header className="policy-hero">
-          <span className="policy-eyebrow">{copy.eyebrow}</span>
-          <h1>{copy.title}</h1>
-          <p>{copy.intro}</p>
-        </header>
-
-        <div className="policy-content">
-          <section className="policy-section about-page-body">
-            <h2>{copy.storyTitle}</h2>
-            {copy.paragraphs.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
-          </section>
-
-          <section className="policy-section">
-            <h2>{copy.followTitle}</h2>
-            <div className="about-social-grid">
-              {copy.links.map((link) => (
-                <a
-                  key={`${link.title}-${link.href}`}
-                  className="about-social-card"
-                  href={link.href}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <span className="about-social-icon" aria-hidden="true">
-                    {link.label}
-                  </span>
-                  <span className="about-social-text">
-                    <strong>{link.title}</strong>
-                    <small>{link.subtitle}</small>
-                  </span>
-                  <span className="about-social-arrow" aria-hidden="true">
-                    ↗
-                  </span>
-                </a>
-              ))}
-            </div>
-          </section>
-        </div>
-      </section>
-    </main>
+            <section className="flex flex-col gap-3">
+              <Kicker as="h2">{copy.followTitle}</Kicker>
+              <ul className="m-0 list-none overflow-hidden rounded-card border-quiet border-divider bg-surface p-0">
+                {copy.links.map((link, index) => (
+                  <li key={`${link.title}-${link.href}`} className={index > 0 ? 'border-t border-divider' : undefined}>
+                    <a
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ink-focus ink-dim flex min-h-[64px] items-center gap-3 px-4 py-3 no-underline"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="flex size-10 shrink-0 items-center justify-center rounded-control border-quiet border-outline bg-tint-blue font-ui text-[12px] font-extrabold text-primary"
+                      >
+                        {link.label}
+                      </span>
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="type-body-strong text-primary">{link.title}</span>
+                        <span className="type-caption text-secondary">{link.subtitle}</span>
+                      </span>
+                      <ArrowUpRightIcon size={20} className="shrink-0 text-secondary" />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          </article>
+        );
+      }}
+    </LocalizedShell>
   );
 }
