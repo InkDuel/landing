@@ -2,6 +2,8 @@
 
 import { useCallback } from 'react';
 
+import { InkInlineBanner } from '@/components/ink/ink-inline-banner';
+import { InkTextAction } from '@/components/ink/ink-states';
 import { Kicker } from '@/components/ink/kicker';
 import type { Locale } from '@/lib/i18n';
 import { apiGet } from '@/lib/session/api';
@@ -26,6 +28,19 @@ export function AuthorWorksList({
   const copy = SESSION_COPY[locale].profile;
   const works = usePagedList(fetchPage);
   const sentinel = useInfiniteSentinel(works.loadMore, works.status === 'ready' && works.hasMore);
+  // A failed first page is an error, not «no works»: say so in the Obras
+  // zone with a retry. Loading and an empty list still show nothing.
+  if (works.status === 'error') {
+    return (
+      <section aria-label={copy.works} className="flex flex-col gap-2">
+        <Kicker as="h2">{copy.works}</Kicker>
+        <InkInlineBanner
+          title={SESSION_COPY[locale].stories.worksError}
+          action={<InkTextAction onClick={works.retry}>{SESSION_COPY[locale].common.retry}</InkTextAction>}
+        />
+      </section>
+    );
+  }
   if (works.status !== 'ready' || works.items.length === 0) return null;
   return (
     <section aria-labelledby="author-works" className="flex flex-col">
