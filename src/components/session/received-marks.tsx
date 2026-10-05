@@ -92,13 +92,13 @@ export function useReceivedMarks(pageSize: number) {
     if (merge.allSourcesHealthy && merged.length > 0) markSeen(uid, merged[0].createdAt);
   }, [pageSize, uid]);
 
-  /** The next rows after the ones on screen; what loaded always stays. */
-  const append = useCallback(async () => {
+  /** [count] more rows after the ones on screen; what loaded always stays. */
+  const append = useCallback(async (count: number) => {
     const merge = engine.current;
     if (!merge) return;
     const gen = generation.current;
     setState((s) => ({ ...s, loadingMore: true, failure: null }));
-    const merged = await merge.take(pageSize);
+    const merged = await merge.take(count);
     if (gen !== generation.current) return;
     setState((s) => {
       const seen = new Set(s.rows.map((row) => markKey(row.mark)));
@@ -110,7 +110,7 @@ export function useReceivedMarks(pageSize: number) {
         failure: merge.blockingSource ? failureKind(merge.blockingFailure) : null,
       };
     });
-  }, [pageSize]);
+  }, []);
 
   useEffect(() => {
     if (!uid) return;
@@ -129,13 +129,17 @@ export function useReceivedMarks(pageSize: number) {
 
   const loadMore = () => {
     if (state.loadingMore || !state.hasMore || state.status !== 'ready' || state.failure) return;
-    void append();
+    void append(pageSize);
   };
 
-  /** Retries only the source that stopped the merge; the others keep their pages. */
+  /**
+   * Retries only the source that stopped the merge; the others keep their
+   * pages. It completes the page that stopped short (the preview stays at
+   * three), it does not add another one.
+   */
   const retry = () => {
     engine.current?.clearFailures();
-    void (state.rows.length === 0 ? load() : append());
+    void (state.rows.length === 0 ? load() : append(pageSize - (state.rows.length % pageSize)));
   };
 
   const newCount = state.rows.filter((row) => row.unread).length;
@@ -225,6 +229,13 @@ export function ReceivedMarksPreview() {
             <ReceivedMarkRow key={markKey(row.mark)} row={row} preview locale={locale} />
           ))}
         </ol>
+      ) : null}
+      {/* Rows loaded and a source then failed: keep them, say so, offer the retry. */}
+      {inbox.status === 'ready' && inbox.failure ? (
+        <p className="mt-1 flex flex-wrap items-center gap-x-3 type-body text-[14px] text-secondary">
+          {copy.inbox.partial}
+          <InkTextAction onClick={inbox.retry}>{copy.retry}</InkTextAction>
+        </p>
       ) : null}
     </section>
   );
