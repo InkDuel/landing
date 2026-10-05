@@ -83,6 +83,8 @@ export type WorksCopy = {
   backToWorks: string;
   // Editor
   chapterTitleHint: (number: number) => string;
+  chapterTitleHintNew: string;
+  chapterLimit: (max: string) => string;
   contentHint: string;
   saveIdle: string;
   saveSaving: string;
@@ -180,6 +182,8 @@ export const WORKS_COPY: Record<Locale, WorksCopy> = {
     retry: 'Reintentar',
     backToWorks: 'Tus obras',
     chapterTitleHint: (n) => `Capítulo ${n} (opcional)`,
+    chapterTitleHintNew: 'Título del capítulo (opcional)',
+    chapterLimit: (max) => `Esta obra llegó al máximo de ${max} capítulos.`,
     contentHint: 'Escribe tu capítulo…',
     saveIdle: 'Cambios sin guardar',
     saveSaving: 'Guardando…',
@@ -269,6 +273,8 @@ export const WORKS_COPY: Record<Locale, WorksCopy> = {
     retry: 'Retry',
     backToWorks: 'Your works',
     chapterTitleHint: (n) => `Chapter ${n} (optional)`,
+    chapterTitleHintNew: 'Chapter title (optional)',
+    chapterLimit: (max) => `This work has reached the maximum of ${max} chapters.`,
     contentHint: 'Write your chapter…',
     saveIdle: 'Unsaved changes',
     saveSaving: 'Saving…',
@@ -358,6 +364,8 @@ export const WORKS_COPY: Record<Locale, WorksCopy> = {
     retry: 'Tentar novamente',
     backToWorks: 'Suas obras',
     chapterTitleHint: (n) => `Capítulo ${n} (opcional)`,
+    chapterTitleHintNew: 'Título do capítulo (opcional)',
+    chapterLimit: (max) => `Esta obra chegou ao máximo de ${max} capítulos.`,
     contentHint: 'Escreva seu capítulo…',
     saveIdle: 'Alterações não salvas',
     saveSaving: 'Salvando…',

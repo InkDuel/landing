@@ -14,6 +14,8 @@ export const WORK_LIMITS = {
   workTitle: 120,
   chapterTitle: 120,
   chapterContent: 5000,
+  /** MaxChaptersPerWork: AddWorkChapter answers 409 at this count. */
+  maxChapters: 100,
 } as const;
 
 /** Length as the backend counts it ([]rune), not UTF-16 units. */

@@ -163,7 +163,10 @@ export function ChapterEditorView({ engine, workTitle }: { engine: ChapterAutosa
 
   const format = (n: number) => n.toLocaleString(INTL_LOCALE[locale]);
   const length = runeLength(state.localContent);
-  const label = copy.chapterDefault(state.orderIndex);
+  // A chapter not yet created has no order: the backend assigns it on the
+  // first save (deleted orders are not reused), so until then it is neutral.
+  const label = state.isNew ? copy.newChapter : copy.chapterDefault(state.orderIndex);
+  const titleHint = state.isNew ? copy.chapterTitleHintNew : copy.chapterTitleHint(state.orderIndex);
   const text = statusText(state, locale);
   const canPublish =
     !state.published &&
@@ -270,14 +273,14 @@ export function ChapterEditorView({ engine, workTitle }: { engine: ChapterAutosa
         {publishFailed ? <InkInlineBanner title={copy.mutationError} /> : null}
 
         <label className="sr-only" htmlFor="chapter-title">
-          {copy.chapterTitleHint(state.orderIndex)}
+          {titleHint}
         </label>
         <input
           id="chapter-title"
           value={state.localTitle}
           onChange={(event) => engine.setTitle(event.target.value)}
           maxLength={WORK_LIMITS.chapterTitle}
-          placeholder={copy.chapterTitleHint(state.orderIndex)}
+          placeholder={titleHint}
           className="w-full bg-transparent font-literary text-[26px] leading-[1.15] font-bold text-content outline-none placeholder:font-normal placeholder:text-placeholder sm:text-[31px]"
         />
 
@@ -334,10 +337,11 @@ export function ChapterEditorView({ engine, workTitle }: { engine: ChapterAutosa
 export function ChapterEditor({ workId, chapterId }: { workId: string; chapterId: string }) {
   const { locale } = useSessionLocale();
   const copy = WORKS_COPY[locale];
+  const router = useRouter();
   const localeRef = useRef(locale);
   localeRef.current = locale;
   const [loaded, setLoaded] = useState<Loaded | null>(null);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'notFound' | 'error'>('loading');
+  const [status, setStatus] = useState<'loading' | 'ready' | 'limit' | 'notFound' | 'error'>('loading');
   const [attempt, setAttempt] = useState(0);
   const [engine, setEngine] = useState<ChapterAutosave | null>(null);
   // The id of a new chapter is generated once per visit (create-on-first-save).
@@ -352,12 +356,16 @@ export function ChapterEditor({ workId, chapterId }: { workId: string; chapterId
         const work = await worksApi.get(workId, ctx);
         let initial: ChapterEditorState;
         if (chapterId === 'new') {
-          const order = work.chapters.reduce((max, c) => Math.max(max, c.orderIndex), 0) + 1;
+          // MaxChaptersPerWork: this text could never be saved, so no editor.
+          if (work.chapterCount >= WORK_LIMITS.maxChapters) {
+            setStatus('limit');
+            return;
+          }
           initial = {
             workId,
             chapterId: newId.current,
             isNew: true,
-            orderIndex: order,
+            orderIndex: 0,
             published: false,
             localContent: '',
             localTitle: '',
@@ -418,6 +426,16 @@ export function ChapterEditor({ workId, chapterId }: { workId: string; chapterId
 
   if (status === 'loading' || (status === 'ready' && !engine)) {
     return <InkSkeleton className="mt-6" lines={6} height="h-6" label={SESSION_COPY[locale].common.loading} />;
+  }
+  if (status === 'limit') {
+    return (
+      <InkInlineBanner
+        className="mt-6"
+        tone="notice"
+        title={copy.chapterLimit(WORK_LIMITS.maxChapters.toLocaleString(INTL_LOCALE[locale]))}
+        action={<InkTextAction onClick={() => router.push(workManageHref(workId))}>{copy.backToWork}</InkTextAction>}
+      />
+    );
   }
   if (status !== 'ready' || !engine || !loaded) {
     return (

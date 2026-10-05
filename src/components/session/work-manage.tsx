@@ -16,6 +16,7 @@ import { BackLink } from '@/components/legal/legal-page';
 import { ListFooter } from './historias';
 import { useSessionLocale } from './session-root';
 import { chapterEditHref, myWorksHref } from './works-parts';
+import { INTL_LOCALE } from '@/lib/i18n';
 import { ApiError } from '@/lib/session/api';
 import { SESSION_COPY } from '@/lib/session/copy';
 import { type AuthorChapter, type AuthorWork, WORK_LIMITS, worksApi } from '@/lib/session/works';
@@ -251,6 +252,8 @@ export function WorkManageView({ workId }: { workId: string }) {
   const hasPublishedChapter = work.publishedChapterCount > 0;
   const available = work.moderationState === 'active';
   const canPublish = available && hasTitle && hasPublishedChapter;
+  // MaxChaptersPerWork: past it AddWorkChapter only answers 409.
+  const atChapterLimit = work.chapterCount >= WORK_LIMITS.maxChapters;
   const kicker = !work.published ? copy.statusDraft : work.isGalleryEligible ? copy.statusInStories : copy.statusPublished;
 
   const panel = work.published ? (
@@ -328,9 +331,15 @@ export function WorkManageView({ workId }: { workId: string }) {
             onRetry={() => void loadMore()}
             locale={locale}
           />
-          <InkButton href={chapterEditHref(work.id, 'new')} variant="secondary" className="mt-3">
-            {chapters.length === 0 ? copy.newChapter : copy.writeNextChapter}
-          </InkButton>
+          {atChapterLimit ? (
+            <p className="mt-3 type-caption text-secondary">
+              {copy.chapterLimit(WORK_LIMITS.maxChapters.toLocaleString(INTL_LOCALE[locale]))}
+            </p>
+          ) : (
+            <InkButton href={chapterEditHref(work.id, 'new')} variant="secondary" className="mt-3">
+              {chapters.length === 0 ? copy.newChapter : copy.writeNextChapter}
+            </InkButton>
+          )}
         </section>
       </div>
 
