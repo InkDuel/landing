@@ -25,6 +25,8 @@ export type WorksCopy = {
   growCta: string;
   growSubtitle: string;
   growError: string;
+  /** web: the backend switched works off (503); there is nothing to retry here. */
+  growUnavailable: string;
   headline: string;
   filterAll: string;
   filterDrafts: string;
@@ -139,6 +141,7 @@ export const WORKS_COPY: Record<Locale, WorksCopy> = {
     growCta: 'Haz crecer esta historia',
     growSubtitle: 'Dale nuevos capítulos y conviértela en una obra.',
     growError: 'No se pudo abrir la historia. Inténtalo de nuevo.',
+    growUnavailable: 'Esta función no está disponible por ahora.',
     headline: 'Tus obras.',
     filterAll: 'Todas',
     filterDrafts: 'Borradores',
@@ -243,6 +246,7 @@ export const WORKS_COPY: Record<Locale, WorksCopy> = {
     growCta: 'Grow this story',
     growSubtitle: 'Give it new chapters and turn it into a work.',
     growError: "Couldn't open the story. Try again.",
+    growUnavailable: "This feature isn't available right now.",
     headline: 'Your works.',
     filterAll: 'All',
     filterDrafts: 'Drafts',
@@ -347,6 +351,7 @@ export const WORKS_COPY: Record<Locale, WorksCopy> = {
     growCta: 'Faça esta história crescer',
     growSubtitle: 'Dê novos capítulos a ela e transforme-a em uma obra.',
     growError: 'Não foi possível abrir a história. Tente de novo.',
+    growUnavailable: 'Esta função não está disponível por enquanto.',
     headline: 'Suas obras.',
     filterAll: 'Todas',
     filterDrafts: 'Rascunhos',
