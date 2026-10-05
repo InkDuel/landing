@@ -2,15 +2,17 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useId, useMemo } from 'react';
+import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 
 import { Consigna } from '@/components/ink/consigna';
 import { cx } from '@/components/ink/cx';
 import { ChevronLeftIcon } from '@/components/ink/icons';
+import { InkButton } from '@/components/ink/ink-button';
 import { InkInlineBanner } from '@/components/ink/ink-inline-banner';
 import { InkEmptyState, InkSkeleton, InkTextAction } from '@/components/ink/ink-states';
 import { StoryText } from '@/components/reading/story-parts';
 import { ByLine, HistoriasIndex, ListFooter, RelatoItem, WorkItem, winReason } from '@/components/session/historias';
+import { NewWorkDialog } from '@/components/session/my-works';
 import { RequireSession, SessionPage } from '@/components/session/session-page';
 import { useSessionLocale } from '@/components/session/session-root';
 import { StoryComments } from '@/components/session/story-comments';
@@ -20,6 +22,7 @@ import { useSession } from '@/lib/session/auth-context';
 import { SESSION_COPY } from '@/lib/session/copy';
 import { type GalleryStory, parseGalleryStories, parseGalleryWorks } from '@/lib/session/models';
 import { useInfiniteSentinel, usePagedList } from '@/lib/session/use-paged-list';
+import { WORKS_COPY } from '@/lib/session/works-copy';
 
 // Historias (09): Lectura paper, «Relatos de duelo | Obras» over the two
 // existing lists, «Lo último» as the only card, then an index. A relato
@@ -128,6 +131,9 @@ function StoriesView() {
     if (relatoKey && relatos.status !== 'loading' && !selected) router.replace('/stories');
   }, [relatoKey, relatos.status, selected, router]);
 
+  const [creating, setCreating] = useState(false);
+  const worksCopy = WORKS_COPY[locale];
+
   if (selected) return <RelatoDetail story={selected} locale={locale} />;
 
   return (
@@ -135,6 +141,19 @@ function StoriesView() {
       <h1 className="pt-1.5 pb-3.5 type-display text-[36px] leading-none text-primary">{copy.title}</h1>
       <Tabs tab={tab} locale={locale} panelId={panelId} onChange={(next) => router.replace(next === 'works' ? '/stories?tab=works' : '/stories', { scroll: false })} />
       <section id={panelId} role="tabpanel" className="pt-3.5">
+        {/* «Historias de la comunidad · + Crear obra» (gallery_works_feed.dart). */}
+        {tab === 'works' && works.status === 'ready' ? (
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <p className="min-w-0 truncate type-body text-[14.5px] text-secondary">{worksCopy.gallerySubtitle}</p>
+            <button
+              type="button"
+              onClick={() => setCreating(true)}
+              className="ink-focus ink-dim min-h-11 shrink-0 rounded-control px-1 type-button-sm text-[15px] text-blue"
+            >
+              + {worksCopy.createWork}
+            </button>
+          </div>
+        ) : null}
         {active.status === 'loading' ? (
           <div className="flex flex-col gap-4">
             <InkSkeleton lines={1} height="h-60" label={SESSION_COPY[locale].common.loading} />
@@ -152,7 +171,14 @@ function StoriesView() {
 
         {active.status === 'ready' && active.items.length === 0 ? (
           tab === 'works' ? (
-            <InkEmptyState title={copy.worksEmpty} />
+            <InkEmptyState
+              title={copy.worksEmpty}
+              action={
+                <InkButton fullWidth={false} className="px-6" onClick={() => setCreating(true)}>
+                  {worksCopy.createWork}
+                </InkButton>
+              }
+            />
           ) : (
             <InkEmptyState title={copy.relatosEmptyTitle} message={copy.relatosEmptyBody} />
           )
@@ -188,6 +214,7 @@ function StoriesView() {
           locale={locale}
         />
       </section>
+      <NewWorkDialog open={creating} onClose={() => setCreating(false)} />
     </div>
   );
 }
