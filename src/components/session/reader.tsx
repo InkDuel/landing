@@ -22,13 +22,17 @@ import {
   parseWorkDetail,
 } from '@/lib/session/models';
 
+import { useSession } from '@/lib/session/auth-context';
+
+import { ChapterMarksChip, ChapterMarksSection, useChapterMarks } from './chapter-marks';
 import { ByLine } from './historias';
 import { useSessionLocale } from './session-root';
 
 // Reader (10), ported from features/continue_stories/presentation/pages/
 // public_reader_page.dart: «InkDuel afuera, la historia adentro». Literata
 // 19/30, no indent or drop cap, a thin progress line under the bar.
-// Following the work, Marcas and reporting are not part of phase 1.
+// Marcas (phase 3) sit under the chapter; following the work and reporting
+// it are not part of the web.
 
 const MAX_SUMMARY_PAGES = 20;
 
@@ -318,6 +322,8 @@ export function ReaderReady({
   const words = chapter.content.trim().split(/\s+/).filter(Boolean).length;
   const kicker = `${copy.reader.chapter(chapter.orderIndex)} · ${copy.reader.readTime(Math.max(1, Math.ceil(words / 200)))}`;
   const total = work.publishedChapterCount || summaries.length;
+  const { user } = useSession();
+  const marks = useChapterMarks(work.id, chapter.id, locale);
 
   return (
     <>
@@ -331,6 +337,9 @@ export function ReaderReady({
           </h1>
           <div className="mt-[17px]">
             <ByLine name={work.authorDisplayName} authorId={work.authorId || undefined} size="md" />
+          </div>
+          <div className="mt-3 flex empty:hidden">
+            <ChapterMarksChip marks={marks} locale={locale} />
           </div>
         </header>
         <StoryText text={chapter.content} />
@@ -377,6 +386,8 @@ export function ReaderReady({
           </nav>
         ) : null}
       </footer>
+
+      <ChapterMarksSection marks={marks} isWorkAuthor={!!user && user.id === work.authorId} locale={locale} />
 
       <ChapterIndex
         open={indexOpen}

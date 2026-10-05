@@ -58,6 +58,8 @@ export type MarksCopy = {
     reported: string;
     createUnavailable: string;
     threadUnavailable: string;
+    /** A write that failed for no specific reason (galleryCommentsGenericError). */
+    actionFailed: string;
     failure: Record<MarkFailure, string>;
   };
 
@@ -162,6 +164,7 @@ export const MARKS_COPY: Record<Locale, MarksCopy> = {
       reported: 'Gracias. Lo vamos a revisar.',
       createUnavailable: 'Por ahora no puedes dejar una Marca.',
       threadUnavailable: 'Este hilo ya no está disponible.',
+      actionFailed: 'No pudimos completar la acción. Inténtalo de nuevo.',
       failure: {
         invalid: 'Revisa el texto e inténtalo de nuevo.',
         session: 'Inicia sesión de nuevo para leer las Marcas.',
@@ -284,6 +287,7 @@ export const MARKS_COPY: Record<Locale, MarksCopy> = {
       reported: "Thanks. We'll review it.",
       createUnavailable: "You can't leave an Ink Mark right now.",
       threadUnavailable: 'This thread is no longer available.',
+      actionFailed: "We couldn't complete that action. Try again.",
       failure: {
         invalid: 'Check the text and try again.',
         session: 'Sign in again to read the Ink Marks.',
@@ -406,6 +410,7 @@ export const MARKS_COPY: Record<Locale, MarksCopy> = {
       reported: 'Obrigado. Vamos analisar.',
       createUnavailable: 'Por enquanto você não pode deixar uma Marca.',
       threadUnavailable: 'Esta conversa não está mais disponível.',
+      actionFailed: 'Não foi possível concluir a ação. Tente novamente.',
       failure: {
         invalid: 'Revise o texto e tente de novo.',
         session: 'Entre de novo para ler as Marcas.',
