@@ -36,10 +36,53 @@ function useEditorState(engine: ChapterAutosave): ChapterEditorState {
   return useSyncExternalStore(engine.subscribe, engine.getState, engine.getState);
 }
 
+// The slice of the Navigation API the guard uses (not yet in TS's DOM lib).
+type TraverseEvent = Event & {
+  navigationType: 'push' | 'replace' | 'reload' | 'traverse';
+  destination: { key: string; sameDocument: boolean };
+};
+type NavigationLike = EventTarget & {
+  traverseTo(key: string): { committed: Promise<unknown>; finished: Promise<unknown> };
+};
+
 /** Saves before any in-app navigation while the editor holds unsaved text. */
 function useLeaveGuard(engine: ChapterAutosave) {
   const router = useRouter();
   useEffect(() => {
+    let active = true;
+    // Browser Back/Forward (and the back gesture) never reach the click
+    // handler. With unsaved text, the same-document traversal is cancelled
+    // through the Navigation API before anything happens (no URL change, no
+    // popstate, Next.js never sees it), the text is saved, and the traversal
+    // is replayed to the same entry only once clean. Nothing is pushed onto
+    // the history, so there are no loops and the forward stack survives. When
+    // the traversal cannot be cancelled (no Navigation API, or the browser
+    // refuses), leaving stays best-effort: the unmount flush below.
+    const navigation = (window as Window & { navigation?: NavigationLike }).navigation;
+    let replaying = false;
+    let saving = false;
+    const onNavigate = (event: Event) => {
+      const { navigationType, destination } = event as TraverseEvent;
+      if (navigationType !== 'traverse' || !destination.sameDocument) return;
+      if (replaying) {
+        replaying = false;
+        return;
+      }
+      if (!event.cancelable || !hasUnsavedWork(engine.getState())) return;
+      event.preventDefault();
+      if (saving) return;
+      saving = true;
+      void engine.flush().then((clean) => {
+        saving = false;
+        if (!clean || !active || !navigation) return;
+        replaying = true;
+        const result = navigation.traverseTo(destination.key);
+        result.committed.catch(() => {
+          replaying = false;
+        });
+        result.finished.catch(() => {});
+      });
+    };
     const onClick = (event: MouseEvent) => {
       if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       const anchor = (event.target as Element | null)?.closest?.('a[href]') as HTMLAnchorElement | null;
@@ -66,11 +109,14 @@ function useLeaveGuard(engine: ChapterAutosave) {
       if (isDirty(engine.getState())) engine.flushBestEffort();
     };
     document.addEventListener('click', onClick, true);
+    navigation?.addEventListener('navigate', onNavigate);
     window.addEventListener('beforeunload', onBeforeUnload);
     document.addEventListener('visibilitychange', onHide);
     window.addEventListener('pagehide', onPageHide);
     return () => {
+      active = false;
       document.removeEventListener('click', onClick, true);
+      navigation?.removeEventListener('navigate', onNavigate);
       window.removeEventListener('beforeunload', onBeforeUnload);
       document.removeEventListener('visibilitychange', onHide);
       window.removeEventListener('pagehide', onPageHide);
@@ -363,7 +409,8 @@ export function ChapterEditor({ workId, chapterId }: { workId: string; chapterId
     });
     setEngine(created);
     return () => {
-      // Leaving by any other way (browser back): best-effort save, then stop.
+      // Leaving unguarded (no Navigation API, or the document itself goes
+      // away): best-effort save, then stop.
       if (isDirty(created.getState())) created.flushBestEffort();
       created.dispose();
     };
