@@ -189,6 +189,25 @@ function parseReply(data: unknown): InkMarkReply | null {
 
 const present = <T>(item: T | null): item is T => item !== null;
 
+const byCreatedAt = (value: string) => {
+  const time = Date.parse(value);
+  return Number.isNaN(time) ? Number.POSITIVE_INFINITY : time;
+};
+
+/**
+ * The one way a thread's replies are combined, whatever arrived and in which
+ * order (first page, next page, a reply just created, a replay): dedupe by
+ * id — the later copy wins, it is the fresher one — then the backend's own
+ * order, createdAt ascending with the id as tie-break.
+ */
+export function mergeReplies(...lists: InkMarkReply[][]): InkMarkReply[] {
+  const byId = new Map<string, InkMarkReply>();
+  for (const list of lists) for (const reply of list) byId.set(reply.id, reply);
+  return [...byId.values()].sort(
+    (a, b) => byCreatedAt(a.createdAt) - byCreatedAt(b.createdAt) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
+  );
+}
+
 // Bandeja «Marcas recibidas»
 
 export type ReceivedMark =
@@ -339,12 +358,18 @@ export const inkMarksApi = {
     return { items: list(data.items).map(parseRoot).filter(present), nextCursor: cursor(data.nextCursor), ...parseSummary(data) };
   },
 
-  /** Replies of one root, oldest first. */
-  async replies(workId: string, chapterId: string, rootId: string, pageCursor: string | null, { locale, signal }: Ctx): Promise<InkMarkRepliesPage> {
+  /** Replies of one root, oldest first. [limit] 1 is the cheap way to read replyCount. */
+  async replies(
+    workId: string,
+    chapterId: string,
+    rootId: string,
+    pageCursor: string | null,
+    { locale, signal, limit }: Ctx & { limit?: number },
+  ): Promise<InkMarkRepliesPage> {
     const data = await apiRequest('GET', chapterPath(workId, chapterId, rootId, 'replies'), {
       locale,
       signal,
-      query: { cursor: pageCursor ?? undefined },
+      query: { cursor: pageCursor ?? undefined, limit: limit ? String(limit) : undefined },
     });
     if (!isRecord(data)) return { items: [], nextCursor: null, replyCount: 0 };
     return { items: list(data.items).map(parseReply).filter(present), nextCursor: cursor(data.nextCursor), replyCount: count(data.replyCount) };
