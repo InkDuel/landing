@@ -7,7 +7,8 @@ import { getFirebaseAuth } from './firebase';
 
 // The only way the browser talks to the backend. The ID token travels in
 // the Authorization header and nowhere else: not in storage, not in the URL,
-// not in logs. Errors carry a status, never the backend's text.
+// not in logs. Errors carry a status, never the backend's text — except a
+// 409's body, which the chapter autosave needs (the author's own text).
 
 const TIMEOUT_MS = 15_000;
 
@@ -15,10 +16,20 @@ export class ApiError extends Error {
   constructor(
     readonly status: number,
     readonly kind: 'http' | 'network' | 'timeout' | 'signedOut' | 'parse',
+    /** Parsed body of a 409 (revision conflict snapshot); undefined otherwise. */
+    readonly data?: unknown,
   ) {
     super(`api ${kind} ${status}`);
     this.name = 'ApiError';
   }
+}
+
+/** Retryable failures: network, timeout, rate limit, unavailable. */
+export function isTransient(error: unknown): boolean {
+  return (
+    error instanceof ApiError &&
+    (error.kind === 'network' || error.kind === 'timeout' || error.status === 429 || error.status === 503 || error.status === 502 || error.status === 504)
+  );
 }
 
 /** Joins path segments, encoding each one: IDs never become paths. */
@@ -26,59 +37,89 @@ export function apiPath(...segments: string[]): string {
   return '/' + segments.map((segment) => encodeURIComponent(segment)).join('/');
 }
 
-async function send(path: string, token: string, locale: Locale, signal?: AbortSignal): Promise<Response> {
+type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
+
+type RequestOptions = {
+  locale: Locale;
+  query?: Record<string, string | undefined>;
+  body?: unknown;
+  signal?: AbortSignal;
+  /** Lets a best-effort save outlive the page (pagehide). */
+  keepalive?: boolean;
+};
+
+async function send(method: Method, path: string, token: string, options: RequestOptions): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   const abort = () => controller.abort();
-  signal?.addEventListener('abort', abort);
+  options.signal?.addEventListener('abort', abort);
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    'Accept-Language': options.locale,
+    Accept: 'application/json',
+  };
+  if (options.body !== undefined) headers['Content-Type'] = 'application/json';
   try {
     return await fetch(`${API_BASE_URL}${path}`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Accept-Language': locale,
-        Accept: 'application/json',
-      },
+      method,
+      headers,
+      body: options.body === undefined ? undefined : JSON.stringify(options.body),
       credentials: 'omit',
       cache: 'no-store',
       referrerPolicy: 'strict-origin-when-cross-origin',
+      keepalive: options.keepalive,
       signal: controller.signal,
     });
   } catch {
-    throw new ApiError(0, signal?.aborted || controller.signal.aborted ? 'timeout' : 'network');
+    throw new ApiError(0, options.signal?.aborted || controller.signal.aborted ? 'timeout' : 'network');
   } finally {
     clearTimeout(timer);
-    signal?.removeEventListener('abort', abort);
+    options.signal?.removeEventListener('abort', abort);
   }
 }
 
 /**
- * GET an authenticated endpoint. On a 401 the token is refreshed once and
- * the request retried, as Firebase tokens expire after an hour.
+ * Calls an authenticated endpoint. On a 401 the token is refreshed once and
+ * the request retried, as Firebase tokens expire after an hour. Returns the
+ * parsed JSON body, or null for an empty (204) response.
  */
-export async function apiGet(
-  path: string,
-  { locale, query, signal }: { locale: Locale; query?: Record<string, string | undefined>; signal?: AbortSignal },
-): Promise<unknown> {
+export async function apiRequest(method: Method, path: string, options: RequestOptions): Promise<unknown> {
   const user = getFirebaseAuth()?.currentUser;
   if (!user) throw new ApiError(401, 'signedOut');
 
   const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(query ?? {})) {
+  for (const [key, value] of Object.entries(options.query ?? {})) {
     if (value) params.set(key, value);
   }
   const target = params.size > 0 ? `${path}?${params.toString()}` : path;
 
-  let response = await send(target, await user.getIdToken(), locale, signal);
+  let response = await send(method, target, await user.getIdToken(), options);
   if (response.status === 401) {
-    response = await send(target, await user.getIdToken(true), locale, signal);
+    response = await send(method, target, await user.getIdToken(true), options);
   }
-  if (!response.ok) throw new ApiError(response.status, 'http');
+  if (!response.ok) {
+    let data: unknown;
+    if (response.status === 409) {
+      try {
+        data = await response.json();
+      } catch {
+        data = undefined;
+      }
+    }
+    throw new ApiError(response.status, 'http', data);
+  }
+  if (response.status === 204) return null;
+  const text = await response.text();
+  if (!text) return null;
   try {
-    return await response.json();
+    return JSON.parse(text);
   } catch {
     throw new ApiError(response.status, 'parse');
   }
+}
+
+export function apiGet(path: string, options: Omit<RequestOptions, 'body' | 'keepalive'>): Promise<unknown> {
+  return apiRequest('GET', path, options);
 }
 
 /** A route param as the user typed it (Next may hand it over encoded). */
