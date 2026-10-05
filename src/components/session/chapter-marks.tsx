@@ -15,6 +15,7 @@ import {
   type ReportReason,
   inkMarksApi,
   markFailure,
+  mergeReplies,
 } from '@/lib/session/marks';
 import { MARKS_COPY } from '@/lib/session/marks-copy';
 
@@ -204,7 +205,7 @@ export function useChapterMarks(workId: string, chapterId: string, locale: Local
                 ...thread,
                 loading: false,
                 loaded: true,
-                items: dedupe(cursor ? [...thread.items, ...page.items] : [...page.items, ...thread.items]),
+                items: mergeReplies(thread.items, page.items),
                 nextCursor: page.nextCursor,
               },
             },
@@ -303,7 +304,7 @@ export function useChapterMarks(workId: string, chapterId: string, locale: Local
           composer: null,
           summary,
           roots: s.roots.map((root) => (root.id === rootId ? { ...root, replyCount: root.replyCount + add } : root)),
-          threads: { ...s.threads, [rootId]: { ...thread, expanded: true, items: dedupe([...thread.items, reply]) } },
+          threads: { ...s.threads, [rootId]: { ...thread, expanded: true, items: mergeReplies(thread.items, [reply]) } },
         };
       });
       // A reply in a thread never opened: bring in the replies before it.
@@ -318,6 +319,7 @@ export function useChapterMarks(workId: string, chapterId: string, locale: Local
           .summary(workId, chapterId, ctx())
           .then((summary) => live(gen) && setState((s) => ({ ...s, summary })))
           .catch(() => undefined);
+        if (result.reply && target.rootId) reconcileReplyCount(target.rootId, gen);
       }
       setNotice(copy.created);
       return true;
@@ -335,6 +337,24 @@ export function useChapterMarks(workId: string, chapterId: string, locale: Local
       }));
       return false;
     }
+  }
+
+  /**
+   * After a replayed reply, re-read ONE root's replyCount (the app's
+   * _reconcileReplyCount): a one-item request whose count alone is adopted.
+   * The thread's items, cursor and expansion are left alone; best-effort.
+   */
+  function reconcileReplyCount(rootId: string, gen: number) {
+    inkMarksApi
+      .replies(workId, chapterId, rootId, null, { ...ctx(), limit: 1 })
+      .then((page) => {
+        if (!live(gen)) return;
+        setState((s) => ({
+          ...s,
+          roots: s.roots.map((root) => (root.id === rootId ? { ...root, replyCount: page.replyCount } : root)),
+        }));
+      })
+      .catch(() => undefined);
   }
 
   /** Optimistic, with rollback; the counters then come from the server. */
