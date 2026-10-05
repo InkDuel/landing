@@ -15,6 +15,10 @@ import { Spine } from './historias';
 // Producto context, spines with the app's stable colour, Literata titles,
 // written status chips, pill filters (the pattern Obras keeps).
 
+export function followingHref(): string {
+  return '/me/following';
+}
+
 export function myWorksHref(): string {
   return '/me/works';
 }
@@ -28,7 +32,20 @@ export function chapterEditHref(workId: string, chapterId: string | 'new'): stri
 }
 
 /** «Tu espacio» row of the own profile (Perfil mockup .p-rows). */
-export function SpaceRow({ href, title, subtitle, glyph }: { href: string; title: string; subtitle: string; glyph: string }) {
+export function SpaceRow({
+  href,
+  title,
+  subtitle,
+  glyph,
+  count,
+}: {
+  href: string;
+  title: string;
+  subtitle?: string;
+  glyph: string;
+  /** The count the app shows on the row, when it is known. */
+  count?: number;
+}) {
   return (
     <Link
       href={href}
@@ -37,8 +54,9 @@ export function SpaceRow({ href, title, subtitle, glyph }: { href: string; title
       <Spine workId={glyph} />
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="type-body-strong leading-[1.2] text-primary">{title}</span>
-        <span className="type-body text-[14px] text-secondary">{subtitle}</span>
+        {subtitle ? <span className="type-body text-[14px] text-secondary">{subtitle}</span> : null}
       </span>
+      {count !== undefined ? <span className="shrink-0 type-body-strong tabular-nums text-secondary">{count}</span> : null}
       <ChevronRightIcon size={20} className="shrink-0 text-secondary" />
     </Link>
   );

@@ -12,6 +12,19 @@ const plural = (zero: string | null, one: string, other: (n: number) => string):
 export type WorksCopy = {
   myWorks: string;
   myWorksSubtitle: string;
+  followStory: string;
+  following: string;
+  followSupport: string;
+  followError: string;
+  followingTitle: string;
+  followingEmptyTitle: string;
+  followingEmptyBody: string;
+  followingError: string;
+  gallerySubtitle: string;
+  createWork: string;
+  growCta: string;
+  growSubtitle: string;
+  growError: string;
   headline: string;
   filterAll: string;
   filterDrafts: string;
@@ -113,6 +126,19 @@ export const WORKS_COPY: Record<Locale, WorksCopy> = {
   es: {
     myWorks: 'Tus obras',
     myWorksSubtitle: 'Tus obras y borradores',
+    followStory: 'Seguir historia',
+    following: 'Siguiendo',
+    followSupport: 'Te avisaremos cuando haya un nuevo capítulo.',
+    followError: 'No pudimos actualizar este seguimiento. Inténtalo de nuevo.',
+    followingTitle: 'Historias que sigo',
+    followingEmptyTitle: 'Todavía no sigues ninguna historia.',
+    followingEmptyBody: 'Cuando sigas una obra, aparecerá aquí para que puedas volver cuando quieras.',
+    followingError: 'No pudimos cargar las historias que sigues.',
+    gallerySubtitle: 'Historias de la comunidad',
+    createWork: 'Crear obra',
+    growCta: 'Haz crecer esta historia',
+    growSubtitle: 'Dale nuevos capítulos y conviértela en una obra.',
+    growError: 'No se pudo abrir la historia. Inténtalo de nuevo.',
     headline: 'Tus obras.',
     filterAll: 'Todas',
     filterDrafts: 'Borradores',
@@ -204,6 +230,19 @@ export const WORKS_COPY: Record<Locale, WorksCopy> = {
   en: {
     myWorks: 'Your works',
     myWorksSubtitle: 'Your works and drafts',
+    followStory: 'Follow story',
+    following: 'Following',
+    followSupport: "We'll let you know when there is a new chapter.",
+    followError: "We couldn't update this follow. Please try again.",
+    followingTitle: 'Stories I follow',
+    followingEmptyTitle: "You aren't following any stories yet.",
+    followingEmptyBody: 'When you follow a work, it will appear here so you can return whenever you want.',
+    followingError: "We couldn't load the stories you follow.",
+    gallerySubtitle: 'Stories from the community',
+    createWork: 'Create work',
+    growCta: 'Grow this story',
+    growSubtitle: 'Give it new chapters and turn it into a work.',
+    growError: "Couldn't open the story. Try again.",
     headline: 'Your works.',
     filterAll: 'All',
     filterDrafts: 'Drafts',
@@ -295,6 +334,19 @@ export const WORKS_COPY: Record<Locale, WorksCopy> = {
   pt: {
     myWorks: 'Suas obras',
     myWorksSubtitle: 'Suas obras e rascunhos',
+    followStory: 'Seguir história',
+    following: 'Seguindo',
+    followSupport: 'Avisaremos quando houver um novo capítulo.',
+    followError: 'Não foi possível atualizar este seguimento. Tente novamente.',
+    followingTitle: 'Histórias que sigo',
+    followingEmptyTitle: 'Você ainda não segue nenhuma história.',
+    followingEmptyBody: 'Quando você seguir uma obra, ela aparecerá aqui para que possa voltar quando quiser.',
+    followingError: 'Não foi possível carregar as histórias que você segue.',
+    gallerySubtitle: 'Histórias da comunidade',
+    createWork: 'Criar obra',
+    growCta: 'Faça esta história crescer',
+    growSubtitle: 'Dê novos capítulos a ela e transforme-a em uma obra.',
+    growError: 'Não foi possível abrir a história. Tente de novo.',
     headline: 'Suas obras.',
     filterAll: 'Todas',
     filterDrafts: 'Rascunhos',
