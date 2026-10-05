@@ -26,13 +26,14 @@ import { useSession } from '@/lib/session/auth-context';
 
 import { ChapterMarksChip, ChapterMarksSection, useChapterMarks } from './chapter-marks';
 import { ByLine } from './historias';
+import { FollowCompact, FollowEndRow, FollowError, useWorkFollow } from './work-follow';
 import { useSessionLocale } from './session-root';
 
 // Reader (10), ported from features/continue_stories/presentation/pages/
 // public_reader_page.dart: «InkDuel afuera, la historia adentro». Literata
 // 19/30, no indent or drop cap, a thin progress line under the bar.
-// Marcas (phase 3) sit under the chapter; following the work and reporting
-// it are not part of the web.
+// Marcas (phase 3) sit under the chapter; following the work (phase 4) sits
+// beside the author and at the end. Reporting the work is not part of the web.
 
 const MAX_SUMMARY_PAGES = 20;
 
@@ -324,6 +325,7 @@ export function ReaderReady({
   const total = work.publishedChapterCount || summaries.length;
   const { user } = useSession();
   const marks = useChapterMarks(work.id, chapter.id, locale);
+  const follow = useWorkFollow(work.id, locale);
 
   return (
     <>
@@ -336,7 +338,13 @@ export function ReaderReady({
             {chapterTitle}
           </h1>
           <div className="mt-[17px]">
-            <ByLine name={work.authorDisplayName} authorId={work.authorId || undefined} size="md" />
+            <ByLine
+              name={work.authorDisplayName}
+              authorId={work.authorId || undefined}
+              size="md"
+              trailing={<FollowCompact follow={follow} locale={locale} />}
+            />
+            <FollowError follow={follow} at="header" locale={locale} />
           </div>
           <div className="mt-3 flex empty:hidden">
             <ChapterMarksChip marks={marks} locale={locale} />
@@ -385,6 +393,10 @@ export function ReaderReady({
             )}
           </nav>
         ) : null}
+
+        <div className="mt-2 empty:hidden">
+          <FollowEndRow follow={follow} authorName={work.authorDisplayName} locale={locale} />
+        </div>
       </footer>
 
       <ChapterMarksSection marks={marks} isWorkAuthor={!!user && user.id === work.authorId} locale={locale} />
