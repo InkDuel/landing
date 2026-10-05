@@ -13,8 +13,10 @@ import { StoryText } from '@/components/reading/story-parts';
 import { ByLine, HistoriasIndex, ListFooter, RelatoItem, WorkItem, winReason } from '@/components/session/historias';
 import { RequireSession, SessionPage } from '@/components/session/session-page';
 import { useSessionLocale } from '@/components/session/session-root';
+import { StoryComments } from '@/components/session/story-comments';
 import type { Locale } from '@/lib/i18n';
 import { apiGet } from '@/lib/session/api';
+import { useSession } from '@/lib/session/auth-context';
 import { SESSION_COPY } from '@/lib/session/copy';
 import { type GalleryStory, parseGalleryStories, parseGalleryWorks } from '@/lib/session/models';
 import { useInfiniteSentinel, usePagedList } from '@/lib/session/use-paged-list';
@@ -23,7 +25,7 @@ import { useInfiniteSentinel, usePagedList } from '@/lib/session/use-paged-list'
 // existing lists, «Lo último» as the only card, then an index. A relato
 // opens in place (?relato=): the backend has no single-relato endpoint, so
 // the detail reads the item already loaded, as the app does. Likes and
-// Marcas are not part of phase 1.
+// Marcas sit under the relato (phase 3); likes are not part of the web.
 
 type Tab = 'relatos' | 'works';
 
@@ -58,6 +60,7 @@ function Tabs({ tab, onChange, locale, panelId }: { tab: Tab; onChange: (tab: Ta
 function RelatoDetail({ story, locale }: { story: GalleryStory; locale: Locale }) {
   const copy = SESSION_COPY[locale].stories;
   const reason = winReason(story, locale);
+  const { user } = useSession();
   useEffect(() => window.scrollTo(0, 0), [story.key]);
   return (
     <article className="mx-auto flex w-full max-w-[680px] flex-col gap-4 pt-2">
@@ -78,6 +81,13 @@ function RelatoDetail({ story, locale }: { story: GalleryStory; locale: Locale }
       <div className="mt-4">
         <StoryText text={story.storyText || story.storyPreview} />
       </div>
+      <StoryComments
+        duelId={story.duelId}
+        storyId={story.storyId}
+        isOwnStory={!!user && user.id === story.authorId}
+        initialCount={story.commentsCount}
+        locale={locale}
+      />
     </article>
   );
 }
