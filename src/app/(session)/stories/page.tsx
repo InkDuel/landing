@@ -64,7 +64,11 @@ function RelatoDetail({ story, locale }: { story: GalleryStory; locale: Locale }
   const copy = SESSION_COPY[locale].stories;
   const reason = winReason(story, locale);
   const { user } = useSession();
-  useEffect(() => window.scrollTo(0, 0), [story.key]);
+  // A block, not an expression: recent Chrome returns a promise from
+  // scrollTo, which React would take for a cleanup function.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [story.key]);
   return (
     <article className="mx-auto flex w-full max-w-[680px] flex-col gap-4 pt-2">
       <Link
