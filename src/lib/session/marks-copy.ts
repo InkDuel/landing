@@ -92,7 +92,8 @@ export type MarksCopy = {
     headline: string;
     lead: string;
     viewAll: string;
-    newBadge: Plural;
+    /** «3 nuevas», «1 nueva», «20+ nuevas» when more may be unread. */
+    newBadge: (count: number, capped: boolean) => string;
     emptyTitle: string;
     emptyBody: string;
     previewEmpty: string;
@@ -214,7 +215,7 @@ export const MARKS_COPY: Record<Locale, MarksCopy> = {
       headline: 'Marcas recibidas.',
       lead: 'Lo que tus lectores dejaron en tus relatos y capítulos.',
       viewAll: 'Ver todas',
-      newBadge: plural('1 nueva', (n) => `${n} nuevas`),
+      newBadge: (n, capped) => (capped ? `${n}+ nuevas` : n === 1 ? '1 nueva' : `${n} nuevas`),
       emptyTitle: 'Todavía no recibiste Marcas',
       emptyBody: 'Cuando alguien deje una Marca en tus relatos o capítulos, aparece aquí.',
       previewEmpty: 'Todavía no recibiste Marcas. Escribe un relato y empezarán a aparecer aquí.',
@@ -338,7 +339,7 @@ export const MARKS_COPY: Record<Locale, MarksCopy> = {
       headline: 'Marks received.',
       lead: 'What your readers left on your stories and chapters.',
       viewAll: 'See all',
-      newBadge: plural('1 new', (n) => `${n} new`),
+      newBadge: (n, capped) => `${n}${capped ? '+' : ''} new`,
       emptyTitle: "You haven't received Marks yet",
       emptyBody: 'When someone leaves a Mark on your stories or chapters, it shows up here.',
       previewEmpty: "No Marks yet. Write a story and they'll start showing up here.",
@@ -462,7 +463,7 @@ export const MARKS_COPY: Record<Locale, MarksCopy> = {
       headline: 'Marcas recebidas.',
       lead: 'O que seus leitores deixaram nos seus contos e capítulos.',
       viewAll: 'Ver todas',
-      newBadge: plural('1 nova', (n) => `${n} novas`),
+      newBadge: (n, capped) => (capped ? `${n}+ novas` : n === 1 ? '1 nova' : `${n} novas`),
       emptyTitle: 'Você ainda não recebeu Marcas',
       emptyBody: 'Quando alguém deixar uma Marca nos seus contos ou capítulos, ela aparece aqui.',
       previewEmpty: 'Você ainda não recebeu Marcas. Escreva um conto e elas vão começar a aparecer aqui.',
