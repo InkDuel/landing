@@ -63,7 +63,7 @@ export function GrowStoryCta({ duelId, storyId, locale }: { duelId: string; stor
         <ChevronRightIcon size={20} className="shrink-0 text-secondary" />
       </button>
       <p role="status" aria-live="polite" className={cx('type-caption text-danger', !failed && 'sr-only')}>
-        {failed ? copy.growError : ''}
+        {failed ? (unavailable ? copy.growUnavailable : copy.growError) : ''}
       </p>
     </div>
   );
