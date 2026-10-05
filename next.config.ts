@@ -50,10 +50,10 @@ const nextConfig: NextConfig = {
     return [
       { source: "/:path*", headers: securityHeaders },
       // The static CSP covers every public page. The signed-in area
-      // (/login, /me, /stories, /profile/*, /work/*) gets a stricter policy
+      // (/login, /me, /me/*, /stories, /profile/*, /work/*) gets a stricter policy
       // with a per-request nonce from src/proxy.ts instead.
       {
-        source: "/((?!login$|me$|stories$|profile/|work/).*)",
+        source: "/((?!login$|me$|me/|stories$|profile/|work/).*)",
         headers: [{ key: "Content-Security-Policy", value: contentSecurityPolicy }],
       },
     ];

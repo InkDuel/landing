@@ -2,7 +2,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { API_BASE_URL, firebaseWebConfig } from '@/lib/session/config';
 
-// Strict CSP with a per-request nonce, only for the signed-in area (founder
+// Strict CSP with a per-request nonce, only for the signed-in area — /login,
+// /me and /me/*, /stories, /profile/*, /work/* (founder
 // decision B, 2026-10-04). Those pages render per request anyway; the public
 // pages keep the static policy from next.config.ts and their CDN cache.
 //
@@ -67,7 +68,7 @@ export const config = {
       ],
     },
     {
-      source: '/(profile|work)/:path*',
+      source: '/(me|profile|work)/:path*',
       missing: [
         { type: 'header', key: 'next-router-prefetch' },
         { type: 'header', key: 'purpose', value: 'prefetch' },
