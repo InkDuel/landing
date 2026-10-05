@@ -12,6 +12,7 @@ import { InkInlineBanner } from '@/components/ink/ink-inline-banner';
 import { InkEmptyState, InkSkeleton, InkTextAction } from '@/components/ink/ink-states';
 import { StoryText } from '@/components/reading/story-parts';
 import { ByLine, HistoriasIndex, ListFooter, RelatoItem, WorkItem, winReason } from '@/components/session/historias';
+import { GrowStoryCta } from '@/components/session/grow-story';
 import { NewWorkDialog } from '@/components/session/my-works';
 import { RequireSession, SessionPage } from '@/components/session/session-page';
 import { useSessionLocale } from '@/components/session/session-root';
@@ -64,6 +65,7 @@ function RelatoDetail({ story, locale }: { story: GalleryStory; locale: Locale }
   const copy = SESSION_COPY[locale].stories;
   const reason = winReason(story, locale);
   const { user } = useSession();
+  const isOwnStory = !!user && user.id === story.authorId;
   // A block, not an expression: recent Chrome returns a promise from
   // scrollTo, which React would take for a cleanup function.
   useEffect(() => {
@@ -88,10 +90,15 @@ function RelatoDetail({ story, locale }: { story: GalleryStory; locale: Locale }
       <div className="mt-4">
         <StoryText text={story.storyText || story.storyPreview} />
       </div>
+      {isOwnStory && story.storyText.trim() ? (
+        <div className="mt-6">
+          <GrowStoryCta duelId={story.duelId} storyId={story.storyId} locale={locale} />
+        </div>
+      ) : null}
       <StoryComments
         duelId={story.duelId}
         storyId={story.storyId}
-        isOwnStory={!!user && user.id === story.authorId}
+        isOwnStory={isOwnStory}
         initialCount={story.commentsCount}
         locale={locale}
       />

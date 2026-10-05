@@ -147,6 +147,16 @@ export const worksApi = {
     return requireWork(await apiRequest('POST', '/api/works', { locale, body: { title, clientRequestId } }));
   },
 
+  /**
+   * «Haz crecer esta historia»: create-or-open the work of one of your own
+   * duel stories (idempotent per duel). A new one has no title and the story
+   * as chapter 1, in draft. Ownership is the token's, never the body's.
+   */
+  async fromDuelStory(duelId: string, storyId: string, { locale }: Ctx) {
+    const data = await apiRequest('POST', '/api/works/from-duel-story', { locale, body: { duelId, storyId } });
+    return { created: isRecord(data) && data.created === true, work: requireWork(data) };
+  },
+
   async get(workId: string, { locale, signal }: Ctx) {
     return requireWork(await apiRequest('GET', apiPath('api', 'works', workId), { locale, signal }));
   },

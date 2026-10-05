@@ -11,6 +11,7 @@ import { apiGet, apiPath } from '@/lib/session/api';
 import { useSession } from '@/lib/session/auth-context';
 import { MARKS_COPY } from '@/lib/session/marks-copy';
 
+import { GrowStoryCta } from './grow-story';
 import { receivedMarksHref } from './received-marks';
 import { useSessionLocale } from './session-root';
 import { StoryComments } from './story-comments';
@@ -63,6 +64,11 @@ export function ReceivedStoryView({ duelId, storyId, commentId }: { duelId: stri
           <div className="mt-2">
             <StoryText text={story.text} />
           </div>
+          {story.authorId === uid && story.text.trim() ? (
+            <div className="mt-4">
+              <GrowStoryCta duelId={duelId} storyId={storyId} locale={locale} />
+            </div>
+          ) : null}
         </>
       ) : null}
       <StoryComments
