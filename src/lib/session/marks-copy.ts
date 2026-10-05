@@ -72,6 +72,7 @@ export type MarksCopy = {
     emptyBody: string;
     hint: string;
     selfComment: string;
+    createUnavailable: string;
     delete: string;
     deleteTitle: string;
     deleteBody: string;
@@ -185,6 +186,7 @@ export const MARKS_COPY: Record<Locale, MarksCopy> = {
       emptyBody: 'Deja la primera Marca.',
       hint: 'Deja tu Marca en este relato…',
       selfComment: 'No puedes dejar Marcas en tu propio relato.',
+      createUnavailable: 'Por ahora no puedes dejar una Marca.',
       delete: 'Borrar Marca',
       deleteTitle: '¿Borrar esta Marca?',
       deleteBody: 'Desaparece del relato al instante.',
@@ -308,6 +310,7 @@ export const MARKS_COPY: Record<Locale, MarksCopy> = {
       emptyBody: 'Leave the first Mark.',
       hint: 'Leave your Mark on this story…',
       selfComment: "You can't leave Marks on your own story.",
+      createUnavailable: "You can't leave a Mark right now.",
       delete: 'Delete Mark',
       deleteTitle: 'Delete this Mark?',
       deleteBody: 'It disappears from the story right away.',
@@ -431,6 +434,7 @@ export const MARKS_COPY: Record<Locale, MarksCopy> = {
       emptyBody: 'Deixe a primeira Marca.',
       hint: 'Deixe sua Marca neste conto…',
       selfComment: 'Você não pode deixar Marcas no seu próprio conto.',
+      createUnavailable: 'Por enquanto você não pode deixar uma Marca.',
       delete: 'Apagar Marca',
       deleteTitle: 'Apagar esta Marca?',
       deleteBody: 'Ela some do conto na hora.',

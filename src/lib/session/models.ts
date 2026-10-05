@@ -65,6 +65,8 @@ export type GalleryStory = {
   authorRank: string;
   score: number;
   strengths: string[];
+  /** Marcas on the relato (may lag the visible list: known debt, not fixed here). */
+  commentsCount: number;
 };
 
 export type Page<T> = { items: T[]; nextCursor: string | null };
@@ -85,6 +87,7 @@ export function parseGalleryStories(data: unknown): Page<GalleryStory> {
       authorRank: str(item.authorRank),
       score: num(item.score),
       strengths: list(item.strengths).filter((s): s is string => typeof s === 'string'),
+      commentsCount: nonNegative(item.commentsCount),
     }))
     .filter((item) => item.duelId && item.storyId);
   return { items, nextCursor: cursor(data.nextCursor) };
