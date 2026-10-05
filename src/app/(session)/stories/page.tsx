@@ -6,7 +6,7 @@ import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 
 import { Consigna } from '@/components/ink/consigna';
 import { cx } from '@/components/ink/cx';
-import { ChevronLeftIcon } from '@/components/ink/icons';
+import { ChevronLeftIcon, PlusIcon } from '@/components/ink/icons';
 import { InkButton } from '@/components/ink/ink-button';
 import { InkInlineBanner } from '@/components/ink/ink-inline-banner';
 import { InkEmptyState, InkSkeleton, InkTextAction } from '@/components/ink/ink-states';
@@ -156,12 +156,15 @@ function StoriesView() {
         {tab === 'works' && works.status === 'ready' ? (
           <div className="mb-3 flex items-center justify-between gap-3">
             <p className="min-w-0 truncate type-body text-[14.5px] text-secondary">{worksCopy.gallerySubtitle}</p>
+            {/* A white pill with presence: yellow stays with «Leer», the main
+                action of Historias (one yellow per screen). */}
             <button
               type="button"
               onClick={() => setCreating(true)}
-              className="ink-focus ink-dim min-h-11 shrink-0 rounded-control px-1 type-button-sm text-[15px] text-blue"
+              className="ink-focus ink-dim inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-pill border-brand border-outline bg-surface px-4 py-2 type-button-sm text-[14px] text-primary"
             >
-              + {worksCopy.createWork}
+              <PlusIcon size={16} />
+              {worksCopy.createWork}
             </button>
           </div>
         ) : null}

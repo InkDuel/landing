@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { cx } from '@/components/ink/cx';
+import { CheckIcon } from '@/components/ink/icons';
 import { PlayerIdentity } from '@/components/ink/player-identity';
 import type { Locale } from '@/lib/i18n';
 import { followsApi } from '@/lib/session/follows';
@@ -53,18 +54,27 @@ export type WorkFollow = ReturnType<typeof useWorkFollow>;
 /** «Seguir historia» / «Siguiendo» beside the byline. */
 export function FollowCompact({ follow, locale }: { follow: WorkFollow; locale: Locale }) {
   if (!follow.canFollow) return null;
+  return <FollowPill follow={follow} origin="header" locale={locale} />;
+}
+
+/**
+ * The follow pill, beside the byline and at the end: outlined while you can
+ * follow, quiet with a check once you do.
+ */
+function FollowPill({ follow, origin, locale }: { follow: WorkFollow; origin: Origin; locale: Locale }) {
   const copy = WORKS_COPY[locale];
   return (
     <button
       type="button"
-      onClick={() => void follow.toggle('header')}
+      onClick={() => void follow.toggle(origin)}
       disabled={follow.busy}
       aria-pressed={follow.following}
       className={cx(
-        'ink-focus ink-dim relative z-10 min-h-11 shrink-0 rounded-control px-1 type-button-sm text-[14.5px]',
-        follow.following ? 'text-reader-muted' : 'text-blue',
+        'ink-focus ink-dim relative z-10 inline-flex min-h-9 shrink-0 items-center gap-1 rounded-pill bg-surface px-3.5 type-button-sm text-[13.5px]',
+        follow.following ? 'border-quiet border-default text-secondary' : 'border-brand border-outline text-primary',
       )}
     >
+      {follow.following ? <CheckIcon size={16} /> : null}
       {follow.following ? copy.following : copy.followStory}
     </button>
   );
@@ -93,15 +103,7 @@ export function FollowEndRow({ follow, authorName, locale }: { follow: WorkFollo
           <span className="truncate type-body-strong text-[15px] text-content">@{name}</span>
           <span className="type-caption text-reader-muted">{copy.followSupport}</span>
         </div>
-        <button
-          type="button"
-          onClick={() => void follow.toggle('end')}
-          disabled={follow.busy}
-          aria-pressed={follow.following}
-          className="ink-focus ink-dim inline-flex min-h-11 shrink-0 items-center rounded-pill border-brand border-outline bg-surface px-4 type-button-sm text-[14px] text-primary"
-        >
-          {follow.following ? copy.following : copy.followStory}
-        </button>
+        <FollowPill follow={follow} origin="end" locale={locale} />
       </div>
       <FollowError follow={follow} at="end" locale={locale} />
     </div>
