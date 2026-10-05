@@ -23,7 +23,8 @@ import { WORKS_COPY } from '@/lib/session/works-copy';
 // action. Creating a work asks only for its title, then opens the editor of
 // chapter 1, as the app does. Converting a duel story is not on the web yet.
 
-function NewWorkDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+/** «Nueva obra»: shared by Tus obras and Historias › Obras (as in the app). */
+export function NewWorkDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { locale } = useSessionLocale();
   const copy = WORKS_COPY[locale];
   const router = useRouter();
