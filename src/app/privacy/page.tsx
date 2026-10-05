@@ -4,7 +4,6 @@ import { type LegalCopy, LegalPage } from '@/components/legal/legal-page';
 import type { Locale } from '@/lib/i18n';
 
 const CONTACT_EMAIL = 'inkduel.app@gmail.com';
-const PRIVACY_URL = 'https://inkduel.com/privacy';
 const DELETE_ACCOUNT_URL = 'https://inkduel.com/delete-account';
 
 const copies: Record<Locale, LegalCopy> = {
