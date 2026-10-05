@@ -13,6 +13,7 @@ import { InkSkeleton, InkTextAction } from '@/components/ink/ink-states';
 import { InkTextField } from '@/components/ink/ink-text-field';
 import { Kicker } from '@/components/ink/kicker';
 import { BackLink } from '@/components/legal/legal-page';
+import { ListFooter } from './historias';
 import { useSessionLocale } from './session-root';
 import { chapterEditHref, myWorksHref } from './works-parts';
 import { ApiError } from '@/lib/session/api';
@@ -28,6 +29,8 @@ import { WORKS_COPY } from '@/lib/session/works-copy';
 // work has a title AND at least one published chapter. Works already
 // published without one (legacy) show «Publicada · Nadie puede leerla
 // todavía» and can be completed or unpublished; nothing is migrated.
+// A work out of moderation's «active» state cannot be (re)published (the
+// backend answers 409); it shows a generic notice and no Publish action.
 
 const words = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
 
@@ -162,11 +165,13 @@ export function WorkManageView({ workId }: { workId: string }) {
   const [confirm, setConfirm] = useState<Confirm>(null);
   const [attempt, setAttempt] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreFailed, setLoadMoreFailed] = useState(false);
 
   const apply = useCallback((next: AuthorWork) => {
     setWork(next);
     setChapters(next.chapters);
     setCursor(next.chaptersNextCursor);
+    setLoadMoreFailed(false);
   }, []);
 
   const reload = useCallback(async () => {
@@ -210,20 +215,26 @@ export function WorkManageView({ workId }: { workId: string }) {
     }
   }
 
+  // Like usePagedList: a failed page disables the sentinel until the explicit
+  // retry, so a 429/5xx/network error never turns into a request loop.
   const loadMore = useCallback(async () => {
     if (!cursor || loadingMore) return;
     setLoadingMore(true);
+    setLoadMoreFailed(false);
     try {
       const page = await worksApi.chapters(workId, cursor, { locale });
       setChapters((prev) => [...prev, ...page.items.filter((item) => !prev.some((p) => p.id === item.id))]);
       setCursor(page.nextCursor);
     } catch {
-      setMutationFailed(true);
+      setLoadMoreFailed(true);
     } finally {
       setLoadingMore(false);
     }
   }, [cursor, loadingMore, workId, locale]);
-  const sentinel = useInfiniteSentinel(() => void loadMore(), status === 'ready' && cursor !== null && !loadingMore);
+  const sentinel = useInfiniteSentinel(
+    () => void loadMore(),
+    status === 'ready' && cursor !== null && !loadingMore && !loadMoreFailed,
+  );
 
   if (status === 'loading') return <InkSkeleton className="mt-6" lines={4} label={SESSION_COPY[locale].common.loading} />;
   if (status !== 'ready' || !work) {
@@ -238,7 +249,8 @@ export function WorkManageView({ workId }: { workId: string }) {
 
   const hasTitle = work.title.trim() !== '';
   const hasPublishedChapter = work.publishedChapterCount > 0;
-  const canPublish = hasTitle && hasPublishedChapter;
+  const available = work.moderationState === 'active';
+  const canPublish = available && hasTitle && hasPublishedChapter;
   const kicker = !work.published ? copy.statusDraft : work.isGalleryEligible ? copy.statusInStories : copy.statusPublished;
 
   const panel = work.published ? (
@@ -254,7 +266,13 @@ export function WorkManageView({ workId }: { workId: string }) {
         <Requirement met={hasPublishedChapter} label={copy.requirementChapter} />
       </ul>
       <p className="type-caption text-secondary">
-        {canPublish ? copy.readyToPublish : !hasTitle ? copy.addTitleToPublish : copy.needsChapter}
+        {!available
+          ? copy.unavailableTitle
+          : canPublish
+            ? copy.readyToPublish
+            : !hasTitle
+              ? copy.addTitleToPublish
+              : copy.needsChapter}
       </p>
       <InkButton disabled={!canPublish} busy={busy} onClick={() => void mutate(() => worksApi.publish(work.id, { locale }))}>
         {copy.publishWork}
@@ -279,7 +297,9 @@ export function WorkManageView({ workId }: { workId: string }) {
           </div>
         </header>
 
-        {work.published && !work.isGalleryEligible ? (
+        {!available ? (
+          <InkInlineBanner tone="notice" title={copy.unavailableTitle} detail={copy.unavailableBody} />
+        ) : work.published && !hasPublishedChapter ? (
           <InkInlineBanner tone="notice" title={copy.notReadableTitle} detail={copy.notReadableBody} />
         ) : null}
         {mutationFailed ? <InkInlineBanner title={copy.mutationError} /> : null}
@@ -301,8 +321,13 @@ export function WorkManageView({ workId }: { workId: string }) {
               />
             ))}
           </ul>
-          <div ref={sentinel} aria-hidden="true" />
-          {loadingMore ? <InkSkeleton className="mt-2" lines={1} height="h-14" label={SESSION_COPY[locale].common.loading} /> : null}
+          <ListFooter
+            sentinel={sentinel}
+            loadingMore={loadingMore}
+            failed={loadMoreFailed}
+            onRetry={() => void loadMore()}
+            locale={locale}
+          />
           <InkButton href={chapterEditHref(work.id, 'new')} variant="secondary" className="mt-3">
             {chapters.length === 0 ? copy.newChapter : copy.writeNextChapter}
           </InkButton>

@@ -48,6 +48,8 @@ export type WorksCopy = {
   statusPublished: string;
   notReadableTitle: string;
   notReadableBody: string;
+  unavailableTitle: string;
+  unavailableBody: string;
   editTitle: string;
   saveTitle: string;
   cancel: string;
@@ -144,6 +146,8 @@ export const WORKS_COPY: Record<Locale, WorksCopy> = {
     statusPublished: 'Publicada',
     notReadableTitle: 'Nadie puede leerla todavía',
     notReadableBody: 'Tu obra está publicada, pero ningún capítulo lo está. Publica uno para que aparezca en Historias.',
+    unavailableTitle: 'Esta obra no está disponible',
+    unavailableBody: 'Por ahora no se puede publicar. Puedes seguir editándola; solo tú la ves.',
     editTitle: 'Editar título',
     saveTitle: 'Guardar',
     cancel: 'Cancelar',
@@ -231,6 +235,8 @@ export const WORKS_COPY: Record<Locale, WorksCopy> = {
     statusPublished: 'Published',
     notReadableTitle: 'Nobody can read it yet',
     notReadableBody: 'Your work is published, but none of its chapters is. Publish one so it shows up in Stories.',
+    unavailableTitle: "This work isn't available",
+    unavailableBody: "It can't be published for now. You can keep editing it; only you can see it.",
     editTitle: 'Edit title',
     saveTitle: 'Save',
     cancel: 'Cancel',
@@ -318,6 +324,8 @@ export const WORKS_COPY: Record<Locale, WorksCopy> = {
     statusPublished: 'Publicada',
     notReadableTitle: 'Ninguém pode lê-la ainda',
     notReadableBody: 'Sua obra está publicada, mas nenhum capítulo está. Publique um para ela aparecer em Histórias.',
+    unavailableTitle: 'Esta obra não está disponível',
+    unavailableBody: 'Por enquanto ela não pode ser publicada. Você pode continuar editando; só você a vê.',
     editTitle: 'Editar título',
     saveTitle: 'Salvar',
     cancel: 'Cancelar',
