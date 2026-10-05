@@ -179,10 +179,17 @@ export const worksApi = {
   },
 
   /** Create-on-first-save: idempotent for the same chapterId and payload. */
-  async addChapter(workId: string, chapterId: string, content: string, title: string, { locale }: Ctx) {
+  async addChapter(
+    workId: string,
+    chapterId: string,
+    content: string,
+    title: string,
+    { locale, keepalive }: Ctx & { keepalive?: boolean },
+  ) {
     return requireChapter(
       await apiRequest('POST', apiPath('api', 'works', workId, 'chapters'), {
         locale,
+        keepalive,
         body: { chapterId, content, title, clientRequestId: chapterId },
       }),
     );
