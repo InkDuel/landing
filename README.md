@@ -2,6 +2,9 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+Use Node.js 24.x, matching Vercel and the test runner. If you use nvm, run
+`nvm install` and `nvm use` from this directory before installing dependencies.
+
 First, run the development server:
 
 ```bash
