@@ -14,6 +14,7 @@ import { Kicker } from '@/components/ink/kicker';
 import { InkPage, PageColumn } from '@/components/shell/ink-page';
 import { DEFAULT_LOCALE } from '@/lib/i18n';
 import { safeRedirectHref } from '@/lib/safe-redirect';
+import { firebaseWebConfig } from '@/lib/session/config';
 
 type Locale = 'es' | 'en' | 'pt';
 type Status = 'checking' | 'ready' | 'submitting' | 'success' | 'error';
@@ -72,6 +73,12 @@ type VerifyCopy = {
 };
 
 const PASSWORD_REGEX = /^(?=.*?[a-zA-Z])(?=.*?[0-9]).{8,}$/;
+
+const configurationErrorByLocale: Record<Locale, string> = {
+  es: 'El servicio de autenticación no está configurado. Intenta más tarde.',
+  en: 'The authentication service is not configured. Please try again later.',
+  pt: 'O serviço de autenticação não está configurado. Tente novamente mais tarde.',
+};
 
 const resetCopyByLocale: Record<Locale, ResetCopy> = {
   es: {
@@ -319,7 +326,9 @@ export default function AuthActionHandler() {
   const resetCopy = resetCopyByLocale[locale];
   const verifyCopy = verifyCopyByLocale[locale];
 
-  const apiKey = searchParams.get('apiKey');
+  // Email links may carry a mobile key; web actions always use our web config.
+  const apiKey = firebaseWebConfig.apiKey.trim();
+  const configurationError = configurationErrorByLocale[locale];
   const oobCode = searchParams.get('oobCode');
   const continueUrl = searchParams.get('continueUrl');
 
@@ -334,13 +343,19 @@ export default function AuthActionHandler() {
 
   useEffect(() => {
     async function handleAction() {
-      if (!apiKey || !oobCode || !actionMode) {
+      if (!oobCode || !actionMode) {
         setStatus('error');
         setError(
           actionMode === 'verifyEmail'
             ? verifyCopy.errors.missingCode
             : resetCopy.errors.missingCode,
         );
+        return;
+      }
+
+      if (!apiKey) {
+        setStatus('error');
+        setError(configurationError);
         return;
       }
 
@@ -427,14 +442,20 @@ export default function AuthActionHandler() {
     }
 
     void handleAction();
-  }, [actionMode, apiKey, oobCode, resetCopy, verifyCopy]);
+  }, [actionMode, apiKey, configurationError, oobCode, resetCopy, verifyCopy]);
 
   async function handleResetSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!oobCode || !apiKey) {
+    if (!oobCode || !actionMode) {
       setStatus('error');
       setError(resetCopy.errors.missingCode);
+      return;
+    }
+
+    if (!apiKey) {
+      setStatus('error');
+      setError(configurationError);
       return;
     }
 
