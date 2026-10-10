@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 import { InkButton } from '@/components/ink/ink-button';
 import { InkDialog } from '@/components/ink/ink-dialog';
 import { LevelBar, ProfileIdentity, ProfileLayout, ProfileStats, RankCard } from '@/components/session/profile-parts';
+import { DuelHistory, RankedQueue } from '@/components/session/duel-history';
+import { RankedActiveNotice } from '@/components/session/ranked';
 import { ReceivedMarksPreview } from '@/components/session/received-marks';
 import { RequireSession, SessionPage } from '@/components/session/session-page';
 import { useSessionLocale } from '@/components/session/session-root';
@@ -18,7 +20,7 @@ import { WORKS_COPY } from '@/lib/session/works-copy';
 // Your profile (11, own): identity → rank card with the pencil → level →
 // stats → Marcas recibidas → «Tu espacio» (Tus obras, Historias que sigo,
 // with the app's counts; Círculo de tinta comes later).
-// The history is not part of the web yet. Signing out lives in Ajustes in the app; the web has no
+// Signing out lives in Ajustes in the app; the web has no
 // Ajustes, so it closes the profile, behind the same simple dialog (18).
 
 function MeView() {
@@ -57,6 +59,7 @@ function MeView() {
         stats={<ProfileStats user={user} locale={locale} own />}
         footer={
           <div className="flex flex-col gap-6">
+            <RankedActiveNotice locale={locale} />
             <ReceivedMarksPreview />
             <div className="flex flex-col gap-3">
               <SpaceRow
@@ -68,6 +71,8 @@ function MeView() {
               />
               <SpaceRow href={followingHref()} title={works.followingTitle} glyph="historias-que-sigo" count={summary?.followingWorksCount} />
             </div>
+            <RankedQueue locale={locale} />
+            <DuelHistory ownerId={user.id} locale={locale} />
             <div>
               <InkButton variant="ghost" fullWidth={false} onClick={() => setConfirming(true)}>
                 {copy.signOut}

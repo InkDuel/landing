@@ -53,7 +53,7 @@ const nextConfig: NextConfig = {
       // (/login, /me, /me/*, /stories, /profile/*, /work/*) gets a stricter policy
       // with a per-request nonce from src/proxy.ts instead.
       {
-        source: "/((?!login$|me$|me/|stories$|profile/|work/).*)",
+        source: "/((?!login$|me$|me/|stories$|ranked$|duels/|profile/|work/).*)",
         headers: [{ key: "Content-Security-Policy", value: contentSecurityPolicy }],
       },
     ];

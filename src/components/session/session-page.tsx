@@ -12,6 +12,7 @@ import { InkPage, PageColumn, type VisualContext } from '@/components/shell/ink-
 import { LanguageSwitcher } from '@/components/shell/language-switcher';
 import { SITE_COPY } from '@/lib/site-copy';
 import { useSession } from '@/lib/session/auth-context';
+import { DUELS_COPY } from '@/lib/session/duels-copy';
 import { SESSION_COPY } from '@/lib/session/copy';
 
 import { useSessionLocale } from './session-root';
@@ -19,7 +20,7 @@ import { useSessionLocale } from './session-root';
 type Width = 'reading' | 'product' | 'wide';
 
 /**
- * Header of the signed-in area: logo, Historias · Perfil, language. Always
+ * Header of the signed-in area: logo, Duelos · Historias · Perfil, language. Always
  * the shell's desktop width; the content below keeps its own.
  */
 function SessionHeader() {
@@ -30,6 +31,7 @@ function SessionHeader() {
   const items =
     status === 'signedIn'
       ? [
+          { href: '/ranked', label: DUELS_COPY[locale].nav, active: pathname === '/ranked' || pathname.startsWith('/duels/') },
           { href: '/stories', label: copy.nav.stories, active: pathname === '/stories' || pathname.startsWith('/work/') },
           { href: '/me', label: copy.nav.profile, active: pathname === '/me' },
         ]
@@ -37,23 +39,31 @@ function SessionHeader() {
 
   return (
     <header className="py-3">
-      <PageColumn width="wide" className="flex items-center gap-3">
+      <PageColumn width="wide" className="flex flex-wrap items-center gap-1 sm:flex-nowrap sm:gap-3">
         <Link
           href="/"
           aria-label={SITE_COPY[locale].homeAria}
           className="ink-focus inline-flex min-h-11 shrink-0 items-center gap-2 rounded-control"
         >
           <InkAppIcon size={36} />
-          <InkWordmark size="sm" className="max-[380px]:hidden" />
+          <InkWordmark size="sm" className="max-sm:hidden" />
         </Link>
-        <nav aria-label={copy.nav.mainLabel} className="flex flex-1 items-center justify-end gap-1">
+        <nav
+          aria-label={copy.nav.mainLabel}
+          className={cx(
+            'flex items-center gap-1',
+            status === 'signedIn'
+              ? 'order-3 w-full justify-center sm:order-none sm:w-auto sm:flex-1 sm:justify-end'
+              : 'flex-1 justify-end',
+          )}
+        >
           {items.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               aria-current={item.active ? 'page' : undefined}
               className={cx(
-                'ink-focus ink-dim inline-flex min-h-11 items-center whitespace-nowrap rounded-control px-3 type-button-sm',
+                'ink-focus ink-dim inline-flex min-h-11 items-center whitespace-nowrap rounded-control px-2 sm:px-3 type-button-sm',
                 item.active ? 'text-primary' : 'text-secondary hover:text-primary',
               )}
             >
@@ -61,7 +71,7 @@ function SessionHeader() {
             </Link>
           ))}
         </nav>
-        <LanguageSwitcher locale={locale} onChange={setLocale} label={SITE_COPY[locale].languageLabel} />
+        <LanguageSwitcher locale={locale} onChange={setLocale} label={SITE_COPY[locale].languageLabel} className="ml-auto sm:ml-0" />
       </PageColumn>
     </header>
   );

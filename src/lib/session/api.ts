@@ -8,7 +8,8 @@ import { getFirebaseAuth } from './firebase';
 // The only way the browser talks to the backend. The ID token travels in
 // the Authorization header and nowhere else: not in storage, not in the URL,
 // not in logs. Errors carry a status, never the backend's text — except a
-// 409's body, which the chapter autosave needs (the author's own text).
+// 409's body, which the chapter autosave needs (the author's own text), and
+// explicitly allowlisted machine codes used by Ranked's recovery flow.
 
 const TIMEOUT_MS = 15_000;
 
@@ -16,7 +17,7 @@ export class ApiError extends Error {
   constructor(
     readonly status: number,
     readonly kind: 'http' | 'network' | 'timeout' | 'signedOut' | 'parse',
-    /** Parsed body of a 409 (revision conflict snapshot); undefined otherwise. */
+    /** A 409 conflict snapshot, or an explicitly allowlisted feature code. */
     readonly data?: unknown,
   ) {
     super(`api ${kind} ${status}`);
@@ -46,6 +47,8 @@ type RequestOptions = {
   signal?: AbortSignal;
   /** Lets a best-effort save outlive the page (pagehide). */
   keepalive?: boolean;
+  /** Only these known machine codes may reach feature-specific error mapping. */
+  errorCodes?: readonly string[];
 };
 
 async function send(method: Method, path: string, token: string, options: RequestOptions): Promise<Response> {
@@ -99,9 +102,13 @@ export async function apiRequest(method: Method, path: string, options: RequestO
   }
   if (!response.ok) {
     let data: unknown;
-    if (response.status === 409) {
+    if (response.status === 409 || options.errorCodes) {
       try {
         data = await response.json();
+        if (response.status !== 409) {
+          const code = typeof data === 'object' && data && 'error' in data ? String(data.error) : '';
+          data = options.errorCodes?.includes(code) ? { error: code } : undefined;
+        }
       } catch {
         data = undefined;
       }
