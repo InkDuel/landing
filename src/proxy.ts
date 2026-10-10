@@ -27,6 +27,8 @@ function sessionPolicy(nonce: string): string {
       API_BASE_URL,
       'https://identitytoolkit.googleapis.com',
       'https://securetoken.googleapis.com',
+      'https://firebaseinstallations.googleapis.com',
+      'https://firebaseremoteconfig.googleapis.com',
       isDev ? 'ws: wss:' : '',
     ]
       .filter(Boolean)
@@ -61,14 +63,14 @@ export function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     {
-      source: '/(login|me|stories)',
+      source: '/(login|me|stories|ranked)',
       missing: [
         { type: 'header', key: 'next-router-prefetch' },
         { type: 'header', key: 'purpose', value: 'prefetch' },
       ],
     },
     {
-      source: '/(me|profile|work)/:path*',
+      source: '/(me|profile|work|duels)/:path*',
       missing: [
         { type: 'header', key: 'next-router-prefetch' },
         { type: 'header', key: 'purpose', value: 'prefetch' },

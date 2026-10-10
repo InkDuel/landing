@@ -25,6 +25,7 @@ export type ProfileUser = {
   losses: number;
   currentStreak: number;
   bestStreak: number;
+  duelDetailsPrivate: boolean;
   writerLevel: number;
   writerXpInLevel: number;
   writerXpForNextLevel: number;
@@ -46,6 +47,7 @@ export function parseProfileUser(data: unknown): ProfileUser | null {
     losses: nonNegative(data.losses),
     currentStreak: nonNegative(data.currentStreak),
     bestStreak: nonNegative(data.bestStreak),
+    duelDetailsPrivate: data.duelDetailsPrivate === true,
     writerLevel: nonNegative(data.writerLevel),
     writerXpInLevel: nonNegative(data.writerXpInLevel),
     writerXpForNextLevel: nonNegative(data.writerXpForNextLevel),
