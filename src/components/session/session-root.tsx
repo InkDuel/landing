@@ -6,6 +6,8 @@ import type { Locale } from '@/lib/i18n';
 import { SessionProvider } from '@/lib/session/auth-context';
 import { useLocale } from '@/lib/use-locale';
 
+import { RankedRuntime } from './ranked-runtime';
+
 type LocaleValue = { locale: Locale; setLocale: (locale: Locale) => void };
 
 const LocaleContext = createContext<LocaleValue | null>(null);
@@ -15,7 +17,9 @@ export function SessionRoot({ initialLocale, children }: { initialLocale: Locale
   const [locale, setLocale] = useLocale({ initial: initialLocale, resolveOnClient: true });
   return (
     <LocaleContext.Provider value={{ locale, setLocale }}>
-      <SessionProvider locale={locale}>{children}</SessionProvider>
+      <SessionProvider locale={locale}>
+        <RankedRuntime locale={locale}>{children}</RankedRuntime>
+      </SessionProvider>
     </LocaleContext.Provider>
   );
 }

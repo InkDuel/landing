@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { InkInlineBanner } from '@/components/ink/ink-inline-banner';
 import { InkSkeleton, InkTextAction } from '@/components/ink/ink-states';
 import { ReadingNotFound } from '@/components/reading/story-parts';
+import { DuelHistory } from '@/components/session/duel-history';
 import { AuthorWorks } from '@/components/session/author-works';
 import { ProfileIdentity, ProfileLayout, ProfileStats, RankCard } from '@/components/session/profile-parts';
 import { RequireSession, SessionPage } from '@/components/session/session-page';
@@ -18,7 +19,7 @@ import { type ProfileUser, parseProfileUser } from '@/lib/session/models';
 
 // Another writer's profile (11, ajeno): identity → compact rank, no pencil →
 // stats → Obras (on the web Obras goes last: see ProfileLayout). Retar,
-// Seguir and the history are not part of phase 1.
+// Seguir is outside this scope.
 
 function ProfileView({ userId }: { userId: string }) {
   const { locale } = useSessionLocale();
@@ -79,7 +80,12 @@ function ProfileView({ userId }: { userId: string }) {
       variant="other"
       identity={<ProfileIdentity user={user} locale={locale} />}
       rank={<RankCard user={user} locale={locale} own={false} />}
-      works={<AuthorWorks authorId={user.id} locale={locale} />}
+      works={
+        <div className="flex flex-col gap-6">
+          <AuthorWorks authorId={user.id} locale={locale} />
+          <DuelHistory ownerId={user.id} privateDetail={user.duelDetailsPrivate} locale={locale} />
+        </div>
+      }
       stats={<ProfileStats user={user} locale={locale} own={false} />}
     />
   );
