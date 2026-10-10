@@ -184,3 +184,33 @@ it('renders an absolute timer, keeps invalid send disabled and freezes editing w
   expect((screen.getByRole('textbox') as HTMLTextAreaElement).readOnly).toBe(true);
   vi.useRealTimers();
 });
+
+it.each(['otherTab', 'unsupported'] as const)(
+  'keeps the Ranked editor and send/forfeit controls read-only when blocked by %s',
+  (editorBlocked) => {
+    const runtime = new RankedSession('me', 'es');
+    const state = {
+      ...runtime.getSnapshot(),
+      phase: 'writing' as const,
+      editorBlocked,
+      story: 'Un relato válido con más de cincuenta caracteres sin contar los espacios.',
+      duel: {
+        id: 'd',
+        state: 'writing',
+        prompt: 'Una llave',
+        writingStartedAt: new Date().toISOString(),
+        writingEndsAt: new Date(Date.now() + 60000).toISOString(),
+        kind: 'ranked_human',
+        mode: 'ranked',
+        userHasSubmitted: false,
+        userA: null,
+        userB: null,
+      },
+    };
+    render(<RankedEditor state={state} runtime={runtime} locale="es" />);
+    expect((screen.getByRole('textbox') as HTMLTextAreaElement).readOnly).toBe(true);
+    expect((screen.getByRole('button', { name: 'Enviar relato' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: 'Rendirme' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByRole('status').textContent).toContain(editorBlocked === 'otherTab' ? 'otra pestaña' : 'navegador');
+  },
+);

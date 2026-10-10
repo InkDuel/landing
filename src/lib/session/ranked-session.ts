@@ -5,17 +5,7 @@ import { ApiError, isTransient } from './api';
 import { type ActiveDuel, type RankedDraft, type QueuedRanked, duelErrorCode, duelsApi, secondsLeft, validStory } from './duels';
 
 export type RankedPhase =
-  | 'loading'
-  | 'idle'
-  | 'waiting'
-  | 'writing'
-  | 'pending'
-  | 'queued'
-  | 'finished'
-  | 'cancelled'
-  | 'expired'
-  | 'unavailable'
-  | 'otherMode';
+  'loading' | 'idle' | 'waiting' | 'writing' | 'pending' | 'queued' | 'finished' | 'cancelled' | 'expired' | 'unavailable' | 'otherMode';
 export type RankedState = {
   phase: RankedPhase;
   duel: ActiveDuel | null;
@@ -28,6 +18,7 @@ export type RankedState = {
   queued: QueuedRanked[];
   storageFailed: boolean;
   submissionAttempted: boolean;
+  editorBlocked: 'otherTab' | 'unsupported' | '';
 };
 type Checkpoint = {
   id: string;
@@ -50,6 +41,7 @@ const initial: RankedState = {
   queued: [],
   storageFailed: false,
   submissionAttempted: false,
+  editorBlocked: 'otherTab',
 };
 export type RankedApi = typeof duelsApi;
 export function rankedFailure(error: unknown): string {
@@ -68,13 +60,19 @@ export function rankedFailure(error: unknown): string {
 
 /** One runtime per signed-in user, kept alive by SessionRoot across navigation.
  * localStorage holds only the user's text/checkpoint; server responses decide
- * every transition and the absolute deadline. Mutations share a Web Lock across
- * tabs where supported; backend claims/idempotency still arbitrate all devices.
+ * every transition and the absolute deadline. A lifetime Web Lock permits one
+ * editor per user; other tabs only observe checkpoints. Mutations use a separate
+ * lock, and backend claims/idempotency still arbitrate all devices.
  */
 export class RankedSession {
   private state: RankedState = initial;
   private listeners = new Set<() => void>();
   private checkpoint: Checkpoint | null = null;
+  private savedCheckpoint = 'null';
+  private ownsEditor = false;
+  private claimingEditor = false;
+  private editorGeneration = 0;
+  private releaseEditor: (() => void) | null = null;
   private running = false;
   private polling = false;
   private operation = false;
@@ -118,6 +116,7 @@ export class RankedSession {
   getSnapshot = () => this.state;
   private patch(update: Partial<RankedState>) {
     this.state = { ...this.state, ...update };
+    if (this.state.phase !== 'writing') this.releaseEditor?.();
     this.listeners.forEach((listener) => listener());
   }
   private read(): Checkpoint | null {
@@ -131,34 +130,94 @@ export class RankedSession {
             submitted: d.submitted === true,
             attempted: d.attempted === true,
             requestId: typeof d.requestId === 'string' ? d.requestId : '',
-            searchAt: typeof d.searchAt === 'number' ? d.searchAt : Date.now(),
+            searchAt: typeof d.searchAt === 'number' ? d.searchAt : 0,
           }
         : null;
     } catch {
       return null;
     }
   }
-  private persist() {
+  private persist(): boolean {
+    // A stale callback (including a poll or a closed editor) cannot replace a
+    // checkpoint saved since it last adopted storage. Editing is additionally
+    // exclusive across tabs, so this comparison is not used as a mutex.
+    if (!this.running || (this.state.phase === 'writing' && !this.ownsEditor)) return false;
+    const saved = this.read();
+    if (JSON.stringify(saved) !== this.savedCheckpoint) {
+      this.checkpoint = saved;
+      this.savedCheckpoint = JSON.stringify(saved);
+      this.patch({ story: saved?.story ?? '', submissionAttempted: saved?.attempted ?? false });
+      return false;
+    }
     if (!this.storage) {
       this.patch({ storageFailed: true });
-      return;
+      return true;
     }
     try {
-      if (this.checkpoint) this.storage?.setItem(this.key, JSON.stringify(this.checkpoint));
-      else this.storage?.removeItem(this.key);
+      if (this.checkpoint) this.storage.setItem(this.key, JSON.stringify(this.checkpoint));
+      else this.storage.removeItem(this.key);
+      this.savedCheckpoint = JSON.stringify(this.checkpoint);
+      return true;
     } catch {
       this.patch({ storageFailed: true });
+      return true; // Keep the only editor's in-memory text available to submit.
     }
+  }
+  private claimEditor() {
+    if (!this.running || this.state.phase !== 'writing' || this.ownsEditor || this.claimingEditor) return;
+    if (typeof navigator === 'undefined' || !navigator.locks) {
+      // localStorage has no atomic compare-and-set. Fail closed rather than
+      // promising cross-tab exclusion with a racy lease or timestamp.
+      this.patch({ editorBlocked: 'unsupported' });
+      return;
+    }
+    this.claimingEditor = true;
+    const generation = this.editorGeneration;
+    void navigator.locks
+      .request(`${this.key}:editor`, { ifAvailable: true }, async (lock) => {
+        if (!lock || !this.running || generation !== this.editorGeneration || this.state.phase !== 'writing') return;
+        this.ownsEditor = true;
+        // Acquire -> read, never read -> acquire: the prior editor may have saved
+        // more text or attempted a submission before releasing its lock.
+        const active = this.state.draft || this.state.duel;
+        if (active) this.remember(active.id, this.state.draft ? 'draft' : 'duel');
+        if (!this.running || this.checkpoint?.submitted) {
+          this.ownsEditor = false;
+          if (this.running) this.patch({ phase: this.state.draft ? 'queued' : 'pending' });
+          return;
+        }
+        let release!: () => void;
+        const held = new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        this.releaseEditor = () => {
+          this.releaseEditor = null;
+          this.ownsEditor = false;
+          this.patch({ editorBlocked: 'otherTab' });
+          release();
+        };
+        this.patch({ editorBlocked: '' });
+        await held;
+      })
+      .catch(() => {
+        if (this.running) this.patch({ editorBlocked: 'unsupported' });
+      })
+      .finally(() => {
+        this.claimingEditor = false;
+      });
   }
   private remember(id: string, type: Checkpoint['type']) {
     const saved = this.read();
-    if (this.checkpoint?.id !== id || this.checkpoint?.type !== type) {
-      this.checkpoint =
-        saved?.id === id && saved.type === type
-          ? saved
-          : { id, type, story: '', submitted: false, attempted: false, requestId: '', searchAt: Date.now() };
-    }
-    this.persist();
+    // Recovery and storage events are observers, never writers. Always adopt
+    // the latest saved copy, even when this tab already knows the same duel.
+    const same = this.checkpoint?.id === id && this.checkpoint.type === type;
+    const unsaved = same && JSON.stringify(saved) === this.savedCheckpoint && (this.ownsEditor || !saved) ? this.checkpoint : null;
+    this.savedCheckpoint = JSON.stringify(saved);
+    this.checkpoint =
+      unsaved ||
+      (saved?.id === id && saved.type === type
+        ? saved
+        : { id, type, story: '', submitted: false, attempted: false, requestId: '', searchAt: Date.now() });
     this.patch({ story: this.checkpoint.story, submissionAttempted: this.checkpoint.attempted });
   }
   private acceptDuel(duel: ActiveDuel) {
@@ -181,14 +240,26 @@ export class RankedSession {
               ? 'finished'
               : 'cancelled';
     this.patch({ duel, draft: null, phase, ...(phase !== 'waiting' ? { asyncOffer: false, lowActivity: false } : {}) });
+    this.claimEditor();
   }
   private acceptDraft(draft: RankedDraft) {
     this.remember(draft.id, 'draft');
-    this.patch({ draft, duel: null, phase: 'writing', asyncOffer: false, lowActivity: false });
+    const submitted = this.checkpoint?.submitted;
+    this.patch({
+      draft: submitted ? null : draft,
+      duel: null,
+      phase: submitted ? 'queued' : 'writing',
+      asyncOffer: false,
+      lowActivity: false,
+    });
+    this.claimEditor();
   }
   start() {
     this.running = true;
+    this.editorGeneration++;
+    if (typeof navigator === 'undefined' || !navigator.locks) this.patch({ editorBlocked: 'unsupported' });
     this.checkpoint = this.read();
+    this.savedCheckpoint = JSON.stringify(this.checkpoint);
     void this.recover();
     this.interval = setInterval(() => {
       void this.tick();
@@ -196,15 +267,17 @@ export class RankedSession {
   }
   stop() {
     this.running = false;
+    this.editorGeneration++;
+    this.releaseEditor?.();
     if (this.interval) clearInterval(this.interval);
   }
   setStory(story: string) {
-    if (this.state.phase !== 'writing' || this.state.busy || this.checkpoint?.attempted) return;
+    if (!this.running || !this.ownsEditor || this.state.phase !== 'writing' || this.state.busy || this.checkpoint?.attempted) return;
     if (this.checkpoint) {
       this.checkpoint.story = story;
       this.persist();
     }
-    this.patch({ story });
+    this.patch({ story: this.checkpoint?.story ?? story });
   }
   private async lock<T>(work: () => Promise<T>): Promise<T> {
     if (typeof navigator !== 'undefined' && navigator.locks) return navigator.locks.request(this.key, work);
@@ -240,7 +313,7 @@ export class RankedSession {
       this.acceptDraft(draft);
       return true;
     }
-    const saved = this.read();
+    const saved = this.read() || this.checkpoint;
     if (saved?.type === 'duel') {
       try {
         const status = await this.api.status(saved.id, this.locale);
@@ -258,11 +331,12 @@ export class RankedSession {
       if (!this.running) return true;
       if (queued.some((q) => q.id === saved.id)) {
         this.checkpoint = null;
-        this.persist();
+        this.savedCheckpoint = JSON.stringify(this.read());
         this.patch({ phase: 'queued', draft: null, story: '', submissionAttempted: false, queued });
         return true;
       }
       this.checkpoint = saved;
+      this.savedCheckpoint = JSON.stringify(saved);
       // /mine omits resolved/expired entries and carries no duelId. Without
       // a positive acknowledgement, do not invent which terminal state won.
       this.patch({ phase: 'unavailable', story: saved.story, draft: null, submissionAttempted: false });
@@ -276,6 +350,7 @@ export class RankedSession {
     });
   };
   begin = async () => {
+    if (this.state.editorBlocked === 'unsupported') return;
     await this.work(async () => {
       if ((await this.sync()) || !this.running) return;
       this.checkpoint = null;
@@ -285,7 +360,10 @@ export class RankedSession {
       this.retries = 0;
       try {
         const duel = await this.api.create(this.locale);
-        if (this.running) this.acceptDuel(duel);
+        if (this.running) {
+          this.acceptDuel(duel);
+          if (this.state.phase === 'waiting') this.persist();
+        }
       } catch (e) {
         // Creation may have committed despite a lost response. /duel is also
         // idempotent for an existing live wait, but first recover M/D explicitly.
@@ -299,7 +377,14 @@ export class RankedSession {
   };
   prepare = async () => {
     await this.work(async () => {
-      if (!this.asyncEnabled || !this.state.asyncOffer || this.state.phase !== 'waiting' || !this.checkpoint) return;
+      if (
+        this.state.editorBlocked === 'unsupported' ||
+        !this.asyncEnabled ||
+        !this.state.asyncOffer ||
+        this.state.phase !== 'waiting' ||
+        !this.checkpoint
+      )
+        return;
       await this.sync();
       if (!this.running || this.state.phase !== 'waiting' || !this.checkpoint) return;
       this.checkpoint.requestId ||= crypto.randomUUID();
@@ -341,20 +426,26 @@ export class RankedSession {
     });
   };
   forfeit = async () => {
+    if (!this.ownsEditor) return;
     await this.work(async () => {
       await this.sync();
       if (!this.running) return;
       if (this.state.phase !== 'writing' || !this.state.duel) return;
       await this.api.forfeit(this.state.duel.id, this.locale);
-      if (this.running) this.patch({ phase: 'pending', submissionAttempted: true });
+      if (!this.running) return;
       if (this.checkpoint) {
         this.checkpoint.submitted = true;
         this.persist();
       }
+      this.patch({ phase: 'pending', submissionAttempted: true });
     });
   };
   submit = async (automatic = false) => {
     if (this.operation || this.state.phase !== 'writing') return;
+    if (!this.ownsEditor) {
+      this.storageChanged(this.key);
+      return;
+    }
     const { draft, duel, story } = this.state;
     if (!automatic && !validStory(story, !!draft || duel?.kind === 'ranked_async')) {
       this.patch({ error: 'invalid' });
@@ -379,15 +470,17 @@ export class RankedSession {
       const text = this.checkpoint?.story ?? story;
       if (this.checkpoint) {
         this.checkpoint.attempted = true;
-        this.persist();
+        if (!this.persist()) return;
       }
       this.patch({ submissionAttempted: true });
       try {
         if (draft) {
           await this.api.submitDraft(draft.id, text, this.locale);
           if (!this.running) return;
-          this.checkpoint = null;
-          this.persist();
+          if (this.checkpoint) {
+            this.checkpoint.submitted = true;
+            this.persist();
+          }
           this.patch({ phase: 'queued', draft: null, story: '', submissionAttempted: false });
         } else if (duel) {
           await this.api.submit(duel.id, text, this.locale);
@@ -456,7 +549,16 @@ export class RankedSession {
     else void this.tick();
   };
   storageChanged = (key: string | null) => {
-    if (key === this.key) void this.recover();
+    if (!this.running || (key !== null && key !== this.key)) return;
+    const saved = this.read();
+    const same = saved && saved.id === this.checkpoint?.id && saved.type === this.checkpoint?.type;
+    if (same) {
+      this.checkpoint = saved;
+      this.savedCheckpoint = JSON.stringify(saved);
+      this.patch({ story: saved.story, submissionAttempted: saved.attempted });
+      if (saved.submitted && this.state.phase === 'writing')
+        this.patch(saved.type === 'draft' ? { phase: 'queued', draft: null, story: '' } : { phase: 'pending' });
+    } else void this.recover();
   };
   private checkpointChanged() {
     const saved = this.read();
@@ -475,8 +577,9 @@ export class RankedSession {
     }
     const { phase, draft, duel, story } = this.state;
     if (phase === 'writing') {
+      this.claimEditor();
       const active = draft || duel;
-      if (active?.writingEndsAt && secondsLeft(active.writingEndsAt, now) === 0 && this.timeoutAttempted !== active.id) {
+      if (this.ownsEditor && active?.writingEndsAt && secondsLeft(active.writingEndsAt, now) === 0 && this.timeoutAttempted !== active.id) {
         this.timeoutAttempted = active.id;
         // Flutter sends any non-empty saved text at timeout; the backend
         // validates it. A live empty story forfeits; a draft simply expires.

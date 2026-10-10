@@ -57,7 +57,33 @@ function runtime(a: RankedApi, user = 'me', storage: Storage = localStorage) {
   session.start();
   return session;
 }
+// Models Web Locks across separate session instances, including a held editor
+// lock and FIFO mutation locks. ifAvailable never steals or queues ownership.
+function installLocks() {
+  const held = new Map<string, Promise<void>>();
+  const request = vi.fn(async (name: string, optionsOrWork: unknown, maybeWork?: unknown) => {
+    const options = typeof optionsOrWork === 'function' ? {} : (optionsOrWork as { ifAvailable?: boolean });
+    const work = (maybeWork || optionsOrWork) as (lock: { name: string; mode: string } | null) => Promise<unknown>;
+    const prior = held.get(name);
+    if (options.ifAvailable && prior) return work(null);
+    let release!: () => void;
+    const next = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    held.set(name, next);
+    if (prior) await prior;
+    try {
+      return await work({ name, mode: 'exclusive' });
+    } finally {
+      if (held.get(name) === next) held.delete(name);
+      release();
+    }
+  });
+  vi.stubGlobal('navigator', { locks: { request } });
+  return request;
+}
 beforeEach(() => {
+  installLocks();
   localStorage.clear();
   vi.useFakeTimers();
   vi.setSystemTime(startAt);
@@ -66,6 +92,7 @@ afterEach(() => {
   sessions.splice(0).forEach((session) => session.stop());
   vi.useRealTimers();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('Ranked session recovery and timing', () => {
@@ -307,6 +334,7 @@ describe('Submission idempotency and failures', () => {
   });
   it('freezes the attempted payload across refresh after a lost response, then retries identically', async () => {
     const a = api();
+    a.status.mockResolvedValue(writing);
     a.pending.mockResolvedValue(writing);
     a.submit.mockRejectedValueOnce(new ApiError(0, 'timeout'));
     const first = runtime(a);
@@ -315,9 +343,12 @@ describe('Submission idempotency and failures', () => {
     await first.submit();
     first.setStory('Changed');
     first.stop();
+    await flush();
     const second = runtime(a);
     await flush();
+    expect(second.getSnapshot().editorBlocked).toBe('');
     second.setStory('Changed again');
+    expect(second.getSnapshot().editorBlocked).toBe('');
     await second.submit();
     expect(a.submit.mock.calls.map((call) => call[1])).toEqual([story, story]);
     expect(second.getSnapshot().phase).toBe('pending');
@@ -398,5 +429,257 @@ describe('Verified wire contracts', () => {
     expect(page.nextCursor).toBe('next');
     expect(page.items[0].prompt).toBe('');
     expect(page.items[0].scoreMine).toBeNull();
+  });
+});
+
+describe('Cross-tab checkpoint regression', () => {
+  it.each(['duel', 'draft'] as const)('allows only one %s editor and never replaces fresh text with a stale recovery', async (type) => {
+    const a = api();
+    a.status.mockResolvedValue(writing);
+    if (type === 'duel') a.pending.mockResolvedValue(writing);
+    else a.activeDraft.mockResolvedValue(draft);
+    const first = runtime(a);
+    await flush();
+    first.setStory(story);
+    const second = runtime(a);
+    await flush();
+    const recent = story + ' Versión reciente.';
+    first.setStory(recent);
+    // The second tab still displays an older snapshot before event delivery.
+    expect(second.getSnapshot().story).toBe(story);
+    expect(second.getSnapshot().editorBlocked).toBe('otherTab');
+    second.setStory(story + ' Edición obsoleta.');
+    second.storageChanged('inkduel-ranked:me');
+    await flush();
+    await second.recover();
+    expect(JSON.parse(localStorage.getItem('inkduel-ranked:me')!).story).toBe(recent);
+    expect(second.getSnapshot().story).toBe(recent);
+  });
+  it('does not write checkpoints or query the server for repeated text storage events', async () => {
+    const a = api();
+    a.pending.mockResolvedValue(writing);
+    const first = runtime(a);
+    await flush();
+    first.setStory(story);
+    const second = runtime(a);
+    await flush();
+    first.setStory(story + ' Versión reciente.');
+    const write = vi.spyOn(Storage.prototype, 'setItem');
+    a.pending.mockClear();
+    for (let i = 0; i < 4; i++) {
+      first.storageChanged('inkduel-ranked:me');
+      second.storageChanged('inkduel-ranked:me');
+      await flush();
+    }
+    expect(write).not.toHaveBeenCalled();
+    expect(a.pending).not.toHaveBeenCalled();
+  });
+  it('keeps a refresh read-only until the writer closes, then adopts its last saved text and deadline', async () => {
+    const a = api();
+    a.pending.mockResolvedValue(writing);
+    a.status.mockResolvedValue(writing);
+    const first = runtime(a);
+    await flush();
+    first.setStory(story);
+    const observer = runtime(a);
+    await flush();
+    observer.stop();
+    const refreshed = runtime(a);
+    await flush();
+    expect(refreshed.getSnapshot().editorBlocked).toBe('otherTab');
+    first.setStory(story + ' Última frase.');
+    // Focus/visibility wakes must not steal a live editor's lock.
+    refreshed.wake();
+    await flush();
+    expect(refreshed.getSnapshot().editorBlocked).toBe('otherTab');
+    first.stop();
+    await flush();
+    vi.setSystemTime('2026-10-10T12:02:00Z');
+    refreshed.wake();
+    await flush();
+    expect(refreshed.getSnapshot().editorBlocked).toBe('');
+    expect(refreshed.getSnapshot().story).toBe(story + ' Última frase.');
+    expect(secondsLeft(refreshed.getSnapshot().duel!.writingEndsAt)).toBe(180);
+    refreshed.setStory(story + ' Continuación.');
+    expect(JSON.parse(localStorage.getItem('inkduel-ranked:me')!).story).toBe(story + ' Continuación.');
+    first.setStory('Una escritura desde el editor cerrado');
+    expect(JSON.parse(localStorage.getItem('inkduel-ranked:me')!).story).toBe(story + ' Continuación.');
+  });
+  it.each(['duel', 'draft'] as const)('submits the %s writer payload once while another tab tries editing and submitting', async (type) => {
+    const a = api();
+    a.status.mockResolvedValue(writing);
+    if (type === 'duel') a.pending.mockResolvedValue(writing);
+    else a.activeDraft.mockResolvedValue(draft);
+    let done!: () => void;
+    const send = type === 'duel' ? a.submit : a.submitDraft;
+    if (type === 'duel')
+      a.submit.mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            done = resolve;
+          }),
+      );
+    else
+      a.submitDraft.mockImplementationOnce(
+        () =>
+          new Promise<string>((resolve) => {
+            done = () => resolve(draft.id);
+          }),
+      );
+    const first = runtime(a);
+    await flush();
+    first.setStory(story);
+    const second = runtime(a);
+    await flush();
+    first.setStory(story + ' Relato definitivo.');
+    const pending = first.submit();
+    await flush();
+    second.storageChanged('inkduel-ranked:me');
+    second.setStory(story + ' Otro relato.');
+    await second.submit();
+    await second.tick(Date.parse(endsAt));
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls[0][1]).toBe(story + ' Relato definitivo.');
+    done();
+    await pending;
+    if (type === 'draft') {
+      a.activeDraft.mockResolvedValue(null);
+      a.queued.mockResolvedValue([{ id: draft.id, status: 'pending', createdAt: startAt, expiresAt: endsAt }]);
+    }
+    second.storageChanged('inkduel-ranked:me');
+    await flush();
+    expect(second.getSnapshot().phase).toBe(type === 'duel' ? 'pending' : 'queued');
+    expect(send).toHaveBeenCalledTimes(1);
+  });
+  it('preserves the frozen payload after the writer closes during a lost acknowledgement', async () => {
+    const a = api();
+    a.status.mockResolvedValue(writing);
+    a.pending.mockResolvedValue(writing);
+    a.submit.mockRejectedValueOnce(new ApiError(0, 'timeout'));
+    const first = runtime(a);
+    await flush();
+    first.setStory(story);
+    const second = runtime(a);
+    await flush();
+    await first.submit();
+    first.stop();
+    await flush();
+    second.wake();
+    await flush();
+    second.setStory(story + ' Cambio después de enviar.');
+    expect(second.getSnapshot().story).toBe(story);
+    expect(second.getSnapshot().submissionAttempted).toBe(true);
+    expect(second.getSnapshot().editorBlocked).toBe('');
+    await second.submit();
+    expect(a.submit.mock.calls.map((call) => call[1])).toEqual([story, story]);
+  });
+  it('recovers an acknowledged async submission after refresh without writing its checkpoint again', async () => {
+    const a = api();
+    a.activeDraft.mockResolvedValue(draft);
+    const first = runtime(a);
+    await flush();
+    first.setStory(story);
+    await first.submit();
+    first.stop();
+    await flush();
+    a.activeDraft.mockResolvedValue(null);
+    a.queued.mockResolvedValue([{ id: draft.id, status: 'pending', createdAt: startAt, expiresAt: endsAt }]);
+    const writes = vi.spyOn(Storage.prototype, 'setItem');
+    const refreshed = runtime(a);
+    await flush();
+    expect(refreshed.getSnapshot().phase).toBe('queued');
+    expect(writes).not.toHaveBeenCalled();
+    expect(a.submitDraft).toHaveBeenCalledTimes(1);
+  });
+  it('reads the latest text when a slow recovery response arrives after editing', async () => {
+    const a = api();
+    a.pending.mockResolvedValue(writing);
+    const writer = runtime(a);
+    await flush();
+    writer.setStory(story);
+    const observer = runtime(a);
+    await flush();
+    let done!: (duel: ActiveDuel) => void;
+    a.pending.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          done = resolve;
+        }),
+    );
+    const recovering = observer.recover();
+    await flush();
+    writer.setStory(story + ' Nuevo final.');
+    const writes = vi.spyOn(Storage.prototype, 'setItem');
+    done(writing);
+    await recovering;
+    expect(observer.getSnapshot().story).toBe(story + ' Nuevo final.');
+    expect(writes).not.toHaveBeenCalled();
+  });
+  it('rejects a stale write or submit if storage changed before its event was delivered', async () => {
+    const a = api();
+    a.pending.mockResolvedValue(writing);
+    const writer = runtime(a);
+    await flush();
+    writer.setStory(story);
+    const saved = JSON.parse(localStorage.getItem('inkduel-ranked:me')!);
+    // A prior app version or another storage writer may not use our lock.
+    localStorage.setItem('inkduel-ranked:me', JSON.stringify({ ...saved, story: story + ' Texto más reciente.' }));
+    writer.setStory(story + ' Texto obsoleto.');
+    expect(writer.getSnapshot().story).toBe(story + ' Texto más reciente.');
+    expect(JSON.parse(localStorage.getItem('inkduel-ranked:me')!).story).toBe(story + ' Texto más reciente.');
+    localStorage.setItem('inkduel-ranked:me', JSON.stringify({ ...saved, story: story + ' Otro cambio reciente.' }));
+    await writer.submit();
+    expect(a.submit).not.toHaveBeenCalled();
+    expect(writer.getSnapshot().story).toBe(story + ' Otro cambio reciente.');
+    await writer.submit();
+    expect(a.submit).toHaveBeenCalledWith(writing.id, story + ' Otro cambio reciente.', 'es');
+  });
+  it('adopts a legacy checkpoint without changing its text on recovery', async () => {
+    localStorage.setItem('inkduel-ranked:me', JSON.stringify({ id: writing.id, type: 'duel', story }));
+    const a = api();
+    a.pending.mockResolvedValue(writing);
+    const writer = runtime(a);
+    await flush();
+    vi.setSystemTime('2026-10-10T12:02:00Z');
+    writer.setStory(story + ' Actualizado.');
+    expect(JSON.parse(localStorage.getItem('inkduel-ranked:me')!).story).toBe(story + ' Actualizado.');
+  });
+  it('keeps unsaved in-memory text through polling if browser storage fails', async () => {
+    const a = api();
+    a.pending.mockResolvedValue(writing);
+    a.status.mockResolvedValue(writing);
+    const session = runtime(a);
+    await flush();
+    session.setStory(story);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('quota');
+    });
+    session.setStory(story + ' Continuación sin guardar.');
+    await session.tick();
+    expect(session.getSnapshot().story).toBe(story + ' Continuación sin guardar.');
+    expect(session.getSnapshot().storageFailed).toBe(true);
+    await session.submit();
+    expect(a.submit).toHaveBeenCalledWith(writing.id, story + ' Continuación sin guardar.', 'es');
+  });
+  it('keeps shared editing read-only without Web Locks instead of using a racy storage lease', async () => {
+    vi.stubGlobal('navigator', {});
+    const a = api();
+    a.pending.mockResolvedValue(writing);
+    const first = runtime(a);
+    const second = runtime(a);
+    await flush();
+    first.setStory(story);
+    second.setStory(story + ' Otra versión.');
+    await Promise.all([first.submit(true), second.submit(true)]);
+    await Promise.all([first.tick(Date.parse(endsAt)), second.tick(Date.parse(endsAt))]);
+    expect(first.getSnapshot().editorBlocked).toBe('unsupported');
+    expect(second.getSnapshot().editorBlocked).toBe('unsupported');
+    expect(localStorage.getItem('inkduel-ranked:me')).toBeNull();
+    expect(a.submit).not.toHaveBeenCalled();
+    expect(a.forfeit).not.toHaveBeenCalled();
+    a.pending.mockResolvedValue(null);
+    await first.recover();
+    await first.begin();
+    expect(a.create).not.toHaveBeenCalled();
   });
 });

@@ -75,7 +75,7 @@ export function RankedEditor({ state, runtime, locale }: { state: RankedState; r
           autoFocus
           value={state.story}
           onChange={(event) => runtime.setStory(event.target.value)}
-          readOnly={seconds === 0 || state.busy || state.submissionAttempted || !active.writingEndsAt}
+          readOnly={!!state.editorBlocked || seconds === 0 || state.busy || state.submissionAttempted || !active.writingEndsAt}
           aria-describedby="ranked-story-limit"
           placeholder={copy.placeholder}
           spellCheck
@@ -91,11 +91,19 @@ export function RankedEditor({ state, runtime, locale }: { state: RankedState; r
           </span>
         </div>
       </InkCard>
-      <p className="type-caption text-secondary">{state.submissionAttempted ? copy.frozen : copy.saved}</p>
+      <p className="type-caption text-secondary" role={state.editorBlocked ? 'status' : undefined}>
+        {state.editorBlocked === 'unsupported'
+          ? copy.editorUnsupported
+          : state.editorBlocked
+            ? copy.editorElsewhere
+            : state.submissionAttempted
+              ? copy.frozen
+              : copy.saved}
+      </p>
       <div className="flex flex-col gap-2 sm:flex-row-reverse sm:items-center">
         <InkButton
           className="sm:max-w-xs"
-          disabled={!valid}
+          disabled={!valid || !!state.editorBlocked}
           busy={state.busy}
           busyLabel={copy.submitting}
           onClick={() => void runtime.submit()}
@@ -107,7 +115,11 @@ export function RankedEditor({ state, runtime, locale }: { state: RankedState; r
             {copy.profile}
           </InkButton>
         ) : (
-          <InkButton variant="ghost" disabled={state.busy || state.submissionAttempted} onClick={() => setForfeiting(true)}>
+          <InkButton
+            variant="ghost"
+            disabled={!!state.editorBlocked || state.busy || state.submissionAttempted}
+            onClick={() => setForfeiting(true)}
+          >
             {copy.forfeit}
           </InkButton>
         )}
@@ -207,6 +219,9 @@ export function Ranked() {
           }
         />
       ) : null}
+      {state.editorBlocked === 'unsupported' && state.phase !== 'writing' ? (
+        <InkInlineBanner className="mt-4" title={copy.editorUnsupported} />
+      ) : null}
       {state.storageFailed ? <InkInlineBanner className="mt-4" title={copy.saveFailed} /> : null}
       {readyToStart ? (
         <div className="mx-auto flex max-w-[600px] flex-col gap-5 pt-6 lg:pt-10">
@@ -251,7 +266,9 @@ export function Ranked() {
           {ink && ink.energy < ink.cost ? <p className="type-body text-secondary">{copy.noEnergy}</p> : null}
           <InkButton
             busy={checking || state.busy}
-            disabled={!ink || ink.energy < ink.cost || (!!state.error && state.phase === 'loading')}
+            disabled={
+              state.editorBlocked === 'unsupported' || !ink || ink.energy < ink.cost || (!!state.error && state.phase === 'loading')
+            }
             onClick={() => void begin()}
           >
             {copy.start}
