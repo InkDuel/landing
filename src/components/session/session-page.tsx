@@ -10,6 +10,7 @@ import { InkInlineBanner } from '@/components/ink/ink-inline-banner';
 import { InkSkeleton, InkTextAction } from '@/components/ink/ink-states';
 import { InkPage, PageColumn, type VisualContext } from '@/components/shell/ink-page';
 import { LanguageSwitcher } from '@/components/shell/language-switcher';
+import { withLang } from '@/lib/i18n';
 import { SITE_COPY } from '@/lib/site-copy';
 import { useSession } from '@/lib/session/auth-context';
 import { DUELS_COPY } from '@/lib/session/duels-copy';
@@ -41,7 +42,7 @@ function SessionHeader() {
     <header className="py-3">
       <PageColumn width="wide" className="flex flex-wrap items-center gap-1 sm:flex-nowrap sm:gap-3">
         <Link
-          href="/"
+          href={withLang(status === 'signedIn' ? '/stories' : '/', locale)}
           aria-label={SITE_COPY[locale].homeAria}
           className="ink-focus inline-flex min-h-11 shrink-0 items-center gap-2 rounded-control"
         >
