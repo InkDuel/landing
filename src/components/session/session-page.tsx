@@ -42,7 +42,7 @@ function SessionHeader() {
     <header className="py-3">
       <PageColumn width="wide" className="flex flex-wrap items-center gap-1 sm:flex-nowrap sm:gap-3">
         <Link
-          href={withLang(status === 'signedIn' ? '/stories' : '/', locale)}
+          href={withLang(status === 'signedIn' ? '/ranked' : '/', locale)}
           aria-label={SITE_COPY[locale].homeAria}
           className="ink-focus inline-flex min-h-11 shrink-0 items-center gap-2 rounded-control"
         >
