@@ -12,7 +12,19 @@
 // - Production host only, so local runs and Vercel previews stay out of the
 //   data. NEXT_PUBLIC_ANALYTICS_DEBUG=1 sends from any host to DebugView.
 //
-// URLs. GA4 never sees a raw URL from this site:
+// Who is measured (geolocation is not consent; it only keeps GA4 off where it
+// would need consent we do not collect yet):
+// - EEA, UK, Switzerland, and any visitor whose country is unknown: GA4 never
+//   loads and nothing is sent. /api/analytics-region answers from Vercel's geo
+//   header; until it answers, calls wait in a small queue, and a "no" (or any
+//   failure) discards them. Public pages stay static.
+// - Everywhere else: GA4 with analytics cookies (_ga client id), the events
+//   below, sanitized URLs and, when signed in, user_id = the InkDuel uid.
+// - Always: ad storage, ad user data, ad personalization and Google signals
+//   denied. The EEA/UK/CH consent default stays as a second layer in case
+//   Google's geolocation disagrees with Vercel's.
+//
+// URLs and sensitive pages. GA4 never sees a raw URL from this site:
 // - page_location / page_referrer are set by us, always sanitized: no hash,
 //   no query except utm_* campaign tags, and the invitation token of
 //   /friend-challenge/{token} replaced. page_title is the sanitized path:
@@ -20,27 +32,19 @@
 //   later hit (custom and automatic) carry them.
 // - Page views are manual (send_page_view: false), one per pathname change.
 // - gtag.js does not load while the real URL can carry a secret (email action
-//   codes, invitation tokens); it starts on the first ordinary page instead.
-// - Verified with the live stream config (2026-10-12): with send_page_view
-//   false, GA4 sends no history page views of its own, so nothing duplicates
-//   the manual ones and no raw URL goes out on client-side navigation.
-//
-// Consent Mode, and what each state sends:
-// - EEA, UK, Switzerland (analytics_storage denied by default, no banner):
-//   cookieless pings only. No _ga cookie and no persistent client id; events
-//   keep their name and params, with the sanitized URL. Never a user_id.
-// - Everywhere else (analytics_storage granted): the _ga cookie (client id),
-//   events, sanitized URLs, and, when signed in, user_id = the InkDuel uid —
-//   only if the server saw a country outside those regions (see
-//   identifyAllowed in the session layout); unknown country means no user_id.
-// - Always: ad storage, ad user data, ad personalization and Google signals
-//   denied. InkDuel does not advertise with this data.
+//   codes, invitation tokens). If a client-side navigation reaches one of
+//   those pages later, GA4 is suspended there with window['ga-disable-<id>']
+//   (checked by gtag.js on every hit, automatic ones included): no page view,
+//   no event, and the next page's referrer is the last ordinary page.
+// - Verified against the live stream config (2026-10-12), which has history
+//   events enabled: with send_page_view false gtag.js sends no history page
+//   views, so nothing duplicates the manual ones.
 
 export const GA_MEASUREMENT_ID = 'G-GEVG8ZZFS2';
 
 const PRODUCTION_HOSTS = new Set(['inkduel.com']);
 
-/** Pages whose real URL can carry a secret: gtag.js never loads on them. */
+/** Pages whose real URL can carry a secret: GA4 never loads or sends there. */
 const SENSITIVE_PREFIXES = ['/auth/', '/reset-password', '/verify-email', '/friend-challenge/'];
 
 export const CONSENT_REQUIRED_REGIONS = [
@@ -49,8 +53,8 @@ export const CONSENT_REQUIRED_REGIONS = [
   'GB', 'CH',
 ];
 
-/** user_id needs a known country outside the consent regions (Vercel's geo header). */
-export function identifyAllowedForCountry(country: string | null | undefined): boolean {
+/** GA4 (and user_id) only for a known country outside the consent regions. */
+export function analyticsAllowedForCountry(country: string | null | undefined): boolean {
   const code = (country ?? '').trim().toUpperCase();
   return /^[A-Z]{2}$/.test(code) && !CONSENT_REQUIRED_REGIONS.includes(code);
 }
@@ -60,11 +64,18 @@ export type AnalyticsParams = Record<string, string | number | boolean | null | 
 declare global {
   interface Window {
     dataLayer?: unknown[];
+    [key: `ga-disable-${string}`]: boolean | undefined;
   }
 }
 
 const debug = process.env.NEXT_PUBLIC_ANALYTICS_DEBUG === '1';
-let started = false;
+const DISABLE_KEY = `ga-disable-${GA_MEASUREMENT_ID}`;
+const REGION_CACHE_KEY = 'inkduel.analytics.measure';
+const QUEUE_LIMIT = 50;
+
+/** idle: not started; checking: waiting for the region; on/off: decided. */
+let gate: 'idle' | 'checking' | 'on' | 'off' = 'idle';
+let queue: Array<() => void> = [];
 let lastPageLocation: string | null = null;
 let lastPagePath: string | null = null;
 
@@ -115,12 +126,36 @@ export function sanitizeUrl(raw: string, origin: string): string {
   }
 }
 
-/** Loads gtag.js once per document, on the first ordinary production page. */
-export function startAnalytics(): void {
-  if (started || typeof window === 'undefined') return;
-  if (!isAnalyticsAllowed(window.location.hostname, window.location.pathname)) return;
-  started = true;
+/** Runs now once GA4 is on, later while the region is pending, never when off. */
+function whenReady(run: () => void): void {
+  if (gate === 'on') run();
+  else if (gate === 'checking' && queue.length < QUEUE_LIMIT) queue.push(run);
+}
 
+/** Whether this visitor may be measured; any doubt (or failure) is a no. */
+async function measureThisVisitor(): Promise<boolean> {
+  try {
+    const cached = window.sessionStorage.getItem(REGION_CACHE_KEY);
+    if (cached === '1' || cached === '0') return cached === '1';
+  } catch {
+    // Storage blocked: ask the server.
+  }
+  try {
+    const response = await fetch('/api/analytics-region', { cache: 'no-store', credentials: 'same-origin' });
+    const data: unknown = response.ok ? await response.json() : null;
+    const measure = typeof data === 'object' && data !== null && (data as { measure?: unknown }).measure === true;
+    try {
+      window.sessionStorage.setItem(REGION_CACHE_KEY, measure ? '1' : '0');
+    } catch {
+      // Not cached: the next page load asks again.
+    }
+    return measure;
+  } catch {
+    return false;
+  }
+}
+
+function boot(): void {
   const origin = window.location.origin;
   window.dataLayer = window.dataLayer ?? [];
   const denied = { ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' };
@@ -143,20 +178,62 @@ export function startAnalytics(): void {
   document.head.appendChild(script);
 }
 
-/** One page_view per pathname, with sanitized location and referrer. */
+/**
+ * Decides once per document, on the first ordinary production page, whether
+ * GA4 loads (see "Who is measured" above).
+ */
+export function startAnalytics(): void {
+  if (gate !== 'idle' || typeof window === 'undefined') return;
+  if (!isAnalyticsAllowed(window.location.hostname, window.location.pathname)) return;
+  gate = 'checking';
+  void measureThisVisitor().then((measure) => {
+    if (gate !== 'checking') return;
+    if (!measure) {
+      gate = 'off';
+      queue = [];
+      return;
+    }
+    boot();
+    gate = 'on';
+    const pending = queue;
+    queue = [];
+    pending.forEach((run) => run());
+  });
+}
+
+const onSensitivePage = () => isSensitivePath(window.location.pathname);
+
+/**
+ * One page_view per pathname, with sanitized location and referrer. On a
+ * sensitive page it suspends GA4 instead (every hit, automatic ones included).
+ */
 export function trackPageView(): void {
+  if (typeof window === 'undefined') return;
+  const sensitive = onSensitivePage();
+  window[DISABLE_KEY] = sensitive;
+  if (sensitive) return;
   startAnalytics();
-  if (!started) return;
+  if (gate !== 'checking' && gate !== 'on') return;
   const origin = window.location.origin;
   const path = sanitizePath(window.location.pathname);
   if (path === lastPagePath) return;
   const pageLocation = sanitizeUrl(window.location.href, origin);
+  if (lastPagePath?.endsWith('/chapter/new') && path.startsWith(lastPagePath.slice(0, -'new'.length))) {
+    // The chapter editor swaps /chapter/new for the created chapter's URL
+    // (replaceState, same screen): adopt it without another page_view.
+    lastPagePath = path;
+    lastPageLocation = pageLocation;
+    whenReady(() => gtag('set', { page_location: pageLocation, page_title: path }));
+    return;
+  }
   const pageReferrer = lastPageLocation ?? sanitizeUrl(document.referrer, origin);
   lastPagePath = path;
   lastPageLocation = pageLocation;
   const page = { page_location: pageLocation, page_referrer: pageReferrer, page_title: path };
-  gtag('set', page);
-  gtag('event', 'page_view', page);
+  whenReady(() => {
+    gtag('set', page);
+    gtag('event', 'page_view', page);
+  });
 }
 
 function normalize(params: AnalyticsParams): Record<string, string | number> {
@@ -168,15 +245,18 @@ function normalize(params: AnalyticsParams): Record<string, string | number> {
   return out;
 }
 
-/** Logs one event. Silently dropped off production and on sensitive pages. */
+/** Logs one event. Dropped off production, on sensitive pages and where GA4 is off. */
 export function track(name: string, params: AnalyticsParams = {}): void {
+  if (typeof window === 'undefined' || onSensitivePage()) return;
   startAnalytics();
-  if (!started) return;
-  try {
-    gtag('event', name, normalize(params));
-  } catch {
-    // Analytics must never break the page.
-  }
+  const payload = normalize(params);
+  whenReady(() => {
+    try {
+      gtag('event', name, payload);
+    } catch {
+      // Analytics must never break the page.
+    }
+  });
 }
 
 // What duel events need from the signed-in profile (the app reads the same
@@ -186,14 +266,16 @@ let profile: { rankTier: string; completedDuels: number } | null = null;
 export type AnalyticsUser = { id: string; rankTier: string; wins: number; losses: number };
 
 /**
- * Signed-in profile for event params, and user_id like the app's setUserId —
- * only when [identify] (see the consent notes above). null on sign-out.
+ * Signed-in profile for event params, and user_id like the app's setUserId.
+ * [identify] comes from the session layout's server-side country check, the
+ * same rule as /api/analytics-region (a second layer). null on sign-out.
  */
 export function setAnalyticsUser(user: AnalyticsUser | null, identify: boolean): void {
   profile = user ? { rankTier: user.rankTier, completedDuels: user.wins + user.losses } : null;
+  if (typeof window === 'undefined') return;
   startAnalytics();
-  if (!started) return;
-  gtag('set', { user_id: user && identify ? user.id : null });
+  const userId = user && identify ? user.id : null;
+  whenReady(() => gtag('set', { user_id: userId }));
 }
 
 /** `is_first_duel` ('yes'/'no', the app's values) and `rank_tier`, when known. */
@@ -204,7 +286,8 @@ export function duelProfileParams(): AnalyticsParams {
 
 /** Test-only: forget module state between cases. */
 export function resetAnalyticsForTests(): void {
-  started = false;
+  gate = 'idle';
+  queue = [];
   lastPageLocation = null;
   lastPagePath = null;
   profile = null;

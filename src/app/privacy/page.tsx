@@ -14,7 +14,7 @@ const copies: Record<Locale, LegalCopy> = {
     intro:
       'Esta política explica qué datos podemos tratar cuando usas InkDuel, por qué los tratamos y qué opciones tienes sobre tu información.',
     lastUpdatedLabel: 'Última actualización',
-    lastUpdatedValue: '24 de abril de 2026',
+    lastUpdatedValue: '12 de octubre de 2026',
     contactLabel: 'Contacto de privacidad',
     contactValue: CONTACT_EMAIL,
     sections: [
@@ -62,18 +62,35 @@ const copies: Record<Locale, LegalCopy> = {
           'Enviar comunicaciones operativas, incluidas notificaciones relacionadas con la actividad de la app.',
           'Generar evaluaciones, recomendaciones y resultados dentro de la experiencia de InkDuel.',
           'Prevenir fraude, abuso, accesos no autorizados y otros usos indebidos.',
-          'Utilizar herramientas de analítica básica, monitoreo de errores y rendimiento para entender cómo se usa la app, detectar fallos técnicos y mejorar la estabilidad del servicio.',
+          'Utilizar herramientas de analítica básica, monitoreo de errores y rendimiento para entender cómo se usan la app y el sitio web (ver la sección 5), detectar fallos técnicos y mejorar la estabilidad del servicio.',
         ],
       },
       {
-        title: '5. Qué información puede ser visible para otros usuarios',
+        title: '5. Analítica del sitio web y cookies',
+        paragraphs: [
+          'En el sitio web inkduel.com usamos Google Analytics 4, un servicio de Google, para medir cuántas personas lo visitan y qué funciones usan, como escribir capítulos, dejar Marcas o jugar duelos. La app móvil usa Google Analytics para Firebase con el mismo fin.',
+          'Solo medimos visitas desde países fuera del Espacio Económico Europeo, el Reino Unido y Suiza. Si te conectas desde esas regiones, o si no podemos determinar tu país, el sitio no carga Google Analytics ni envía datos de medición. Para decidirlo usamos tu país aproximado, según la dirección IP de la conexión, y guardamos solo el resultado (medir o no medir) en el almacenamiento de la pestaña hasta que la cierras.',
+          'Cuando la medición está activa, se tratan estos datos:',
+        ],
+        bullets: [
+          'Cookies de Google Analytics (_ga y _ga_<ID>), que guardan un identificador aleatorio de tu navegador para distinguir visitas. Duran hasta dos años, salvo que las borres.',
+          'Páginas visitadas, sin los parámetros de la dirección (salvo etiquetas de campaña utm_*), sin códigos de verificación ni tokens de invitación y sin el título de la página.',
+          'Acciones dentro del sitio, como iniciar sesión, publicar un capítulo, dejar una Marca, seguir una obra o enviar un relato, con identificadores técnicos (por ejemplo, de la obra o del capítulo) y datos como tu rango o la duración de la escritura. Nunca el texto que escribes, tu correo electrónico ni tu nombre de usuario.',
+          'Si inicias sesión, el identificador interno de tu cuenta de InkDuel, para relacionar el uso del sitio con el de la app.',
+          'Datos técnicos que Google recibe con cualquier conexión: dirección IP (Google Analytics 4 no la registra ni la almacena), tipo de navegador y dispositivo, idioma, resolución de pantalla y ubicación aproximada.',
+          'No usamos estos datos para publicidad: la publicidad personalizada, los datos de usuario para anuncios y Google Signals están desactivados.',
+          'Puedes bloquear o borrar estas cookies desde tu navegador, usar el complemento de inhabilitación de Google Analytics (tools.google.com/dlpage/gaoptout) o escribirnos para ejercer tus derechos. Las páginas de verificación de correo, cambio de contraseña e invitaciones a duelos nunca envían datos de medición.',
+        ],
+      },
+      {
+        title: '6. Qué información puede ser visible para otros usuarios',
         paragraphs: [
           'Algunas funciones de InkDuel implican que cierta información sea visible para otros usuarios, como nombre de usuario, perfil público, relatos publicados, participación en duelos, resultados, rankings, votos o estadísticas asociadas a la actividad dentro de la plataforma.',
           'La visibilidad concreta puede depender de la configuración del producto, de la naturaleza pública o competitiva de determinadas funciones y de los ajustes de privacidad que ofrezca la app en cada momento.',
         ],
       },
       {
-        title: '6. Cuándo compartimos información',
+        title: '7. Cuándo compartimos información',
         paragraphs: [
           'No vendemos tus datos personales. Podemos compartir información solo en los supuestos necesarios para prestar el servicio, operar funciones específicas o cumplir obligaciones legales.',
           'Para operar ciertas funciones, InkDuel puede procesar contenido mediante sistemas automatizados propios o de proveedores externos. Esto puede incluir el análisis de relatos, comparación de respuestas, generación de retroalimentación, detección de abuso y cálculo de resultados de duelos.',
@@ -88,14 +105,14 @@ const copies: Record<Locale, LegalCopy> = {
         ],
       },
       {
-        title: '7. Edad mínima',
+        title: '8. Edad mínima',
         paragraphs: [
           'InkDuel no está dirigida a menores de 13 años ni a personas que no alcancen la edad mínima requerida para consentir el tratamiento de datos personales en su jurisdicción.',
           'Si detectamos que recopilamos información de un menor sin el consentimiento correspondiente, tomaremos medidas razonables para eliminarla.',
         ],
       },
       {
-        title: '8. Conservación y eliminación de datos',
+        title: '9. Conservación y eliminación de datos',
         paragraphs: [
           'Conservamos la información durante el tiempo necesario para operar InkDuel, mantener la seguridad del servicio y cumplir obligaciones legales o de prevención de fraude.',
           'Si solicitas eliminar tu cuenta desde la app o a través de nuestros canales de privacidad, eliminaremos o anonimizaremos la información asociada, salvo cuando debamos conservar ciertos datos por motivos legales, de seguridad o defensa frente a abusos.',
@@ -108,27 +125,27 @@ const copies: Record<Locale, LegalCopy> = {
         },
       },
       {
-        title: '9. Tus opciones y derechos',
+        title: '10. Tus opciones y derechos',
         paragraphs: [
           'Según tu país o región, puedes tener derecho a acceder, corregir, eliminar u oponerte a determinados tratamientos de datos personales.',
           'También puedes actualizar parte de tu información desde la propia app, como idioma, ajustes del perfil y solicitud de eliminación de cuenta.',
         ],
       },
       {
-        title: '10. Seguridad',
+        title: '11. Seguridad',
         paragraphs: [
           'Aplicamos medidas técnicas y organizativas razonables para proteger la información contra acceso no autorizado, pérdida, alteración o divulgación indebida.',
           'Aun así, ningún sistema es completamente infalible, por lo que no podemos garantizar seguridad absoluta.',
         ],
       },
       {
-        title: '11. Transferencias internacionales',
+        title: '12. Transferencias internacionales',
         paragraphs: [
           'Algunos de nuestros proveedores pueden procesar información en distintos países. Cuando eso ocurre, adoptamos medidas razonables para que la transferencia y el tratamiento mantengan un nivel adecuado de protección.',
         ],
       },
       {
-        title: '12. Cambios en esta política',
+        title: '13. Cambios en esta política',
         paragraphs: [
           'Podemos actualizar esta política cuando cambien nuestras prácticas, el producto o los requisitos legales. Publicaremos la versión vigente en esta misma página e indicaremos la fecha de última actualización.',
         ],
@@ -142,7 +159,7 @@ const copies: Record<Locale, LegalCopy> = {
     intro:
       'This policy explains what data we may process when you use InkDuel, why we process it, and what choices you have over your information.',
     lastUpdatedLabel: 'Last updated',
-    lastUpdatedValue: 'April 24, 2026',
+    lastUpdatedValue: 'October 12, 2026',
     contactLabel: 'Privacy contact',
     contactValue: CONTACT_EMAIL,
     sections: [
@@ -190,18 +207,35 @@ const copies: Record<Locale, LegalCopy> = {
           'Send operational communications, including notifications related to app activity.',
           'Generate evaluations, recommendations, and results within the InkDuel experience.',
           'Prevent fraud, abuse, unauthorized access, and other misuse.',
-          'Use basic analytics, error monitoring, and performance tools to understand app usage, detect technical issues, and improve service stability.',
+          'Use basic analytics, error monitoring, and performance tools to understand how the app and the website are used (see section 5), detect technical issues, and improve service stability.',
         ],
       },
       {
-        title: '5. What information may be visible to other users',
+        title: '5. Website analytics and cookies',
+        paragraphs: [
+          'On the inkduel.com website we use Google Analytics 4, a Google service, to measure how many people visit and which features they use, such as writing chapters, leaving Marks, or playing duels. The mobile app uses Google Analytics for Firebase for the same purpose.',
+          'We only measure visits from countries outside the European Economic Area, the United Kingdom, and Switzerland. If you connect from those regions, or if we cannot determine your country, the website does not load Google Analytics and sends no measurement data. To decide, we use your approximate country based on the IP address of the connection, and we keep only the result (measure or not) in the tab storage until you close it.',
+          'When measurement is active, the following data is processed:',
+        ],
+        bullets: [
+          'Google Analytics cookies (_ga and _ga_<ID>), which store a random identifier for your browser to tell visits apart. They last up to two years unless you delete them.',
+          'Pages visited, without address parameters (except utm_* campaign tags), without verification codes or invitation tokens, and without the page title.',
+          'Actions on the website, such as signing in, publishing a chapter, leaving a Mark, following a work, or submitting a story, with technical identifiers (for example, of the work or chapter) and data such as your rank or writing duration. Never the text you write, your email address, or your username.',
+          'If you sign in, the internal identifier of your InkDuel account, to relate website usage to app usage.',
+          'Technical data Google receives with any connection: IP address (Google Analytics 4 does not log or store it), browser and device type, language, screen resolution, and approximate location.',
+          'We do not use this data for advertising: ad personalization, user data for ads, and Google Signals are turned off.',
+          'You can block or delete these cookies in your browser, use the Google Analytics opt-out add-on (tools.google.com/dlpage/gaoptout), or contact us to exercise your rights. Email verification, password reset, and duel invitation pages never send measurement data.',
+        ],
+      },
+      {
+        title: '6. What information may be visible to other users',
         paragraphs: [
           'Some InkDuel features imply that certain information may be visible to other users, such as username, public profile, published stories, duel participation, results, rankings, votes, or statistics associated with activity within the platform.',
           'The specific visibility of this information may depend on product configuration, the public or competitive nature of certain features, and the privacy settings made available by the app at any given time.',
         ],
       },
       {
-        title: '6. When we share information',
+        title: '7. When we share information',
         paragraphs: [
           'We do not sell your personal data. We may share information only when needed to provide the service, operate specific features, or comply with legal obligations.',
           'To operate certain features, InkDuel may process content through our own automated systems or those of external providers. This may include story analysis, response comparison, feedback generation, abuse detection, and duel result calculation.',
@@ -216,14 +250,14 @@ const copies: Record<Locale, LegalCopy> = {
         ],
       },
       {
-        title: '7. Minimum age',
+        title: '8. Minimum age',
         paragraphs: [
           'InkDuel is not directed to children under 13 or to people who have not reached the minimum age required to consent to personal data processing in their jurisdiction.',
           'If we detect that we have collected information from a minor without the required consent, we will take reasonable steps to delete it.',
         ],
       },
       {
-        title: '8. Data retention and account deletion',
+        title: '9. Data retention and account deletion',
         paragraphs: [
           'We keep information for as long as needed to operate InkDuel, maintain service security, and comply with legal obligations or fraud-prevention needs.',
           'If you request deletion of your account from inside the app or through our privacy channels, we will delete or anonymize the associated information unless we must retain certain data for legal, security, or abuse-prevention reasons.',
@@ -236,27 +270,27 @@ const copies: Record<Locale, LegalCopy> = {
         },
       },
       {
-        title: '9. Your choices and rights',
+        title: '10. Your choices and rights',
         paragraphs: [
           'Depending on your country or region, you may have rights to access, correct, delete, or object to certain processing of personal data.',
           'You can also update part of your information directly in the app, including language, profile settings, and account deletion requests.',
         ],
       },
       {
-        title: '10. Security',
+        title: '11. Security',
         paragraphs: [
           'We apply reasonable technical and organizational measures to protect information against unauthorized access, loss, alteration, or improper disclosure.',
           'Even so, no system is completely fail-safe, and we cannot guarantee absolute security.',
         ],
       },
       {
-        title: '11. International transfers',
+        title: '12. International transfers',
         paragraphs: [
           'Some of our providers may process information in different countries. When that happens, we take reasonable steps to ensure that the transfer and processing maintain an appropriate level of protection.',
         ],
       },
       {
-        title: '12. Changes to this policy',
+        title: '13. Changes to this policy',
         paragraphs: [
           'We may update this policy when our practices, product, or legal requirements change. We will publish the current version on this page and indicate the latest update date.',
         ],
@@ -270,7 +304,7 @@ const copies: Record<Locale, LegalCopy> = {
     intro:
       'Esta politica explica quais dados podemos tratar quando voce usa o InkDuel, por que tratamos esses dados e quais escolhas voce tem sobre as suas informacoes.',
     lastUpdatedLabel: 'Ultima atualizacao',
-    lastUpdatedValue: '24 de abril de 2026',
+    lastUpdatedValue: '12 de outubro de 2026',
     contactLabel: 'Contato de privacidade',
     contactValue: CONTACT_EMAIL,
     sections: [
@@ -318,18 +352,35 @@ const copies: Record<Locale, LegalCopy> = {
           'Enviar comunicacoes operacionais, incluindo notificacoes relacionadas a atividade do app.',
           'Gerar avaliacoes, recomendacoes e resultados dentro da experiencia do InkDuel.',
           'Prevenir fraude, abuso, acesso nao autorizado e outros usos indevidos.',
-          'Usar ferramentas de analise basica, monitoramento de erros e desempenho para entender o uso do app, detectar falhas tecnicas e melhorar a estabilidade do servico.',
+          'Usar ferramentas de analise basica, monitoramento de erros e desempenho para entender o uso do app e do site (ver a secao 5), detectar falhas tecnicas e melhorar a estabilidade do servico.',
         ],
       },
       {
-        title: '5. Quais informacoes podem ser visiveis para outros usuarios',
+        title: '5. Analise do site e cookies',
+        paragraphs: [
+          'No site inkduel.com usamos o Google Analytics 4, um servico do Google, para medir quantas pessoas o visitam e quais funcoes usam, como escrever capitulos, deixar Marcas ou jogar duelos. O app movel usa o Google Analytics para Firebase com a mesma finalidade.',
+          'So medimos visitas de paises fora do Espaco Economico Europeu, do Reino Unido e da Suica. Se voce se conecta a partir dessas regioes, ou se nao conseguimos determinar o seu pais, o site nao carrega o Google Analytics nem envia dados de medicao. Para decidir, usamos o seu pais aproximado, com base no endereco IP da conexao, e guardamos apenas o resultado (medir ou nao) no armazenamento da aba ate voce fecha-la.',
+          'Quando a medicao esta ativa, tratamos estes dados:',
+        ],
+        bullets: [
+          'Cookies do Google Analytics (_ga e _ga_<ID>), que guardam um identificador aleatorio do seu navegador para distinguir visitas. Duram ate dois anos, a menos que voce os apague.',
+          'Paginas visitadas, sem os parametros do endereco (exceto etiquetas de campanha utm_*), sem codigos de verificacao ou tokens de convite e sem o titulo da pagina.',
+          'Acoes no site, como entrar na conta, publicar um capitulo, deixar uma Marca, seguir uma obra ou enviar um conto, com identificadores tecnicos (por exemplo, da obra ou do capitulo) e dados como o seu rank ou a duracao da escrita. Nunca o texto que voce escreve, o seu e-mail ou o seu nome de usuario.',
+          'Se voce entrar na conta, o identificador interno da sua conta InkDuel, para relacionar o uso do site com o do app.',
+          'Dados tecnicos que o Google recebe em qualquer conexao: endereco IP (o Google Analytics 4 nao o registra nem armazena), tipo de navegador e dispositivo, idioma, resolucao de tela e localizacao aproximada.',
+          'Nao usamos esses dados para publicidade: a personalizacao de anuncios, os dados de usuario para anuncios e o Google Signals estao desativados.',
+          'Voce pode bloquear ou apagar esses cookies no seu navegador, usar o complemento de desativacao do Google Analytics (tools.google.com/dlpage/gaoptout) ou nos escrever para exercer os seus direitos. As paginas de verificacao de e-mail, troca de senha e convites para duelos nunca enviam dados de medicao.',
+        ],
+      },
+      {
+        title: '6. Quais informacoes podem ser visiveis para outros usuarios',
         paragraphs: [
           'Algumas funcoes do InkDuel implicam que certas informacoes possam ser visiveis para outros usuarios, como nome de usuario, perfil publico, historias publicadas, participacao em duelos, resultados, rankings, votos ou estatisticas associadas a atividade dentro da plataforma.',
           'A visibilidade especifica dessas informacoes pode depender da configuracao do produto, da natureza publica ou competitiva de certas funcoes e das configuracoes de privacidade disponibilizadas pelo app em cada momento.',
         ],
       },
       {
-        title: '6. Quando compartilhamos informacoes',
+        title: '7. Quando compartilhamos informacoes',
         paragraphs: [
           'Nao vendemos seus dados pessoais. Podemos compartilhar informacoes apenas quando isso for necessario para prestar o servico, operar funcoes especificas ou cumprir obrigacoes legais.',
           'Para operar certas funcoes, o InkDuel pode processar conteudo por meio de sistemas automatizados proprios ou de fornecedores externos. Isso pode incluir analise de historias, comparacao de respostas, geracao de feedback, deteccao de abuso e calculo de resultados de duelos.',
@@ -344,14 +395,14 @@ const copies: Record<Locale, LegalCopy> = {
         ],
       },
       {
-        title: '7. Idade minima',
+        title: '8. Idade minima',
         paragraphs: [
           'O InkDuel nao e direcionado a menores de 13 anos nem a pessoas que nao tenham atingido a idade minima exigida para consentir com o tratamento de dados pessoais em sua jurisdicao.',
           'Se detectarmos que coletamos informacoes de um menor sem o consentimento necessario, tomaremos medidas razoaveis para exclui-las.',
         ],
       },
       {
-        title: '8. Retencao e exclusao de dados',
+        title: '9. Retencao e exclusao de dados',
         paragraphs: [
           'Mantemos as informacoes pelo tempo necessario para operar o InkDuel, preservar a seguranca do servico e cumprir obrigacoes legais ou necessidades de prevencao a fraude.',
           'Se voce solicitar a exclusao da sua conta dentro do app ou pelos nossos canais de privacidade, excluiremos ou anonimizaremos as informacoes associadas, salvo quando precisarmos manter certos dados por motivos legais, de seguranca ou prevencao de abuso.',
@@ -364,27 +415,27 @@ const copies: Record<Locale, LegalCopy> = {
         },
       },
       {
-        title: '9. Suas escolhas e direitos',
+        title: '10. Suas escolhas e direitos',
         paragraphs: [
           'Dependendo do seu pais ou regiao, voce pode ter direitos de acessar, corrigir, excluir ou se opor a certos tratamentos de dados pessoais.',
           'Voce tambem pode atualizar parte das suas informacoes diretamente no app, incluindo idioma, configuracoes de perfil e solicitacoes de exclusao da conta.',
         ],
       },
       {
-        title: '10. Seguranca',
+        title: '11. Seguranca',
         paragraphs: [
           'Aplicamos medidas tecnicas e organizacionais razoaveis para proteger as informacoes contra acesso nao autorizado, perda, alteracao ou divulgacao indevida.',
           'Ainda assim, nenhum sistema e totalmente infalivel, e nao podemos garantir seguranca absoluta.',
         ],
       },
       {
-        title: '11. Transferencias internacionais',
+        title: '12. Transferencias internacionais',
         paragraphs: [
           'Alguns dos nossos fornecedores podem processar informacoes em diferentes paises. Quando isso acontece, adotamos medidas razoaveis para que a transferencia e o tratamento mantenham um nivel adequado de protecao.',
         ],
       },
       {
-        title: '12. Alteracoes nesta politica',
+        title: '13. Alteracoes nesta politica',
         paragraphs: [
           'Podemos atualizar esta politica quando nossas praticas, o produto ou os requisitos legais mudarem. Publicaremos a versao vigente nesta pagina e indicaremos a data da ultima atualizacao.',
         ],

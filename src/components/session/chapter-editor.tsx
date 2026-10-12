@@ -23,9 +23,9 @@ import { WORK_LIMITS, conflictSnapshot, newClientId, runeLength, worksApi } from
 import { WORKS_COPY } from '@/lib/session/works-copy';
 import {
   consumeEditorSource,
-  trackChapterPublished,
-  trackChapterPublishTapped,
+  publishChapterAttempt,
   trackEditorOpened,
+  trackPublishFailed,
 } from '@/lib/session/works-analytics';
 
 import { useSessionLocale } from './session-root';
@@ -187,24 +187,30 @@ export function ChapterEditorView({ engine, workTitle }: { engine: ChapterAutosa
     // create of a new chapter); only a clean chapter reaches the dialog.
     const clean = await engine.flush();
     setPublishing(false);
-    if (clean && !engine.getState().isNew) setConfirming(true);
+    if (!clean) {
+      // Not yet an attempt (nothing confirmed), but the save that blocks it.
+      const saved = engine.getState();
+      if (!saved.isNew) {
+        trackPublishFailed({ step: 'chapter', workId: saved.workId, chapterId: saved.chapterId, reason: 'save_failed_before_confirm' });
+      }
+      return;
+    }
+    if (!engine.getState().isNew) setConfirming(true);
   }
 
   async function publish() {
+    if (publishing) return;
     setPublishing(true);
     try {
-      // Nothing may have changed between the dialog and the request: if it
-      // did, save again before publishing what the server holds.
-      if (!(await engine.flush())) {
-        setConfirming(false);
-        return;
-      }
-      const chapter = { orderIndex: state.orderIndex, workId: state.workId, chapterId: state.chapterId };
-      trackChapterPublishTapped(chapter);
-      await worksApi.publishChapter(state.workId, state.chapterId, { locale });
-      // The editor holds no fresh work, so became_gallery_visible stays unknown here.
-      trackChapterPublished({ ...chapter, wasPublished: state.published }, null);
-      engine.markPublished();
+      // One confirmed attempt, measured from before the save (see
+      // publishChapterAttempt). Nothing may have changed between the dialog
+      // and the request: if it did, save again before publishing what the
+      // server holds.
+      const outcome = await publishChapterAttempt(
+        { orderIndex: state.orderIndex, workId: state.workId, chapterId: state.chapterId, wasPublished: state.published },
+        { flush: () => engine.flush(), publish: () => worksApi.publishChapter(state.workId, state.chapterId, { locale }) },
+      );
+      if (outcome === 'published') engine.markPublished();
       setConfirming(false);
     } catch {
       setPublishFailed(true);

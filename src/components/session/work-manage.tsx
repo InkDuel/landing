@@ -20,7 +20,13 @@ import { INTL_LOCALE } from '@/lib/i18n';
 import { ApiError } from '@/lib/session/api';
 import { SESSION_COPY } from '@/lib/session/copy';
 import { type AuthorChapter, type AuthorWork, WORK_LIMITS, worksApi } from '@/lib/session/works';
-import { trackChapterPublished, trackChapterPublishTapped, trackWorkPublished } from '@/lib/session/works-analytics';
+import {
+  publishFailureReason,
+  trackChapterPublished,
+  trackChapterPublishTapped,
+  trackPublishFailed,
+  trackWorkPublished,
+} from '@/lib/session/works-analytics';
 import { useInfiniteSentinel } from '@/lib/session/use-paged-list';
 import { WORKS_COPY } from '@/lib/session/works-copy';
 
@@ -283,9 +289,14 @@ export function WorkManageView({ workId }: { workId: string }) {
         busy={busy}
         onClick={() =>
           void mutate(async () => {
-            const published = await worksApi.publish(work.id, { locale });
-            trackWorkPublished(work, published);
-            return published;
+            try {
+              const published = await worksApi.publish(work.id, { locale });
+              trackWorkPublished(work, published);
+              return published;
+            } catch (error) {
+              trackPublishFailed({ step: 'work', workId: work.id, reason: publishFailureReason(error) });
+              throw error;
+            }
           })
         }
       >
@@ -382,7 +393,12 @@ export function WorkManageView({ workId }: { workId: string }) {
               const ref = { orderIndex: chapter.orderIndex, workId: work.id, chapterId: chapter.id };
               trackChapterPublishTapped(ref);
               await mutate(async () => {
-                await worksApi.publishChapter(work.id, chapter.id, { locale });
+                try {
+                  await worksApi.publishChapter(work.id, chapter.id, { locale });
+                } catch (error) {
+                  trackPublishFailed({ step: 'chapter', workId: work.id, chapterId: chapter.id, reason: publishFailureReason(error) });
+                  throw error;
+                }
                 // The reload that follows every mutation, done here so the
                 // event can compare gallery visibility before and after.
                 const after = await worksApi.get(work.id, { locale }).catch(() => null);

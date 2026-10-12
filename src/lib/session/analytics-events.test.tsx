@@ -7,9 +7,12 @@ import type { ActiveDuel } from './duels';
 import { duelsApi } from './duels';
 import { storyCommentsApi } from './marks';
 import { type AuthorWork, worksApi } from './works';
+import { ApiError } from './api';
 import {
   consumeEditorSource,
   markNextEditorAuto,
+  publishChapterAttempt,
+  publishFailureReason,
   trackChapterPublished,
   trackEditorOpened,
   trackWorkPublished,
@@ -196,5 +199,47 @@ describe('duel events match the app', () => {
     fetchMock.mockResolvedValueOnce(response({ submissionId: 'sub-1' }));
     await duelsApi.submitDraft('draft-1', 'relato', 'es');
     expect(tracked().map(([name]) => name)).toEqual(['ranked_async_draft_queued']);
+  });
+});
+
+describe('chapter publish attempts from the editor', () => {
+  const chapter = { orderIndex: 3, workId: 'w1', chapterId: 'c3', wasPublished: false };
+  const ids = { work_id: 'w1', chapter_id: 'c3' };
+
+  it('success: tapped, then published', async () => {
+    const publish = vi.fn().mockResolvedValue({});
+    await expect(publishChapterAttempt(chapter, { flush: async () => true, publish })).resolves.toBe('published');
+    expect(tracked().map(([name]) => name)).toEqual(['work_chapter_publish_tapped', 'work_chapter_published']);
+    expect(tracked()[0][1]).toEqual({ order_index: 3, ...ids });
+  });
+
+  it('the save before publishing fails: tapped is still counted, then failed(save_failed); no request', async () => {
+    const publish = vi.fn();
+    await expect(publishChapterAttempt(chapter, { flush: async () => false, publish })).resolves.toBe('saveFailed');
+    expect(publish).not.toHaveBeenCalled();
+    expect(tracked()).toEqual([
+      ['work_chapter_publish_tapped', { order_index: 3, ...ids }],
+      ['work_publish_failed', { step: 'chapter', ...ids, reason: 'save_failed' }],
+    ]);
+  });
+
+  it('the publish request fails: tapped, then failed with the app reason, error rethrown', async () => {
+    const error = new ApiError(503, 'http');
+    await expect(publishChapterAttempt(chapter, { flush: async () => true, publish: async () => Promise.reject(error) })).rejects.toBe(error);
+    expect(tracked()).toEqual([
+      ['work_chapter_publish_tapped', { order_index: 3, ...ids }],
+      ['work_publish_failed', { step: 'chapter', ...ids, reason: 'unavailable' }],
+    ]);
+  });
+
+  it('maps failures to the app reasons', () => {
+    expect(publishFailureReason(new ApiError(409, 'http'))).toBe('conflict');
+    expect(publishFailureReason(new ApiError(429, 'http'))).toBe('rate_limit');
+    expect(publishFailureReason(new ApiError(404, 'http'))).toBe('not_found');
+    expect(publishFailureReason(new ApiError(403, 'http'))).toBe('forbidden');
+    expect(publishFailureReason(new ApiError(0, 'network'))).toBe('network');
+    expect(publishFailureReason(new ApiError(0, 'timeout'))).toBe('network');
+    expect(publishFailureReason(new ApiError(500, 'http'))).toBe('generic');
+    expect(publishFailureReason(new Error('x'))).toBe('generic');
   });
 });
