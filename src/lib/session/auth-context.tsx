@@ -10,6 +10,7 @@ import {
 } from '@firebase/auth';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
+import { setAnalyticsUser, track } from '@/lib/analytics';
 import type { Locale } from '@/lib/i18n';
 
 import { ApiError, apiGet } from './api';
@@ -78,6 +79,9 @@ export function SessionProvider({ locale, children }: { locale: Locale; children
   // Set when /api/me said «no account»: the sign-out that follows must not
   // turn the message back into a plain signed-out state.
   const noAccountRef = useRef(false);
+  // The method of a sign-in started on this page: `login` is logged once
+  // /api/me confirms the account, never for a restored session.
+  const pendingMethodRef = useRef<SignInMethod | null>(null);
 
   useEffect(() => {
     const auth = getFirebaseAuth();
@@ -87,6 +91,7 @@ export function SessionProvider({ locale, children }: { locale: Locale; children
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!active) return;
       if (!firebaseUser) {
+        setAnalyticsUser(null);
         setUser(null);
         setStatus(noAccountRef.current ? 'noAccount' : 'signedOut');
         return;
@@ -97,10 +102,14 @@ export function SessionProvider({ locale, children }: { locale: Locale; children
         const me = parseProfileUser(await apiGet('/api/me', { locale: localeRef.current }));
         if (!active) return;
         if (!me) throw new ApiError(200, 'parse');
+        setAnalyticsUser(me.id);
+        if (pendingMethodRef.current) track('login', { method: pendingMethodRef.current });
+        pendingMethodRef.current = null;
         setUser(me);
         setStatus('signedIn');
       } catch (error) {
         if (!active) return;
+        pendingMethodRef.current = null;
         if (error instanceof ApiError && error.status === 404) {
           noAccountRef.current = true;
           await firebaseSignOut(auth);
@@ -121,6 +130,7 @@ export function SessionProvider({ locale, children }: { locale: Locale; children
     if (!auth) return 'generic';
     noAccountRef.current = false;
     auth.languageCode = localeRef.current;
+    pendingMethodRef.current = method;
     try {
       if (method === 'email') {
         if (!credentials) return 'invalidCredentials';
@@ -134,6 +144,7 @@ export function SessionProvider({ locale, children }: { locale: Locale; children
       }
       return null;
     } catch (error) {
+      pendingMethodRef.current = null;
       return mapSignInError(error);
     }
   }, []);

@@ -1,5 +1,6 @@
 'use client';
 
+import { track } from '@/lib/analytics';
 import type { Locale } from '@/lib/i18n';
 import { ApiError, apiGet, apiPath, apiRequest } from './api';
 import type { Page } from './models';
@@ -199,7 +200,9 @@ export const duelsApi = {
     return parseRankedDraft(record(await apiGet('/api/ranked-async/active-draft', { locale })).draft);
   },
   async create(locale: Locale) {
-    return parseActiveDuel(await apiRequest('POST', '/api/duel', { locale }));
+    const duel = parseActiveDuel(await apiRequest('POST', '/api/duel', { locale }));
+    track('duel_search_started', { duel_mode: 'ranked', language: locale });
+    return duel;
   },
   async status(id: string, locale: Locale) {
     return parseActiveDuel(await apiGet(path(id, 'status'), { locale }), id);
@@ -217,12 +220,14 @@ export const duelsApi = {
   },
   async submit(id: string, story: string, locale: Locale) {
     await apiRequest('POST', path(id, 'story'), { locale, body: { story } });
+    track('story_submitted', { duel_mode: 'ranked' });
   },
   async submitDraft(id: string, story: string, locale: Locale) {
     const d = record(
       await apiRequest('POST', apiPath('api', 'ranked-async', 'drafts', id, 'story'), { locale, errorCodes, body: { story } }),
     );
     if (!str(d.submissionId)) throw new ApiError(200, 'parse');
+    track('story_submitted', { duel_mode: 'ranked_async' });
     return str(d.submissionId);
   },
   async drain(locale: Locale): Promise<ActiveDuel | null> {
@@ -236,6 +241,7 @@ export const duelsApi = {
     if (str(d.duelId)) return { duel: parseActiveDuel(d), draft: null };
     const draft = parseRankedDraft(d.draft);
     if (!draft) throw new ApiError(200, 'parse');
+    track('ranked_async_draft_started');
     return { duel: null, draft };
   },
   async queued(locale: Locale) {

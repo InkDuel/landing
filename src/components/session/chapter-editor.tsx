@@ -10,6 +10,7 @@ import { InkChip } from '@/components/ink/ink-chip';
 import { InkDialog } from '@/components/ink/ink-dialog';
 import { InkInlineBanner } from '@/components/ink/ink-inline-banner';
 import { InkSkeleton, InkTextAction } from '@/components/ink/ink-states';
+import { track } from '@/lib/analytics';
 import { INTL_LOCALE, type Locale } from '@/lib/i18n';
 import { ApiError, isTransient } from '@/lib/session/api';
 import {
@@ -396,6 +397,12 @@ export function ChapterEditor({ workId, chapterId }: { workId: string; chapterId
         }
         setLoaded({ initial, workTitle: work.title });
         setStatus('ready');
+        track('work_chapter_editor_opened', {
+          is_new: initial.isNew,
+          order_index: initial.isNew ? null : initial.orderIndex,
+          work_id: workId,
+          chapter_id: initial.chapterId,
+        });
       } catch (error) {
         if (controller.signal.aborted) return;
         setStatus(error instanceof ApiError && (error.status === 404 || error.status === 403) ? 'notFound' : 'error');
