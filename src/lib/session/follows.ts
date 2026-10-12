@@ -1,6 +1,5 @@
 'use client';
 
-import { track } from '@/lib/analytics';
 import type { Locale } from '@/lib/i18n';
 
 import { ApiError, apiPath, apiRequest } from './api';
@@ -35,15 +34,11 @@ export const followsApi = {
 
   /** Idempotent; answers the canonical state. */
   async follow(workId: string, { locale }: Ctx): Promise<boolean> {
-    const state = following(await apiRequest('PUT', apiPath('api', 'gallery', 'works', workId, 'follow'), { locale }));
-    track('work_followed');
-    return state;
+    return following(await apiRequest('PUT', apiPath('api', 'gallery', 'works', workId, 'follow'), { locale }));
   },
 
   async unfollow(workId: string, { locale }: Ctx): Promise<boolean> {
-    const state = following(await apiRequest('DELETE', apiPath('api', 'gallery', 'works', workId, 'follow'), { locale }));
-    track('work_unfollowed');
-    return state;
+    return following(await apiRequest('DELETE', apiPath('api', 'gallery', 'works', workId, 'follow'), { locale }));
   },
 
   /** «Historias que sigo», newest follow first, in the gallery's own shape. */

@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { connection } from 'next/server';
 import type { ReactNode } from 'react';
 
 import { SessionRoot } from '@/components/session/session-root';
+import { identifyAllowedForCountry } from '@/lib/analytics';
 import { resolveRequestLocale } from '@/lib/request-locale';
 
 // The signed-in area renders per request: the CSP nonce from src/proxy.ts
@@ -15,5 +17,12 @@ export const metadata: Metadata = {
 export default async function SessionLayout({ children }: { children: ReactNode }) {
   await connection();
   const { locale } = await resolveRequestLocale(undefined);
-  return <SessionRoot initialLocale={locale}>{children}</SessionRoot>;
+  // GA4 user_id only where the visitor's country (Vercel's geo header) is known
+  // and outside the consent regions; see src/lib/analytics.ts.
+  const identifyAllowed = identifyAllowedForCountry((await headers()).get('x-vercel-ip-country'));
+  return (
+    <SessionRoot initialLocale={locale} identifyAllowed={identifyAllowed}>
+      {children}
+    </SessionRoot>
+  );
 }

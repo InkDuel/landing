@@ -3,6 +3,7 @@
 import { track } from '@/lib/analytics';
 import type { Locale } from '@/lib/i18n';
 import { ApiError, apiGet, apiPath, apiRequest } from './api';
+import { parseStorySubmission } from './duel-analytics';
 import type { Page } from './models';
 
 const record = (v: unknown): Record<string, unknown> =>
@@ -29,6 +30,8 @@ export type ActiveDuel = {
   userHasSubmitted: boolean;
   kind: string;
   mode: string;
+  /** Analytics only (duel_mode / opponent_type, like the app). */
+  isAIInvolved: boolean;
   userA: DuelPlayer | null;
   userB: DuelPlayer | null;
 };
@@ -43,6 +46,7 @@ export function parseActiveDuel(value: unknown, id = ''): ActiveDuel {
     userHasSubmitted: d.userHasSubmitted === true,
     kind: str(d.kind),
     mode: str(d.mode),
+    isAIInvolved: d.isAIInvolved === true,
     userA: activePlayer(d.userA, d.playerA),
     userB: activePlayer(d.userB, d.playerB),
   };
@@ -200,9 +204,7 @@ export const duelsApi = {
     return parseRankedDraft(record(await apiGet('/api/ranked-async/active-draft', { locale })).draft);
   },
   async create(locale: Locale) {
-    const duel = parseActiveDuel(await apiRequest('POST', '/api/duel', { locale }));
-    track('duel_search_started', { duel_mode: 'ranked', language: locale });
-    return duel;
+    return parseActiveDuel(await apiRequest('POST', '/api/duel', { locale }));
   },
   async status(id: string, locale: Locale) {
     return parseActiveDuel(await apiGet(path(id, 'status'), { locale }), id);
@@ -219,15 +221,15 @@ export const duelsApi = {
     await apiRequest('POST', path(id, 'forfeit'), { locale });
   },
   async submit(id: string, story: string, locale: Locale) {
-    await apiRequest('POST', path(id, 'story'), { locale, body: { story } });
-    track('story_submitted', { duel_mode: 'ranked' });
+    return parseStorySubmission(await apiRequest('POST', path(id, 'story'), { locale, body: { story } }));
   },
   async submitDraft(id: string, story: string, locale: Locale) {
     const d = record(
       await apiRequest('POST', apiPath('api', 'ranked-async', 'drafts', id, 'story'), { locale, errorCodes, body: { story } }),
     );
     if (!str(d.submissionId)) throw new ApiError(200, 'parse');
-    track('story_submitted', { duel_mode: 'ranked_async' });
+    // The app logs an accepted async draft as ranked_async_draft_queued, not story_submitted.
+    track('ranked_async_draft_queued');
     return str(d.submissionId);
   },
   async drain(locale: Locale): Promise<ActiveDuel | null> {

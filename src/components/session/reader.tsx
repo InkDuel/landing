@@ -324,7 +324,7 @@ export function ReaderReady({
   const kicker = `${copy.reader.chapter(chapter.orderIndex)} · ${copy.reader.readTime(Math.max(1, Math.ceil(words / 200)))}`;
   const total = work.publishedChapterCount || summaries.length;
   const { user } = useSession();
-  const marks = useChapterMarks(work.id, chapter.id, locale);
+  const marks = useChapterMarks(work.id, chapter.id, chapter.orderIndex, locale);
   const follow = useWorkFollow(work.id, locale);
 
   return (

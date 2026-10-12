@@ -10,7 +10,6 @@ import { InkChip } from '@/components/ink/ink-chip';
 import { InkDialog } from '@/components/ink/ink-dialog';
 import { InkInlineBanner } from '@/components/ink/ink-inline-banner';
 import { InkSkeleton, InkTextAction } from '@/components/ink/ink-states';
-import { track } from '@/lib/analytics';
 import { INTL_LOCALE, type Locale } from '@/lib/i18n';
 import { ApiError, isTransient } from '@/lib/session/api';
 import {
@@ -22,6 +21,12 @@ import {
 import { SESSION_COPY } from '@/lib/session/copy';
 import { WORK_LIMITS, conflictSnapshot, newClientId, runeLength, worksApi } from '@/lib/session/works';
 import { WORKS_COPY } from '@/lib/session/works-copy';
+import {
+  consumeEditorSource,
+  trackChapterPublished,
+  trackChapterPublishTapped,
+  trackEditorOpened,
+} from '@/lib/session/works-analytics';
 
 import { useSessionLocale } from './session-root';
 import { chapterEditHref, workManageHref } from './works-parts';
@@ -194,7 +199,11 @@ export function ChapterEditorView({ engine, workTitle }: { engine: ChapterAutosa
         setConfirming(false);
         return;
       }
+      const chapter = { orderIndex: state.orderIndex, workId: state.workId, chapterId: state.chapterId };
+      trackChapterPublishTapped(chapter);
       await worksApi.publishChapter(state.workId, state.chapterId, { locale });
+      // The editor holds no fresh work, so became_gallery_visible stays unknown here.
+      trackChapterPublished({ ...chapter, wasPublished: state.published }, null);
       engine.markPublished();
       setConfirming(false);
     } catch {
@@ -397,11 +406,12 @@ export function ChapterEditor({ workId, chapterId }: { workId: string; chapterId
         }
         setLoaded({ initial, workTitle: work.title });
         setStatus('ready');
-        track('work_chapter_editor_opened', {
-          is_new: initial.isNew,
-          order_index: initial.isNew ? null : initial.orderIndex,
-          work_id: workId,
-          chapter_id: initial.chapterId,
+        trackEditorOpened({
+          source: consumeEditorSource(workId, chapterId),
+          isNew: initial.isNew,
+          orderIndex: initial.orderIndex,
+          workId,
+          chapterId: initial.chapterId,
         });
       } catch (error) {
         if (controller.signal.aborted) return;

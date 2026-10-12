@@ -20,6 +20,7 @@ import { INTL_LOCALE } from '@/lib/i18n';
 import { ApiError } from '@/lib/session/api';
 import { SESSION_COPY } from '@/lib/session/copy';
 import { type AuthorChapter, type AuthorWork, WORK_LIMITS, worksApi } from '@/lib/session/works';
+import { trackChapterPublished, trackChapterPublishTapped, trackWorkPublished } from '@/lib/session/works-analytics';
 import { useInfiniteSentinel } from '@/lib/session/use-paged-list';
 import { WORKS_COPY } from '@/lib/session/works-copy';
 
@@ -277,7 +278,17 @@ export function WorkManageView({ workId }: { workId: string }) {
               ? copy.addTitleToPublish
               : copy.needsChapter}
       </p>
-      <InkButton disabled={!canPublish} busy={busy} onClick={() => void mutate(() => worksApi.publish(work.id, { locale }))}>
+      <InkButton
+        disabled={!canPublish}
+        busy={busy}
+        onClick={() =>
+          void mutate(async () => {
+            const published = await worksApi.publish(work.id, { locale });
+            trackWorkPublished(work, published);
+            return published;
+          })
+        }
+      >
         {copy.publishWork}
       </InkButton>
       <p className="text-center type-caption text-tertiary">{copy.onlyYouCanSee}</p>
@@ -367,7 +378,20 @@ export function WorkManageView({ workId }: { workId: string }) {
             busy={busy}
             onClick={async () => {
               const chapter = confirm.chapter;
-              await mutate(() => worksApi.publishChapter(work.id, chapter.id, { locale }));
+              if (busy) return;
+              const ref = { orderIndex: chapter.orderIndex, workId: work.id, chapterId: chapter.id };
+              trackChapterPublishTapped(ref);
+              await mutate(async () => {
+                await worksApi.publishChapter(work.id, chapter.id, { locale });
+                // The reload that follows every mutation, done here so the
+                // event can compare gallery visibility before and after.
+                const after = await worksApi.get(work.id, { locale }).catch(() => null);
+                trackChapterPublished(
+                  { ...ref, wasPublished: chapter.published },
+                  { wasVisible: work.isGalleryEligible, after },
+                );
+                return after;
+              });
               setConfirm(null);
             }}
           >

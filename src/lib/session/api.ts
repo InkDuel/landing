@@ -49,6 +49,8 @@ type RequestOptions = {
   keepalive?: boolean;
   /** Only these known machine codes may reach feature-specific error mapping. */
   errorCodes?: readonly string[];
+  /** Receives the status of a successful response (e.g. 201 new vs 200 replay). */
+  onStatus?: (status: number) => void;
 };
 
 async function send(method: Method, path: string, token: string, options: RequestOptions): Promise<Response> {
@@ -115,6 +117,7 @@ export async function apiRequest(method: Method, path: string, options: RequestO
     }
     throw new ApiError(response.status, 'http', data);
   }
+  options.onStatus?.(response.status);
   if (response.status === 204) return null;
   const text = await response.text();
   if (!text) return null;

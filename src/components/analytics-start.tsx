@@ -1,13 +1,18 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 
-import { startAnalytics } from '@/lib/analytics';
+import { trackPageView } from '@/lib/analytics';
 
-/** Starts GA4 on every page; GA4 itself logs the page views. */
+/**
+ * One sanitized page_view per pathname, on every page (src/lib/analytics.ts).
+ * GA4 does not load until the first page whose real URL carries no secret.
+ */
 export function AnalyticsStart() {
+  const pathname = usePathname();
   useEffect(() => {
-    startAnalytics();
-  }, []);
+    trackPageView();
+  }, [pathname]);
   return null;
 }

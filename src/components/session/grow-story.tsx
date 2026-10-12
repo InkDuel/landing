@@ -5,9 +5,11 @@ import { useState } from 'react';
 
 import { cx } from '@/components/ink/cx';
 import { ChevronRightIcon, PlusIcon } from '@/components/ink/icons';
+import { track } from '@/lib/analytics';
 import type { Locale } from '@/lib/i18n';
 import { ApiError } from '@/lib/session/api';
 import { worksApi } from '@/lib/session/works';
+import { markNextEditorAuto } from '@/lib/session/works-analytics';
 import { WORKS_COPY } from '@/lib/session/works-copy';
 
 import { chapterEditHref, workManageHref } from './works-parts';
@@ -30,9 +32,12 @@ export function GrowStoryCta({ duelId, storyId, locale }: { duelId: string; stor
     if (busy || unavailable) return;
     setBusy(true);
     setFailed(false);
+    // Like the app, before the call: the gap to continue_story_started is the failure rate.
+    track('continue_story_tapped');
     try {
       const { created, work } = await worksApi.fromDuelStory(duelId, storyId, { locale });
       const first = [...work.chapters].sort((a, b) => a.orderIndex - b.orderIndex)[0];
+      if (created && first) markNextEditorAuto(work.id, first.id);
       router.push(created && first ? chapterEditHref(work.id, first.id) : workManageHref(work.id));
     } catch (error) {
       setFailed(true);

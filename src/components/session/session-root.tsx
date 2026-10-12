@@ -13,11 +13,19 @@ type LocaleValue = { locale: Locale; setLocale: (locale: Locale) => void };
 const LocaleContext = createContext<LocaleValue | null>(null);
 
 /** Locale (shared mechanism) and session for every signed-in page. */
-export function SessionRoot({ initialLocale, children }: { initialLocale: Locale; children: ReactNode }) {
+export function SessionRoot({
+  initialLocale,
+  identifyAllowed,
+  children,
+}: {
+  initialLocale: Locale;
+  identifyAllowed: boolean;
+  children: ReactNode;
+}) {
   const [locale, setLocale] = useLocale({ initial: initialLocale, resolveOnClient: true });
   return (
     <LocaleContext.Provider value={{ locale, setLocale }}>
-      <SessionProvider locale={locale}>
+      <SessionProvider locale={locale} identifyAllowed={identifyAllowed}>
         <RankedRuntime locale={locale}>{children}</RankedRuntime>
       </SessionProvider>
     </LocaleContext.Provider>

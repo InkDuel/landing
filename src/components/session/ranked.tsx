@@ -14,6 +14,7 @@ import { NumberedRule } from '@/components/ink/numbered-rule';
 import { PlayerIdentity } from '@/components/ink/player-identity';
 import { type Locale, INTL_LOCALE, withLang } from '@/lib/i18n';
 import { apiGet } from '@/lib/session/api';
+import { trackDuelSearchStarted } from '@/lib/session/duel-analytics';
 import { DUELS_COPY, duelErrorMessage } from '@/lib/session/duels-copy';
 import { secondsLeft, storyLength, validStory } from '@/lib/session/duels';
 import { getFirebaseAuth } from '@/lib/session/firebase';
@@ -187,8 +188,12 @@ export function Ranked() {
     if (checking) return;
     setChecking(true);
     const firebaseUser = await refresh();
-    if (firebaseUser && !(firebaseUser.providerData.some((provider) => provider.providerId === 'password') && !firebaseUser.emailVerified))
+    if (firebaseUser && !(firebaseUser.providerData.some((provider) => provider.providerId === 'password') && !firebaseUser.emailVerified)) {
+      // Like the app: when the search starts, before the network. Only this
+      // button logs it, never a recovery or an internal retry.
+      trackDuelSearchStarted(locale);
       await runtime.begin();
+    }
     setChecking(false);
   }
   async function verify() {
