@@ -2,6 +2,7 @@
 
 import type { Locale } from '@/lib/i18n';
 import { ApiError, isTransient } from './api';
+import { trackStorySubmitted } from './duel-analytics';
 import { type ActiveDuel, type RankedDraft, type QueuedRanked, duelErrorCode, duelsApi, secondsLeft, validStory } from './duels';
 
 export type RankedPhase =
@@ -483,7 +484,8 @@ export class RankedSession {
           }
           this.patch({ phase: 'queued', draft: null, story: '', submissionAttempted: false });
         } else if (duel) {
-          await this.api.submit(duel.id, text, this.locale);
+          const submission = await this.api.submit(duel.id, text, this.locale);
+          trackStorySubmitted(duel, submission);
           if (!this.running) return;
           if (this.checkpoint) {
             this.checkpoint.submitted = true;

@@ -70,7 +70,16 @@ function mapSignInError(error: unknown): SignInError {
   }
 }
 
-export function SessionProvider({ locale, children }: { locale: Locale; children: ReactNode }) {
+export function SessionProvider({
+  locale,
+  identifyAllowed = false,
+  children,
+}: {
+  locale: Locale;
+  /** GA4 may receive the uid as user_id (src/lib/analytics.ts). */
+  identifyAllowed?: boolean;
+  children: ReactNode;
+}) {
   const [status, setStatus] = useState<SessionStatus>(isFirebaseConfigured ? 'loading' : 'unconfigured');
   const [user, setUser] = useState<ProfileUser | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -82,6 +91,8 @@ export function SessionProvider({ locale, children }: { locale: Locale; children
   // The method of a sign-in started on this page: `login` is logged once
   // /api/me confirms the account, never for a restored session.
   const pendingMethodRef = useRef<SignInMethod | null>(null);
+  // Fixed per request by the session layout (server geo), so read once.
+  const identifyRef = useRef(identifyAllowed);
 
   useEffect(() => {
     const auth = getFirebaseAuth();
@@ -91,7 +102,7 @@ export function SessionProvider({ locale, children }: { locale: Locale; children
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!active) return;
       if (!firebaseUser) {
-        setAnalyticsUser(null);
+        setAnalyticsUser(null, false);
         setUser(null);
         setStatus(noAccountRef.current ? 'noAccount' : 'signedOut');
         return;
@@ -102,7 +113,7 @@ export function SessionProvider({ locale, children }: { locale: Locale; children
         const me = parseProfileUser(await apiGet('/api/me', { locale: localeRef.current }));
         if (!active) return;
         if (!me) throw new ApiError(200, 'parse');
-        setAnalyticsUser(me.id);
+        setAnalyticsUser(me, identifyRef.current);
         if (pendingMethodRef.current) track('login', { method: pendingMethodRef.current });
         pendingMethodRef.current = null;
         setUser(me);

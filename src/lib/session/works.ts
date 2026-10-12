@@ -145,8 +145,11 @@ export const worksApi = {
 
   /** Idempotent for the same clientRequestId and title. */
   async createOriginal(title: string, clientRequestId: string, { locale }: Ctx) {
-    const work = requireWork(await apiRequest('POST', '/api/works', { locale, body: { title, clientRequestId } }));
-    track('work_created', { work_id: work.id });
+    const data = await apiRequest('POST', '/api/works', { locale, body: { title, clientRequestId } });
+    const work = requireWork(data);
+    // Web-only event. `created` is the backend's transaction outcome: a retry
+    // with the same clientRequestId answers created=false and is not counted.
+    if (isRecord(data) && data.created === true) track('work_created', { work_id: work.id });
     return work;
   },
 
@@ -158,6 +161,8 @@ export const worksApi = {
   async fromDuelStory(duelId: string, storyId: string, { locale }: Ctx) {
     const data = await apiRequest('POST', '/api/works/from-duel-story', { locale, body: { duelId, storyId } });
     const result = { created: isRecord(data) && data.created === true, work: requireWork(data) };
+    // Like the app: `created` from the response, never inferred (an open of an
+    // existing work is logged too, with created=0).
     track('continue_story_started', { created: result.created, work_id: result.work.id });
     return result;
   },
@@ -188,9 +193,7 @@ export const worksApi = {
   },
 
   async publish(workId: string, { locale }: Ctx) {
-    const work = requireWork(await apiRequest('PUT', apiPath('api', 'works', workId, 'publish'), { locale }));
-    track('work_published', { work_id: workId });
-    return work;
+    return requireWork(await apiRequest('PUT', apiPath('api', 'works', workId, 'publish'), { locale }));
   },
 
   async unpublish(workId: string, { locale }: Ctx) {
@@ -212,6 +215,9 @@ export const worksApi = {
         body: { chapterId, content, title, clientRequestId: chapterId },
       }),
     );
+    // The backend does not say whether this was an idempotent replay. The
+    // autosave engine only repeats a create whose earlier attempt failed (so
+    // logged nothing), the same rule as the app's chapter editor.
     track('work_chapter_created', { order_index: chapter.orderIndex, work_id: workId, chapter_id: chapterId });
     return chapter;
   },
@@ -236,9 +242,7 @@ export const worksApi = {
 
   /** One-way and idempotent; publishes what the server holds. */
   async publishChapter(workId: string, chapterId: string, { locale }: Ctx) {
-    const chapter = requireChapter(await apiRequest('PUT', apiPath('api', 'works', workId, 'chapters', chapterId, 'publish'), { locale }));
-    track('work_chapter_published', { order_index: chapter.orderIndex, work_id: workId, chapter_id: chapterId });
-    return chapter;
+    return requireChapter(await apiRequest('PUT', apiPath('api', 'works', workId, 'chapters', chapterId, 'publish'), { locale }));
   },
 
   /** Drafts only: a published chapter answers 409. */

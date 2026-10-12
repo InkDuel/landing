@@ -314,10 +314,17 @@ export const storyCommentsApi = {
 
   /** Idempotent for the same clientRequestId and content (201 new, 200 replay). */
   async create(duelId: string, storyId: string, clientRequestId: string, content: string, { locale }: Ctx) {
-    const data = await apiRequest('POST', storyPath(duelId, storyId), { locale, body: { clientRequestId, content } });
+    let status = 0;
+    const data = await apiRequest('POST', storyPath(duelId, storyId), {
+      locale,
+      body: { clientRequestId, content },
+      onStatus: (value) => (status = value),
+    });
     if (!isRecord(data)) throw new ApiError(200, 'parse');
     const result = { comment: requireStoryComment(data.comment), commentsCount: count(data.commentsCount) };
-    track('story_comment_created');
+    // Web-only event. The backend answers 201 for a new comment and 200 for an
+    // idempotent replay of the same clientRequestId, which is not counted.
+    if (status === 201) track('story_comment_created');
     return result;
   },
 
@@ -387,17 +394,7 @@ export const inkMarksApi = {
     const root = data.root === undefined ? null : parseRoot(data.root);
     const reply = data.reply === undefined ? null : parseReply(data.reply);
     if (!root === !reply) throw new ApiError(200, 'parse');
-    const created = bool(data.created);
-    // Same shape as the app (V0 §7); an idempotent replay is not a new Marca.
-    if (created) {
-      const base = { work_id: workId, chapter_id: chapterId };
-      if (root) track('ink_mark_created', { ...base, is_reply: false, is_author: root.isAuthor });
-      if (reply) {
-        track('ink_mark_reply_created', { ...base, is_author: reply.isAuthor });
-        if (reply.isAuthor) track('ink_mark_author_reply_created', base);
-      }
-    }
-    return { created, root, reply };
+    return { created: bool(data.created), root, reply };
   },
 
   async remove(workId: string, chapterId: string, markId: string, { locale }: Ctx) {

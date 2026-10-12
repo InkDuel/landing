@@ -6,6 +6,7 @@ import { cx } from '@/components/ink/cx';
 import { InkButton } from '@/components/ink/ink-button';
 import { InkInlineBanner } from '@/components/ink/ink-inline-banner';
 import { InkSkeleton, InkTextAction } from '@/components/ink/ink-states';
+import { track } from '@/lib/analytics';
 import type { Locale } from '@/lib/i18n';
 import {
   type ChapterMarksSummary,
@@ -109,7 +110,23 @@ function dedupe<T extends { id: string }>(items: T[]): T[] {
   });
 }
 
-export function useChapterMarks(workId: string, chapterId: string, locale: Locale) {
+/**
+ * The app's Marca events (V0 §7), only for a new Marca: an idempotent replay
+ * (created=false) was already counted. isAuthor is the server's, never inferred.
+ */
+function trackMarkCreated(
+  chapter: { workId: string; chapterId: string; orderIndex: number },
+  result: { root: InkMarkRoot | null; reply: InkMarkReply | null },
+) {
+  const base = { work_id: chapter.workId, chapter_id: chapter.chapterId, order_index: chapter.orderIndex };
+  if (result.root) track('ink_mark_created', { ...base, is_reply: false, is_author: result.root.isAuthor });
+  if (result.reply) {
+    track('ink_mark_reply_created', { ...base, is_author: result.reply.isAuthor });
+    if (result.reply.isAuthor) track('ink_mark_author_reply_created', base);
+  }
+}
+
+export function useChapterMarks(workId: string, chapterId: string, orderIndex: number, locale: Locale) {
   const [state, setState] = useState<State>(() => initialState(null));
   // Bumped on every chapter change: a slow answer for chapter 3 never lands on 4.
   const generation = useRef(0);
@@ -280,6 +297,7 @@ export function useChapterMarks(workId: string, chapterId: string, locale: Local
     setState((s) => ({ ...s, busy: true, createError: null }));
     try {
       const result = await inkMarksApi.create(workId, chapterId, requestId, text, target.parentId, ctx());
+      if (result.created) trackMarkCreated({ workId, chapterId, orderIndex }, result);
       if (!live(gen)) return false;
       identity.clear();
       setState((s) => {

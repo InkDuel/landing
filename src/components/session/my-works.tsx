@@ -17,6 +17,7 @@ import { MyWorkRow, PillFilters, chapterEditHref } from './works-parts';
 import { SESSION_COPY } from '@/lib/session/copy';
 import { useInfiniteSentinel, usePagedList } from '@/lib/session/use-paged-list';
 import { type MyWorksFilter, WORK_LIMITS, newClientId, worksApi } from '@/lib/session/works';
+import { markNextEditorAuto } from '@/lib/session/works-analytics';
 import { WORKS_COPY } from '@/lib/session/works-copy';
 
 // Tus obras (16): Producto, pill filters, «Nueva obra» as the one yellow
@@ -45,6 +46,7 @@ export function NewWorkDialog({ open, onClose }: { open: boolean; onClose: () =>
     requestId.current ??= newClientId();
     try {
       const work = await worksApi.createOriginal(trimmed, requestId.current, { locale });
+      markNextEditorAuto(work.id, 'new');
       router.push(chapterEditHref(work.id, 'new'));
     } catch {
       setFailed(true);

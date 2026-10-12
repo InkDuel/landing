@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { track } from '@/lib/analytics';
 import { ApiError } from './api';
 import {
   type ActiveDuel,
@@ -12,6 +13,12 @@ import {
 } from './duels';
 import { RankedSession, type RankedApi } from './ranked-session';
 
+vi.mock('@/lib/analytics', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/analytics')>()),
+  track: vi.fn(),
+}));
+const trackedNames = () => vi.mocked(track).mock.calls.map(([name]) => name);
+
 const startAt = '2026-10-10T12:00:00Z';
 const endsAt = '2026-10-10T12:05:00Z';
 const writing: ActiveDuel = {
@@ -22,11 +29,18 @@ const writing: ActiveDuel = {
   writingEndsAt: endsAt,
   kind: 'ranked_human',
   mode: 'ranked',
+  isAIInvolved: false,
   userHasSubmitted: false,
   userA: { id: 'me', username: 'Autor', rankTier: '' },
   userB: { id: 'rival', username: 'Rival', rankTier: '' },
 };
 const waiting: ActiveDuel = { ...writing, state: 'waiting_for_opponent', writingStartedAt: '', writingEndsAt: '', prompt: '', userB: null };
+const submitted = {
+  writingDurationSeconds: 120,
+  configuredWritingDurationSeconds: 300,
+  writingDurationBucket: '61_120',
+  submissionType: 'before_timeout',
+};
 const draft: RankedDraft = { id: 'draft-1', prompt: 'Una llave', writingStartedAt: startAt, writingEndsAt: endsAt };
 const story = 'Una historia que tiene más de cincuenta caracteres sin contar los espacios.';
 function api() {
@@ -38,7 +52,7 @@ function api() {
     heartbeat: vi.fn<RankedApi['heartbeat']>().mockResolvedValue(waiting),
     drain: vi.fn<RankedApi['drain']>().mockResolvedValue(null),
     prepare: vi.fn<RankedApi['prepare']>().mockResolvedValue({ draft, duel: null }),
-    submit: vi.fn<RankedApi['submit']>().mockResolvedValue(undefined),
+    submit: vi.fn<RankedApi['submit']>().mockResolvedValue(submitted),
     submitDraft: vi.fn<RankedApi['submitDraft']>().mockResolvedValue(draft.id),
     queued: vi.fn<RankedApi['queued']>().mockResolvedValue([]),
     cancel: vi.fn<RankedApi['cancel']>().mockResolvedValue(true),
@@ -317,8 +331,8 @@ describe('Submission idempotency and failures', () => {
     let done!: () => void;
     a.submit.mockImplementationOnce(
       () =>
-        new Promise<void>((resolve) => {
-          done = resolve;
+        new Promise((resolve) => {
+          done = () => resolve(submitted);
         }),
     );
     const session = runtime(a);
@@ -515,8 +529,8 @@ describe('Cross-tab checkpoint regression', () => {
     if (type === 'duel')
       a.submit.mockImplementationOnce(
         () =>
-          new Promise<void>((resolve) => {
-            done = resolve;
+          new Promise((resolve) => {
+            done = () => resolve(submitted);
           }),
       );
     else
@@ -681,5 +695,43 @@ describe('Cross-tab checkpoint regression', () => {
     await first.recover();
     await first.begin();
     expect(a.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('Analytics events', () => {
+  beforeEach(() => vi.mocked(track).mockClear());
+  it('logs story_submitted once when a transient failure is retried until accepted', async () => {
+    const a = api();
+    a.pending.mockResolvedValue(writing);
+    a.status.mockResolvedValue(writing);
+    a.submit.mockRejectedValueOnce(new ApiError(0, 'network')).mockRejectedValueOnce(new ApiError(503, 'http'));
+    const session = runtime(a);
+    await flush();
+    session.setStory(story);
+    await session.submit();
+    await vi.advanceTimersByTimeAsync(8000);
+    expect(a.submit).toHaveBeenCalledTimes(3);
+    expect(trackedNames().filter((name) => name === 'story_submitted')).toHaveLength(1);
+  });
+  it('never logs story_submitted when every attempt fails', async () => {
+    const a = api();
+    a.pending.mockResolvedValue(writing);
+    a.status.mockResolvedValue(writing);
+    a.submit.mockRejectedValue(new ApiError(0, 'network'));
+    const session = runtime(a);
+    await flush();
+    session.setStory(story);
+    await session.submit();
+    await vi.advanceTimersByTimeAsync(22000);
+    expect(trackedNames()).not.toContain('story_submitted');
+  });
+  it('recovery and the session start never log duel_search_started (only the start button does)', async () => {
+    const a = api();
+    a.pending.mockResolvedValue(waiting);
+    const session = runtime(a);
+    await flush();
+    await session.begin();
+    await vi.advanceTimersByTimeAsync(20000);
+    expect(trackedNames()).not.toContain('duel_search_started');
   });
 });

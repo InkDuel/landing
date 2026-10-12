@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { cx } from '@/components/ink/cx';
 import { CheckIcon } from '@/components/ink/icons';
 import { PlayerIdentity } from '@/components/ink/player-identity';
+import { track } from '@/lib/analytics';
 import type { Locale } from '@/lib/i18n';
 import { followsApi } from '@/lib/session/follows';
 import { WORKS_COPY } from '@/lib/session/works-copy';
@@ -41,6 +42,9 @@ export function useWorkFollow(workId: string, locale: Locale) {
       const ctx = { locale: localeRef.current };
       const following = was ? await followsApi.unfollow(workId, ctx) : await followsApi.follow(workId, ctx);
       setState((s) => ({ ...s, following, busy: false }));
+      // A real change only: the canonical answer differs from the state the
+      // server last reported (an idempotent repeat changes nothing).
+      if (following !== was) track(following ? 'work_followed' : 'work_unfollowed');
     } catch {
       setState((s) => ({ ...s, following: was, busy: false, failedAt: origin }));
     }
