@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+import { GA_HIT_SOURCES, GA_SCRIPT_SOURCES } from "./src/lib/analytics-csp";
+
 const isDev = process.env.NODE_ENV === "development";
 
 // Content Security Policy, sent as a static header so public pages stay
@@ -9,14 +11,16 @@ const isDev = process.env.NODE_ENV === "development";
 // - 'unsafe-inline' styles: next/font and React style attributes.
 // - 'unsafe-eval' and the dev websocket only in development (Fast Refresh).
 // - connect-src: the browser only talks to Firebase Auth's REST API
-//   (email action links). Backend fetches happen on the server.
+//   (email action links) and GA4. Backend fetches happen on the server.
+// - Google Analytics (src/lib/analytics.ts): gtag.js from googletagmanager.com,
+//   its hits to google-analytics.com (fetch/beacon, image fallback).
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline' ${GA_SCRIPT_SOURCES}${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  `img-src 'self' data: blob: ${GA_HIT_SOURCES}`,
   "font-src 'self'",
-  `connect-src 'self' https://identitytoolkit.googleapis.com${isDev ? " ws: wss:" : ""}`,
+  `connect-src 'self' https://identitytoolkit.googleapis.com ${GA_HIT_SOURCES}${isDev ? " ws: wss:" : ""}`,
   "media-src 'self'",
   "object-src 'none'",
   "frame-src 'none'",

@@ -1,5 +1,6 @@
 'use client';
 
+import { track } from '@/lib/analytics';
 import type { Locale } from '@/lib/i18n';
 
 import { apiPath, apiRequest } from './api';
@@ -144,7 +145,9 @@ export const worksApi = {
 
   /** Idempotent for the same clientRequestId and title. */
   async createOriginal(title: string, clientRequestId: string, { locale }: Ctx) {
-    return requireWork(await apiRequest('POST', '/api/works', { locale, body: { title, clientRequestId } }));
+    const work = requireWork(await apiRequest('POST', '/api/works', { locale, body: { title, clientRequestId } }));
+    track('work_created', { work_id: work.id });
+    return work;
   },
 
   /**
@@ -154,7 +157,9 @@ export const worksApi = {
    */
   async fromDuelStory(duelId: string, storyId: string, { locale }: Ctx) {
     const data = await apiRequest('POST', '/api/works/from-duel-story', { locale, body: { duelId, storyId } });
-    return { created: isRecord(data) && data.created === true, work: requireWork(data) };
+    const result = { created: isRecord(data) && data.created === true, work: requireWork(data) };
+    track('continue_story_started', { created: result.created, work_id: result.work.id });
+    return result;
   },
 
   async get(workId: string, { locale, signal }: Ctx) {
@@ -183,7 +188,9 @@ export const worksApi = {
   },
 
   async publish(workId: string, { locale }: Ctx) {
-    return requireWork(await apiRequest('PUT', apiPath('api', 'works', workId, 'publish'), { locale }));
+    const work = requireWork(await apiRequest('PUT', apiPath('api', 'works', workId, 'publish'), { locale }));
+    track('work_published', { work_id: workId });
+    return work;
   },
 
   async unpublish(workId: string, { locale }: Ctx) {
@@ -198,13 +205,15 @@ export const worksApi = {
     title: string,
     { locale, keepalive }: Ctx & { keepalive?: boolean },
   ) {
-    return requireChapter(
+    const chapter = requireChapter(
       await apiRequest('POST', apiPath('api', 'works', workId, 'chapters'), {
         locale,
         keepalive,
         body: { chapterId, content, title, clientRequestId: chapterId },
       }),
     );
+    track('work_chapter_created', { order_index: chapter.orderIndex, work_id: workId, chapter_id: chapterId });
+    return chapter;
   },
 
   /** Autosave with optimistic concurrency; a 409 carries the server snapshot. */
@@ -227,7 +236,9 @@ export const worksApi = {
 
   /** One-way and idempotent; publishes what the server holds. */
   async publishChapter(workId: string, chapterId: string, { locale }: Ctx) {
-    return requireChapter(await apiRequest('PUT', apiPath('api', 'works', workId, 'chapters', chapterId, 'publish'), { locale }));
+    const chapter = requireChapter(await apiRequest('PUT', apiPath('api', 'works', workId, 'chapters', chapterId, 'publish'), { locale }));
+    track('work_chapter_published', { order_index: chapter.orderIndex, work_id: workId, chapter_id: chapterId });
+    return chapter;
   },
 
   /** Drafts only: a published chapter answers 409. */

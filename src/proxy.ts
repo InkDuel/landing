@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { GA_HIT_SOURCES, GA_SCRIPT_SOURCES } from '@/lib/analytics-csp';
 import { API_BASE_URL, firebaseWebConfig } from '@/lib/session/config';
 
 // Strict CSP with a per-request nonce, only for the signed-in area — /login,
@@ -9,7 +10,9 @@ import { API_BASE_URL, firebaseWebConfig } from '@/lib/session/config';
 //
 // Firebase Auth needs: its REST APIs (connect-src), the auth handler of the
 // authDomain in an iframe (frame-src) and Google's gapi loader for the popup
-// flow (allowed through 'strict-dynamic' from our nonced scripts).
+// flow (allowed through 'strict-dynamic' from our nonced scripts). GA4's
+// gtag.js is inserted by our own code, so 'strict-dynamic' trusts it too; its
+// host stays listed for browsers without 'strict-dynamic'.
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -17,10 +20,10 @@ function sessionPolicy(nonce: string): string {
   const authDomain = firebaseWebConfig.authDomain ? `https://${firebaseWebConfig.authDomain}` : '';
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://apis.google.com${isDev ? " 'unsafe-eval'" : ''}`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://apis.google.com ${GA_SCRIPT_SOURCES}${isDev ? " 'unsafe-eval'" : ''}`,
     // Styles keep 'unsafe-inline': next/font and React style attributes.
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob:",
+    `img-src 'self' data: blob: ${GA_HIT_SOURCES}`,
     "font-src 'self'",
     [
       "connect-src 'self'",
@@ -29,6 +32,7 @@ function sessionPolicy(nonce: string): string {
       'https://securetoken.googleapis.com',
       'https://firebaseinstallations.googleapis.com',
       'https://firebaseremoteconfig.googleapis.com',
+      GA_HIT_SOURCES,
       isDev ? 'ws: wss:' : '',
     ]
       .filter(Boolean)

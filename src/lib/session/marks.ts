@@ -1,5 +1,6 @@
 'use client';
 
+import { track } from '@/lib/analytics';
 import type { Locale } from '@/lib/i18n';
 
 import { ApiError, apiPath, apiRequest } from './api';
@@ -315,7 +316,9 @@ export const storyCommentsApi = {
   async create(duelId: string, storyId: string, clientRequestId: string, content: string, { locale }: Ctx) {
     const data = await apiRequest('POST', storyPath(duelId, storyId), { locale, body: { clientRequestId, content } });
     if (!isRecord(data)) throw new ApiError(200, 'parse');
-    return { comment: requireStoryComment(data.comment), commentsCount: count(data.commentsCount) };
+    const result = { comment: requireStoryComment(data.comment), commentsCount: count(data.commentsCount) };
+    track('story_comment_created');
+    return result;
   },
 
   async remove(duelId: string, storyId: string, commentId: string, { locale }: Ctx) {
@@ -384,7 +387,17 @@ export const inkMarksApi = {
     const root = data.root === undefined ? null : parseRoot(data.root);
     const reply = data.reply === undefined ? null : parseReply(data.reply);
     if (!root === !reply) throw new ApiError(200, 'parse');
-    return { created: bool(data.created), root, reply };
+    const created = bool(data.created);
+    // Same shape as the app (V0 §7); an idempotent replay is not a new Marca.
+    if (created) {
+      const base = { work_id: workId, chapter_id: chapterId };
+      if (root) track('ink_mark_created', { ...base, is_reply: false, is_author: root.isAuthor });
+      if (reply) {
+        track('ink_mark_reply_created', { ...base, is_author: reply.isAuthor });
+        if (reply.isAuthor) track('ink_mark_author_reply_created', base);
+      }
+    }
+    return { created, root, reply };
   },
 
   async remove(workId: string, chapterId: string, markId: string, { locale }: Ctx) {

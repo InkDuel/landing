@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Figtree, Literata } from "next/font/google";
+import { AnalyticsStart } from "@/components/analytics-start";
 import { DEFAULT_LOCALE } from "@/lib/i18n";
 
 import "./globals.css";
@@ -56,7 +57,10 @@ export default function RootLayout({
 
   return (
     <html lang={DEFAULT_LOCALE} suppressHydrationWarning>
-      <body className={`${fonts} antialiased`}>{children}</body>
+      <body className={`${fonts} antialiased`}>
+        <AnalyticsStart />
+        {children}
+      </body>
     </html>
   );
 }
