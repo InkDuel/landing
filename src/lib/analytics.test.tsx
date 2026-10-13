@@ -200,6 +200,44 @@ describe('URL hygiene', () => {
     ]);
   });
 
+  it('region answers while on a sensitive page: gtag waits for the next ordinary page, without duplicates', async () => {
+    const { trackPageView, track } = await load(true);
+    let answer!: (response: Response) => void;
+    regionFetch.mockImplementation(() => new Promise<Response>((resolve) => (answer = resolve)));
+    const origin = window.location.origin;
+
+    go('/me');
+    trackPageView();
+    track('on_me');
+    go('/friend-challenge/T0KEN?oobCode=S3CRET');
+    trackPageView();
+    track('inside_sensitive');
+    answer(Response.json({ measure: true }));
+    await settle();
+    expect(document.querySelector('script')).toBeNull();
+    expect(window.dataLayer).toBeUndefined();
+
+    go('/stories');
+    trackPageView();
+    trackPageView();
+    await settle();
+    expect(document.querySelectorAll('script[src*="googletagmanager.com/gtag/js"]')).toHaveLength(1);
+    expect(disabled()).toBe(false);
+    expect(regionFetch).toHaveBeenCalledTimes(1);
+    expect(sent()).not.toMatch(/T0KEN|S3CRET|friend-challenge|inside_sensitive/);
+    expect(entries().find((e) => e[0] === 'config')?.[2]).toMatchObject({ page_location: `${origin}/stories` });
+    const events = entries().filter((e) => e[0] === 'event');
+    expect(events.map((e) => [e[1], (e[2] as { page_location?: string }).page_location ?? null])).toEqual([
+      ['page_view', `${origin}/me`],
+      ['on_me', null],
+      ['page_view', `${origin}/stories`],
+    ]);
+    expect(events[2][2]).toMatchObject({ page_referrer: `${origin}/me` });
+
+    track('after_boot');
+    expect(entries().at(-1)).toEqual(['event', 'after_boot', {}]);
+  });
+
   it('one page_view per pathname, not per query change', async () => {
     const { trackPageView } = await load(true);
     go('/stories');
