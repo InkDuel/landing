@@ -76,6 +76,8 @@ const QUEUE_LIMIT = 50;
 /** idle: not started; checking: waiting for the region; on/off: decided. */
 let gate: 'idle' | 'checking' | 'on' | 'off' = 'idle';
 let queue: Array<() => void> = [];
+/** The region said yes; boot waits if that answer found a sensitive page. */
+let measureAllowed = false;
 let lastPageLocation: string | null = null;
 let lastPagePath: string | null = null;
 
@@ -193,15 +195,25 @@ export function startAnalytics(): void {
       queue = [];
       return;
     }
-    boot();
-    gate = 'on';
-    const pending = queue;
-    queue = [];
-    pending.forEach((run) => run());
+    measureAllowed = true;
+    bootIfOrdinaryPage();
   });
 }
 
 const onSensitivePage = () => isSensitivePath(window.location.pathname);
+
+/**
+ * Loads gtag.js and flushes the queue, but never on a sensitive page: if the
+ * region answers while the user is on one, the next ordinary page view boots.
+ */
+function bootIfOrdinaryPage(): void {
+  if (gate !== 'checking' || !measureAllowed || onSensitivePage()) return;
+  boot();
+  gate = 'on';
+  const pending = queue;
+  queue = [];
+  pending.forEach((run) => run());
+}
 
 /**
  * One page_view per pathname, with sanitized location and referrer. On a
@@ -234,6 +246,7 @@ export function trackPageView(): void {
     gtag('set', page);
     gtag('event', 'page_view', page);
   });
+  bootIfOrdinaryPage();
 }
 
 function normalize(params: AnalyticsParams): Record<string, string | number> {
@@ -288,6 +301,7 @@ export function duelProfileParams(): AnalyticsParams {
 export function resetAnalyticsForTests(): void {
   gate = 'idle';
   queue = [];
+  measureAllowed = false;
   lastPageLocation = null;
   lastPagePath = null;
   profile = null;
