@@ -84,6 +84,16 @@ export type MarksCopy = {
     reported: string;
     loadMore: string;
     failure: Record<MarkFailure, string>;
+    reply: string;
+    hintReply: string;
+    viewReplies: Plural;
+    hideReplies: string;
+    moreReplies: string;
+    replyCreated: string;
+    replyDeleted: string;
+    replyDeleteTitle: string;
+    replyDeleteBody: string;
+    threadUnavailable: string;
   };
 
   // Bandeja
@@ -209,6 +219,16 @@ export const MARKS_COPY: Record<Locale, MarksCopy> = {
         network: 'Revisa tu conexión e inténtalo de nuevo.',
         generic: 'No pudimos completar la acción. Inténtalo de nuevo.',
       },
+      reply: 'Responder',
+      hintReply: 'Escribe tu respuesta…',
+      viewReplies: plural('Ver 1 respuesta', (n) => `Ver ${n} respuestas`),
+      hideReplies: 'Ocultar respuestas',
+      moreReplies: 'Ver más respuestas',
+      replyCreated: 'Tu respuesta quedó.',
+      replyDeleted: 'Respuesta borrada.',
+      replyDeleteTitle: '¿Borrar esta respuesta?',
+      replyDeleteBody: 'Desaparece del hilo al instante.',
+      threadUnavailable: 'Este hilo ya no está disponible.',
     },
     inbox: {
       title: 'Marcas recibidas',
@@ -333,6 +353,16 @@ export const MARKS_COPY: Record<Locale, MarksCopy> = {
         network: 'Check your connection and try again.',
         generic: "We couldn't complete that action. Try again.",
       },
+      reply: 'Reply',
+      hintReply: 'Write your reply…',
+      viewReplies: plural('View 1 reply', (n) => `View ${n} replies`),
+      hideReplies: 'Hide replies',
+      moreReplies: 'View more replies',
+      replyCreated: 'Your reply is in.',
+      replyDeleted: 'Reply deleted.',
+      replyDeleteTitle: 'Delete this reply?',
+      replyDeleteBody: 'It disappears from the thread right away.',
+      threadUnavailable: 'This thread is no longer available.',
     },
     inbox: {
       title: 'Received marks',
@@ -457,6 +487,16 @@ export const MARKS_COPY: Record<Locale, MarksCopy> = {
         network: 'Verifique sua conexão e tente novamente.',
         generic: 'Não foi possível concluir a ação. Tente novamente.',
       },
+      reply: 'Responder',
+      hintReply: 'Escreva sua resposta…',
+      viewReplies: plural('Ver 1 resposta', (n) => `Ver ${n} respostas`),
+      hideReplies: 'Ocultar respostas',
+      moreReplies: 'Ver mais respostas',
+      replyCreated: 'Sua resposta ficou.',
+      replyDeleted: 'Resposta apagada.',
+      replyDeleteTitle: 'Apagar esta resposta?',
+      replyDeleteBody: 'Ela some da conversa na hora.',
+      threadUnavailable: 'Esta conversa não está mais disponível.',
     },
     inbox: {
       title: 'Marcas recebidas',
