@@ -128,6 +128,22 @@ describe('Results and pending states', () => {
     expect(screen.queryByText('Para tu escritura')).toBeNull();
     expect(screen.queryByText('Mi relato')).toBeNull();
   });
+  it('shows Marcas only where the backend says commentable, never on your own relato without any', () => {
+    const marcas = (storyA: Record<string, unknown>, storyB: Record<string, unknown>) =>
+      parseDuelDetail({ id: 'd', userA: { id: 'me', username: 'Autor' }, userB: { id: 'rival', username: 'Rival' }, storyA, storyB });
+    const { unmount } = render(
+      <DuelResultView
+        duel={marcas({ id: 'sa', text: 'Mi relato', commentable: true, commentsCount: 0 }, { id: 'sb', text: 'Otro relato', commentable: true, commentsCount: 2 })}
+        locale="es"
+      />,
+    );
+    // Only the rival's: the own relato has no Marcas yet.
+    expect(screen.getAllByRole('heading', { name: /Marca/ }).map((node) => node.textContent)).toEqual(['2 Marcas de tinta']);
+    unmount();
+
+    render(<DuelResultView duel={marcas({ id: 'sa', text: 'Mi relato', commentsCount: 3 }, { id: 'sb', text: 'Otro relato' })} locale="es" />);
+    expect(screen.queryByRole('heading', { name: /Marca/ })).toBeNull();
+  });
   it('only offers participant result waiting if /status authorizes it', async () => {
     vi.mocked(duelsApi.detail).mockRejectedValue(new ApiError(403, 'http'));
     vi.mocked(duelsApi.status).mockRejectedValue(new ApiError(403, 'http'));

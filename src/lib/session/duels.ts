@@ -125,7 +125,18 @@ export type DuelDetail = {
   feedback: string;
   rankPointsDelta: number | null;
   writerXpDelta: number | null;
+  /** Marcas of each relato: set only when the backend says it is commentable. */
+  marcasA: DuelStoryMarcas | null;
+  marcasB: DuelStoryMarcas | null;
 };
+export type DuelStoryMarcas = { storyId: string; commentsCount: number };
+/** The backend's `commentable` decides (viewer-independent); never recomputed here. */
+function storyMarcas(value: unknown): DuelStoryMarcas | null {
+  const story = record(value);
+  if (story.commentable !== true || !str(story.id)) return null;
+  const count = number(story.commentsCount);
+  return { storyId: str(story.id), commentsCount: count === null ? 0 : Math.max(0, Math.trunc(count)) };
+}
 export function parseDuelDetail(value: unknown): DuelDetail {
   const d = record(value),
     userA = player(d.userA);
@@ -145,6 +156,8 @@ export function parseDuelDetail(value: unknown): DuelDetail {
     feedback: str(d.feedback),
     rankPointsDelta: number(record(d.rankDelta).rankPointsDelta),
     writerXpDelta: number(record(d.progressDelta).writerXpDelta),
+    marcasA: storyMarcas(d.storyA),
+    marcasB: storyMarcas(d.storyB),
   };
 }
 export type QueuedRanked = { id: string; status: string; createdAt: string; expiresAt: string };
