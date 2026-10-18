@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import { cx } from '@/components/ink/cx';
+import { CheckIcon } from '@/components/ink/icons';
 import { InkSkeleton, InkTextAction } from '@/components/ink/ink-states';
 import { DashedLine } from '@/components/ink/numbered-rule';
 import { PlayerIdentity } from '@/components/ink/player-identity';
@@ -211,8 +212,29 @@ export function storyHref(story: GalleryStory): string {
   return `/stories?relato=${encodeURIComponent(story.key)}`;
 }
 
+/** «✓ Leído»: the reader already read this relato (reading memory). */
+export function ReadMarker({ label }: { label: string }) {
+  return (
+    <span className="inline-flex shrink-0 items-center gap-[3px] type-caption text-[12.5px] text-tertiary">
+      <CheckIcon size={16} />
+      {label}
+    </span>
+  );
+}
+
 /** A relato in the index; the whole row opens it, the author opens the profile. */
-export function RelatoItem({ story, locale, lead = false }: { story: GalleryStory; locale: Locale; lead?: boolean }) {
+export function RelatoItem({
+  story,
+  locale,
+  lead = false,
+  readLabel,
+}: {
+  story: GalleryStory;
+  locale: Locale;
+  lead?: boolean;
+  /** «Leído», shown on index rows the reader already read. */
+  readLabel?: string;
+}) {
   const copy = SESSION_COPY[locale].stories;
   const reason = winReason(story, locale);
   const href = storyHref(story);
@@ -254,7 +276,12 @@ export function RelatoItem({ story, locale, lead = false }: { story: GalleryStor
           <RelatoQuote text={story.storyPreview} lead={false} />
         </Link>
         {prompt ? <PromptLine label={copy.promptLead} prompt={prompt} lines={1} /> : null}
-        <ByLine name={story.authorDisplayName} authorId={story.authorId || undefined} extra={reason} />
+        <ByLine
+          name={story.authorDisplayName}
+          authorId={story.authorId || undefined}
+          extra={reason}
+          trailing={story.readByMe && readLabel ? <ReadMarker label={readLabel} /> : undefined}
+        />
       </div>
     </article>
   );
