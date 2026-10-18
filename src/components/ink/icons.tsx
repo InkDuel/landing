@@ -148,3 +148,56 @@ export function PlusIcon(props: IconProps) {
     </Svg>
   );
 }
+
+export function ListIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" />
+    </Svg>
+  );
+}
+
+export function BookOpenIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 6c-2.5-1.6-5.5-2-8-1v14c2.5-1 5.5-.6 8 1 2.5-1.6 5.5-2 8-1V5c-2.5-1-5.5-.6-8 1zm0 0v14" />
+    </Svg>
+  );
+}
+
+export function ArrowRightIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M5 12h14" />
+      <path d="m13 6 6 6-6 6" />
+    </Svg>
+  );
+}
+
+/** «Me atrapó»: a hook. */
+export function HookIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="15" cy="4" r="1.5" />
+      <path d="M15 5.5V15a5 5 0 0 1-10 0v-2.5l3 2.5" />
+    </Svg>
+  );
+}
+
+/** «Me emocionó»: a drop. */
+export function DropIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 21a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5S12.5 4.5 12 2c-.5 2.5-2 4.9-4 6.5S5 12 5 14a7 7 0 0 0 7 7z" />
+    </Svg>
+  );
+}
+
+/** «No lo vi venir»: a bolt. */
+export function BoltIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M13 2 4 14h7l-1 8 9-12h-7z" />
+    </Svg>
+  );
+}

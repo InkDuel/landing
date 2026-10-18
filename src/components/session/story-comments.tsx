@@ -89,6 +89,11 @@ type State = {
   replyError: string | null;
 };
 
+/** The Marcas section of a relato, for «Deja tu Marca» to scroll to. */
+export function storyCommentsSectionId(duelId: string, storyId: string): string {
+  return `marcas-${duelId}-${storyId}`;
+}
+
 export function StoryComments({
   duelId,
   storyId,
@@ -577,7 +582,12 @@ export function StoryComments({
   }
 
   return (
-    <section ref={section} aria-labelledby={`comments-${storyId}`} className="mt-12 flex scroll-mt-16 flex-col gap-4">
+    <section
+      ref={section}
+      id={storyCommentsSectionId(duelId, storyId)}
+      aria-labelledby={`comments-${storyId}`}
+      className="mt-12 flex scroll-mt-16 flex-col gap-4"
+    >
       <div className="border-y border-divider py-3.5">
         <h2 id={`comments-${storyId}`} className="type-title-section text-[22px] text-primary">
           {state.count > 0 ? copy.title(state.count) : copy.titleEmpty}

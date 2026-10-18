@@ -1,35 +1,39 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 
-import { Consigna } from '@/components/ink/consigna';
 import { cx } from '@/components/ink/cx';
-import { ChevronLeftIcon, PlusIcon } from '@/components/ink/icons';
+import { PlusIcon } from '@/components/ink/icons';
 import { InkButton } from '@/components/ink/ink-button';
 import { InkInlineBanner } from '@/components/ink/ink-inline-banner';
 import { InkEmptyState, InkSkeleton, InkTextAction } from '@/components/ink/ink-states';
-import { StoryText } from '@/components/reading/story-parts';
-import { ByLine, HistoriasIndex, ListFooter, RelatoItem, WorkItem, winReason } from '@/components/session/historias';
-import { GrowStoryCta } from '@/components/session/grow-story';
+import { HistoriasIndex, ListFooter, RelatoItem, WorkItem } from '@/components/session/historias';
 import { NewWorkDialog } from '@/components/session/my-works';
 import { RequireSession, SessionPage } from '@/components/session/session-page';
 import { useSessionLocale } from '@/components/session/session-root';
-import { StoryComments } from '@/components/session/story-comments';
+import { ModeAction, type ReaderLinks, ReadingMode } from '@/components/session/historias-reading';
+import { StoryReaderArticle } from '@/components/session/story-reader';
 import type { Locale } from '@/lib/i18n';
 import { apiGet } from '@/lib/session/api';
 import { useSession } from '@/lib/session/auth-context';
 import { SESSION_COPY } from '@/lib/session/copy';
 import { type GalleryStory, parseGalleryStories, parseGalleryWorks } from '@/lib/session/models';
+import { type HistoriasViewMode, type ReadingFlags, readViewMode, readingApi, readingFlags, saveViewMode } from '@/lib/session/reading';
+import { READING_COPY } from '@/lib/session/reading-copy';
 import { useInfiniteSentinel, usePagedList } from '@/lib/session/use-paged-list';
 import { WORKS_COPY } from '@/lib/session/works-copy';
 
 // Historias (09): Lectura paper, «Relatos de duelo | Obras» over the two
 // existing lists, «Lo último» as the only card, then an index. A relato
 // opens in place (?relato=): the backend has no single-relato endpoint, so
-// the detail reads the item already loaded, as the app does. Likes and
-// Marcas sit under the relato (phase 3); likes are not part of the web.
+// the detail reads the item already loaded, as the app does. Marcas sit
+// under the relato (phase 3); likes are not part of the web.
+//
+// Reading flow (the app's gallery_page.dart, behind the same two switches):
+// «Relatos de duelo» opens on a relato to read («Leer de corrido»), with
+// «Ver lista» in the title row; reactions and «Siguiente relato» close each
+// relato. With the queue switch off, Historias is the list as before.
 
 type Tab = 'relatos' | 'works';
 
@@ -61,50 +65,7 @@ function Tabs({ tab, onChange, locale, panelId }: { tab: Tab; onChange: (tab: Ta
   );
 }
 
-function RelatoDetail({ story, locale }: { story: GalleryStory; locale: Locale }) {
-  const copy = SESSION_COPY[locale].stories;
-  const reason = winReason(story, locale);
-  const { user } = useSession();
-  const isOwnStory = !!user && user.id === story.authorId;
-  // A block, not an expression: recent Chrome returns a promise from
-  // scrollTo, which React would take for a cleanup function.
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [story.key]);
-  return (
-    <article className="mx-auto flex w-full max-w-[680px] flex-col gap-4 pt-2">
-      <Link
-        href="/stories"
-        className="ink-focus ink-dim -ml-2 inline-flex min-h-11 items-center gap-1 self-start rounded-control pr-3 pl-1 type-button-sm text-[14px] text-secondary"
-      >
-        <ChevronLeftIcon size={20} />
-        {copy.title}
-      </Link>
-      {story.prompt.trim() ? <Consigna label={copy.promptLabel} text={story.prompt.trim()} /> : null}
-      <ByLine name={story.authorDisplayName} authorId={story.authorId || undefined} extra={story.authorRank} size="md" />
-      {reason ? (
-        <p className="type-caption text-[13.5px] text-secondary">
-          {reason} · {copy.score(Math.round(story.score))}
-        </p>
-      ) : null}
-      <div className="mt-4">
-        <StoryText text={story.storyText || story.storyPreview} />
-      </div>
-      {isOwnStory && story.storyText.trim() ? (
-        <div className="mt-6">
-          <GrowStoryCta duelId={story.duelId} storyId={story.storyId} locale={locale} />
-        </div>
-      ) : null}
-      <StoryComments
-        duelId={story.duelId}
-        storyId={story.storyId}
-        isOwnStory={isOwnStory}
-        initialCount={story.commentsCount}
-        locale={locale}
-      />
-    </article>
-  );
-}
+type StoryPatch = Pick<GalleryStory, 'readByMe' | 'myReaction' | 'reactionCounts'>;
 
 function StoriesView() {
   const { locale } = useSessionLocale();
@@ -129,12 +90,56 @@ function StoriesView() {
   );
   const relatos = usePagedList(fetchRelatos);
   const works = usePagedList(fetchWorks);
+  const { user } = useSession();
+  const viewerId = user?.id ?? null;
+
+  // The reading flow's switches: null until known, so nothing flips mid-visit.
+  const [flags, setFlags] = useState<ReadingFlags | null>(null);
+  const [mode, setMode] = useState<HistoriasViewMode>('list');
+  useEffect(() => {
+    let active = true;
+    void readingFlags().then((value) => {
+      if (!active) return;
+      setFlags(value);
+      if (value.queue) setMode(readViewMode());
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+  const selectMode = (next: HistoriasViewMode) => {
+    saveViewMode(next);
+    setMode(next);
+    window.scrollTo({ top: 0 });
+  };
+
+  // What the reader did here, laid over the loaded list (as the app's
+  // markReadLocally / applyReactionLocally): «Leído» and canonical reactions.
+  const [patches, setPatches] = useState<Record<string, Partial<StoryPatch>>>({});
+  const items = useMemo(
+    () => relatos.items.map((story) => (patches[story.key] ? { ...story, ...patches[story.key] } : story)),
+    [relatos.items, patches],
+  );
+  const patch = useCallback(
+    (key: string, value: Partial<StoryPatch>) => setPatches((current) => ({ ...current, [key]: { ...current[key], ...value } })),
+    [],
+  );
+  const onStoryRead = useCallback((story: GalleryStory) => patch(story.key, { readByMe: true }), [patch]);
+  const onReactionSaved = useCallback(
+    (story: GalleryStory) => patch(story.key, { myReaction: story.myReaction, reactionCounts: story.reactionCounts }),
+    [patch],
+  );
+
+  // Reading mode stays mounted (hidden) on Obras, so coming back to
+  // «Relatos de duelo» finds the same relato, as the app's kept-alive tab.
+  const readingMounted = !relatoKey && !!flags?.queue && mode === 'reading';
+  const reading = tab === 'relatos' && readingMounted;
   const active = tab === 'works' ? works : relatos;
-  const sentinel = useInfiniteSentinel(active.loadMore, active.status === 'ready' && active.hasMore && !relatoKey);
+  const sentinel = useInfiniteSentinel(active.loadMore, active.status === 'ready' && active.hasMore && !relatoKey && !reading);
 
   const selected = useMemo(
-    () => (relatoKey ? relatos.items.find((item) => item.key === relatoKey) ?? null : null),
-    [relatoKey, relatos.items],
+    () => (relatoKey ? items.find((item) => item.key === relatoKey) ?? null : null),
+    [relatoKey, items],
   );
   // A relato link from another visit: if it is not in the loaded list, fall
   // back to the index instead of an empty page.
@@ -145,13 +150,60 @@ function StoriesView() {
   const [creating, setCreating] = useState(false);
   const worksCopy = WORKS_COPY[locale];
 
-  if (selected) return <RelatoDetail story={selected} locale={locale} />;
+  // Opened from the list: read on purpose, so it counts as read right away.
+  // The reader is built once per relato, after the switches are known.
+  if (selected && !flags) return <InkSkeleton lines={1} height="h-80" label={SESSION_COPY[locale].common.loading} />;
+  if (selected && flags) {
+    return (
+      <StoryReaderArticle
+        key={selected.key}
+        locale={locale}
+        backHref="/stories"
+        options={{
+          story: selected,
+          api: readingApi,
+          queueEnabled: flags.queue,
+          reactionsEnabled: flags.reactions,
+          viewerId,
+          locale,
+          feed: items,
+          onStoryRead,
+          onReactionSaved,
+        }}
+      />
+    );
+  }
+
+  const links: ReaderLinks | null = flags ? { flags, viewerId, feed: items, onStoryRead, onReactionSaved } : null;
+  const showModeAction = tab === 'relatos' && !!flags?.queue;
+  const listCopy = READING_COPY[locale];
 
   return (
     <div className="flex flex-col">
-      <h1 className="pt-1.5 pb-3.5 type-display text-[36px] leading-none text-primary">{copy.title}</h1>
+      <div className="flex items-center justify-between gap-3 pt-1.5 pb-3.5">
+        <h1 className="type-display text-[36px] leading-none text-primary">{copy.title}</h1>
+        {showModeAction ? <ModeAction mode={mode} onChange={selectMode} locale={locale} /> : null}
+      </div>
       <Tabs tab={tab} locale={locale} panelId={panelId} onChange={(next) => router.replace(next === 'works' ? '/stories?tab=works' : '/stories', { scroll: false })} />
       <section id={panelId} role="tabpanel" className="pt-3.5">
+        {tab === 'relatos' && !flags ? <InkSkeleton lines={1} height="h-60" label={SESSION_COPY[locale].common.loading} /> : null}
+        {readingMounted && links ? (
+          <div hidden={!reading}>
+            <ReadingMode
+              links={links}
+              listStatus={relatos.status}
+              listError={
+                <InkInlineBanner
+                  title={copy.relatosError}
+                  detail={copy.relatosErrorBody}
+                  action={<InkTextAction onClick={relatos.retry}>{SESSION_COPY[locale].common.retry}</InkTextAction>}
+                />
+              }
+              onShowList={() => selectMode('list')}
+              locale={locale}
+            />
+          </div>
+        ) : null}
         {/* «Historias de la comunidad · + Crear obra» (gallery_works_feed.dart). */}
         {tab === 'works' && works.status === 'ready' ? (
           <div className="mb-3 flex items-center justify-between gap-3">
@@ -168,14 +220,14 @@ function StoriesView() {
             </button>
           </div>
         ) : null}
-        {active.status === 'loading' ? (
+        {(tab === 'works' || (flags && !reading)) && active.status === 'loading' ? (
           <div className="flex flex-col gap-4">
             <InkSkeleton lines={1} height="h-60" label={SESSION_COPY[locale].common.loading} />
             <InkSkeleton lines={3} height="h-28" label="" />
           </div>
         ) : null}
 
-        {active.status === 'error' ? (
+        {(tab === 'works' || (flags && !reading)) && active.status === 'error' ? (
           <InkInlineBanner
             title={tab === 'works' ? copy.worksError : copy.relatosError}
             detail={tab === 'works' ? undefined : copy.relatosErrorBody}
@@ -183,7 +235,7 @@ function StoriesView() {
           />
         ) : null}
 
-        {active.status === 'ready' && active.items.length === 0 ? (
+        {(tab === 'works' || (flags && !reading)) && active.status === 'ready' && active.items.length === 0 ? (
           tab === 'works' ? (
             <InkEmptyState
               title={copy.worksEmpty}
@@ -198,13 +250,16 @@ function StoriesView() {
           )
         ) : null}
 
-        {tab === 'relatos' && relatos.status === 'ready' && relatos.items.length > 0 ? (
+        {tab === 'relatos' && flags && !reading && relatos.status === 'ready' && items.length > 0 ? (
           <>
             <div className="mb-1.5 lg:mb-4">
-              <RelatoItem story={relatos.items[0]} locale={locale} lead />
+              <RelatoItem story={items[0]} locale={locale} lead />
             </div>
             <HistoriasIndex
-              items={relatos.items.slice(1).map((story) => ({ key: story.key, node: <RelatoItem story={story} locale={locale} /> }))}
+              items={items.slice(1).map((story) => ({
+                key: story.key,
+                node: <RelatoItem story={story} locale={locale} readLabel={listCopy.readMarker} />,
+              }))}
             />
           </>
         ) : null}
@@ -220,13 +275,15 @@ function StoriesView() {
           </>
         ) : null}
 
-        <ListFooter
-          sentinel={sentinel}
-          loadingMore={active.loadingMore}
-          failed={active.loadMoreFailed}
-          onRetry={active.loadMore}
-          locale={locale}
-        />
+        {reading ? null : (
+          <ListFooter
+            sentinel={sentinel}
+            loadingMore={active.loadingMore}
+            failed={active.loadMoreFailed}
+            onRetry={active.loadMore}
+            locale={locale}
+          />
+        )}
       </section>
       <NewWorkDialog open={creating} onClose={() => setCreating(false)} />
     </div>

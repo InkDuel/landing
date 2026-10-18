@@ -69,29 +69,60 @@ export type GalleryStory = {
   strengths: string[];
   /** Marcas on the relato (may lag the visible list: known debt, not fixed here). */
   commentsCount: number;
+  /** The relato's language (es, en, pt), '' when the backend sent none. */
+  language: string;
+  /** Historias reading flow (all additive; empty while its switches are off). */
+  readByMe: boolean;
+  myReaction: GalleryReaction | null;
+  reactionCounts: GalleryReactionCounts;
 };
+
+/** internal/models/gallery_reading.go: one per reader per relato, changeable. */
+export const GALLERY_REACTIONS = ['hooked', 'moved', 'surprised'] as const;
+export type GalleryReaction = (typeof GALLERY_REACTIONS)[number];
+export type GalleryReactionCounts = Record<GalleryReaction, number>;
+
+export const NO_REACTIONS: GalleryReactionCounts = { hooked: 0, moved: 0, surprised: 0 };
+
+export function parseReaction(value: unknown): GalleryReaction | null {
+  return GALLERY_REACTIONS.find((reaction) => reaction === value) ?? null;
+}
+
+export function parseReactionCounts(value: unknown): GalleryReactionCounts {
+  if (!isRecord(value)) return NO_REACTIONS;
+  return { hooked: nonNegative(value.hooked), moved: nonNegative(value.moved), surprised: nonNegative(value.surprised) };
+}
+
+/** One story of /gallery/stories or /gallery/stories/next; null without its identity. */
+export function parseGalleryStory(item: unknown): GalleryStory | null {
+  if (!isRecord(item) || !str(item.duelId) || !str(item.storyId)) return null;
+  return {
+    key: `${str(item.duelId)}~${str(item.storyId)}`,
+    duelId: str(item.duelId),
+    storyId: str(item.storyId),
+    prompt: str(item.prompt),
+    storyPreview: str(item.storyPreview),
+    storyText: str(item.storyText),
+    authorId: str(item.authorId),
+    authorDisplayName: str(item.authorDisplayName),
+    authorRank: str(item.authorRank),
+    score: num(item.score),
+    strengths: list(item.strengths).filter((s): s is string => typeof s === 'string'),
+    commentsCount: nonNegative(item.commentsCount),
+    language: str(item.language),
+    readByMe: item.readByMe === true,
+    myReaction: parseReaction(item.myReaction),
+    reactionCounts: parseReactionCounts(item.reactionCounts),
+  };
+}
 
 export type Page<T> = { items: T[]; nextCursor: string | null };
 
 export function parseGalleryStories(data: unknown): Page<GalleryStory> {
   if (!isRecord(data)) return { items: [], nextCursor: null };
   const items = list(data.items)
-    .filter(isRecord)
-    .map((item) => ({
-      key: `${str(item.duelId)}~${str(item.storyId)}`,
-      duelId: str(item.duelId),
-      storyId: str(item.storyId),
-      prompt: str(item.prompt),
-      storyPreview: str(item.storyPreview),
-      storyText: str(item.storyText),
-      authorId: str(item.authorId),
-      authorDisplayName: str(item.authorDisplayName),
-      authorRank: str(item.authorRank),
-      score: num(item.score),
-      strengths: list(item.strengths).filter((s): s is string => typeof s === 'string'),
-      commentsCount: nonNegative(item.commentsCount),
-    }))
-    .filter((item) => item.duelId && item.storyId);
+    .map(parseGalleryStory)
+    .filter((item): item is GalleryStory => item !== null);
   return { items, nextCursor: cursor(data.nextCursor) };
 }
 
