@@ -166,4 +166,19 @@ describe('«Marcas recibidas» with replies', () => {
     expect(within(rows[2]).getByText('en tu relato de «Mi consigna»')).toBeTruthy();
     await waitFor(() => expect(window.localStorage.getItem('inkduel-marks-seen:me')).toBe('2026-10-16T10:00:00.000Z'));
   });
+
+  it('shows a reply on your own Work once, as the received Marca, counted once', async () => {
+    const work = { workId: 'o1', workTitle: 'La casa', chapterId: 'ch1', chapterOrderIndex: 1, chapterTitle: '', rootId: 'm1' };
+    const shared = { id: 'w1', author: { userId: 'u-beto', displayName: 'beto' }, content: 'Respuesta', createdAt: '2026-10-16T10:00:00Z', ...work };
+    vi.mocked(storyCommentsApi.received).mockResolvedValue(page([]));
+    vi.mocked(storyCommentsApi.repliesReceived).mockResolvedValue(page([]));
+    vi.mocked(inkMarksApi.received).mockResolvedValue(page([{ source: 'workChapter', ...shared }]));
+    vi.mocked(inkMarksApi.repliesReceived).mockResolvedValue(page([{ source: 'workChapterReply', ...shared, isWorkAuthor: false }]));
+
+    render(<ReceivedMarksPreview />);
+    const rows = await screen.findAllByRole('listitem');
+    expect(rows).toHaveLength(1);
+    expect(rows[0].textContent).not.toContain('respondió a tu Marca');
+    expect(screen.getByText('1 nueva')).toBeTruthy();
+  });
 });

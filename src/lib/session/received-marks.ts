@@ -75,6 +75,8 @@ class SourceState {
 
 export class ReceivedMarksMerge {
   private readonly sources: SourceState[];
+  /** Work mark ids already on screen, whichever Work source brought them. */
+  private readonly shownWorkIds = new Set<string>();
   private readonly fetchPageSize: number;
   private readonly maxEmptyPages: number;
   private readonly isUnavailable: (error: unknown) => boolean;
@@ -140,9 +142,32 @@ export class ReceivedMarksMerge {
         if (!best || compareNewestFirst(source.buffer[0], best.buffer[0]) < 0) best = source;
       }
       if (!best) break;
-      emitted.push(best.buffer.shift() as ReceivedMark);
+      const mark = best.buffer.shift() as ReceivedMark;
+      if (this.isWorkDuplicate(mark)) continue;
+      emitted.push(mark);
     }
     return emitted;
+  }
+
+  /**
+   * A reply to a Marca the author left on their own Work comes from both Work
+   * sources with the same id. As in the app, the received-Marca row wins: the
+   * reply copy is dropped while the plain one is buffered or already shown.
+   * Same id means same createdAt, and on a tie the plain source sorts first,
+   * so it is the one emitted; should the reply copy still get out first, the
+   * later plain copy is dropped instead: a row on screen is never taken back.
+   */
+  private isWorkDuplicate(mark: ReceivedMark): boolean {
+    if (mark.source !== 'workChapter' && mark.source !== 'workChapterReply') return false;
+    if (this.shownWorkIds.has(mark.id)) return true;
+    if (
+      mark.source === 'workChapterReply' &&
+      this.sources.some((source) => source.config.source === 'workChapter' && source.buffer.some((item) => item.id === mark.id))
+    ) {
+      return true;
+    }
+    this.shownWorkIds.add(mark.id);
+    return false;
   }
 
   private async fill(source: SourceState) {
