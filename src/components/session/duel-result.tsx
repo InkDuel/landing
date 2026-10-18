@@ -11,16 +11,19 @@ import { PlayerIdentity } from '@/components/ink/player-identity';
 import { type Locale, INTL_LOCALE, withLang } from '@/lib/i18n';
 import { ApiError } from '@/lib/session/api';
 import { DUELS_COPY } from '@/lib/session/duels-copy';
+import { useSession } from '@/lib/session/auth-context';
 import { type DuelDetail, duelsApi } from '@/lib/session/duels';
 import { useRanked } from './ranked-runtime';
 import { useSessionLocale } from './session-root';
+import { StoryComments } from './story-comments';
 
 export function DuelResultView({ duel, locale, onRanked }: { duel: DuelDetail; locale: Locale; onRanked?: () => void }) {
   const copy = DUELS_COPY[locale];
   const winner = duel.userA.id === duel.winnerId ? duel.userA : duel.userB?.id === duel.winnerId ? duel.userB : null;
+  const { user } = useSession();
   const stories = [
-    { player: duel.userA, text: duel.storyA, score: duel.scoreA },
-    ...(duel.userB ? [{ player: duel.userB, text: duel.storyB, score: duel.scoreB }] : []),
+    { player: duel.userA, text: duel.storyA, score: duel.scoreA, marcas: duel.marcasA },
+    ...(duel.userB ? [{ player: duel.userB, text: duel.storyB, score: duel.scoreB, marcas: duel.marcasB }] : []),
   ];
   return (
     <div className="flex flex-col gap-5 pt-4 lg:pt-8">
@@ -54,24 +57,40 @@ export function DuelResultView({ duel, locale, onRanked }: { duel: DuelDetail; l
         </InkCard>
       ) : null}
       <div className="grid gap-5 lg:grid-cols-2">
-        {stories.map(({ player, text, score }) => (
-          <InkCard key={player.id} className="min-w-0">
-            <div className="flex items-center justify-between gap-3">
-              <InkButton href={withLang(`/profile/${encodeURIComponent(player.id)}`, locale)} variant="link" fullWidth={false}>
-                <span className="inline-flex items-center gap-2">
-                  <PlayerIdentity name={player.username} rankTier={player.rankTier} size={32} />
-                  <span className="break-words">{player.username}</span>
-                </span>
-              </InkButton>
-              {score !== null ? (
-                <span aria-label={copy.score} className="shrink-0 type-numeric text-[24px] text-primary">
-                  {score.toLocaleString(INTL_LOCALE[locale])}
-                </span>
+        {stories.map(({ player, text, score, marcas }) => {
+          const isOwnStory = !!user && user.id === player.id;
+          return (
+            <div key={player.id} className="flex min-w-0 flex-col">
+              <InkCard className="min-w-0">
+                <div className="flex items-center justify-between gap-3">
+                  <InkButton href={withLang(`/profile/${encodeURIComponent(player.id)}`, locale)} variant="link" fullWidth={false}>
+                    <span className="inline-flex items-center gap-2">
+                      <PlayerIdentity name={player.username} rankTier={player.rankTier} size={32} />
+                      <span className="break-words">{player.username}</span>
+                    </span>
+                  </InkButton>
+                  {score !== null ? (
+                    <span aria-label={copy.score} className="shrink-0 type-numeric text-[24px] text-primary">
+                      {score.toLocaleString(INTL_LOCALE[locale])}
+                    </span>
+                  ) : null}
+                </div>
+                {text ? <p className="mt-5 whitespace-pre-wrap break-words type-literary-small leading-relaxed text-content">{text}</p> : null}
+              </InkCard>
+              {/* Marcas under each relato, as the app's result. Your own relato
+                  with none yet has nothing to show (duel_result_comments_bar.dart). */}
+              {marcas && text && !(isOwnStory && marcas.commentsCount === 0) ? (
+                <StoryComments
+                  duelId={duel.id}
+                  storyId={marcas.storyId}
+                  isOwnStory={isOwnStory}
+                  initialCount={marcas.commentsCount}
+                  locale={locale}
+                />
               ) : null}
             </div>
-            {text ? <p className="mt-5 whitespace-pre-wrap break-words type-literary-small leading-relaxed text-content">{text}</p> : null}
-          </InkCard>
-        ))}
+          );
+        })}
       </div>
       <div className="flex flex-col gap-2 sm:flex-row">
         <InkButton href="/ranked" onClick={onRanked}>

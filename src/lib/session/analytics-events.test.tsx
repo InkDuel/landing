@@ -5,7 +5,7 @@ import { setAnalyticsUser, track } from '@/lib/analytics';
 import { duelMode, opponentType, parseStorySubmission, trackDuelSearchStarted, trackStorySubmitted } from './duel-analytics';
 import type { ActiveDuel } from './duels';
 import { duelsApi } from './duels';
-import { storyCommentsApi } from './marks';
+import { storyCommentsApi, storyRepliesApi } from './marks';
 import { type AuthorWork, worksApi } from './works';
 import { ApiError } from './api';
 import {
@@ -74,6 +74,16 @@ describe('creation events follow the backend, not the HTTP success', () => {
     await storyCommentsApi.create('d1', 's1', 'req', 'texto', { locale: 'es' });
     expect(named('story_comment_created')).toHaveLength(1);
     expect(JSON.stringify(tracked())).not.toContain('texto');
+  });
+
+  it('story_comment_reply_created on 201 only, without the text', async () => {
+    const body = { reply: { id: 'r1', content: 'respuesta' }, replyCount: 1 };
+    fetchMock.mockResolvedValueOnce(response(body, 201));
+    fetchMock.mockResolvedValueOnce(response(body, 200));
+    await storyRepliesApi.create('d1', 's1', 'c1', 'req', 'respuesta', 'r0', { locale: 'es' });
+    await storyRepliesApi.create('d1', 's1', 'c1', 'req', 'respuesta', 'r0', { locale: 'es' });
+    expect(named('story_comment_reply_created')).toEqual([['story_comment_reply_created', { is_nested: true }]]);
+    expect(JSON.stringify(tracked())).not.toContain('respuesta');
   });
 
   it('publish endpoints log nothing by themselves (replays answer like first publishes)', async () => {

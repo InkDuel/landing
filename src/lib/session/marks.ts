@@ -8,7 +8,8 @@ import type { Page } from './models';
 
 // Marcas (phase 3): the reader side of two existing contracts.
 // - Relatos de duelo: inkduel-backend/internal/controllers/gallery_comment_controller.go
-//   (one level, no replies).
+//   (Marcas plus one level of replies; deleting a Marca hides its thread,
+//   no tombstones).
 // - Capítulos: internal/controllers/work_ink_mark_controller.go (roots plus
 //   one level of replies, tombstones).
 // The backend is the authority on every permission (canComment, canMark,
@@ -105,9 +106,24 @@ export type StoryComment = {
   content: string;
   createdAt: string;
   canDelete: boolean;
+  /** Visible replies in this Marca's thread. */
+  replyCount: number;
 };
 
-export type StoryCommentsPage = Page<StoryComment> & { commentsCount: number; canComment: boolean };
+export type StoryCommentsPage = Page<StoryComment> & { commentsCount: number; canComment: boolean; canReply: boolean };
+
+export type StoryCommentReply = {
+  id: string;
+  author: MarkAuthor;
+  content: string;
+  createdAt: string;
+  canDelete: boolean;
+  /** Set only when the reply answers another reply, never the Marca. */
+  parentReplyId: string;
+  replyingTo: string;
+};
+
+export type StoryCommentRepliesPage = Page<StoryCommentReply> & { replyCount: number; canReply: boolean };
 
 function parseStoryComment(data: unknown): StoryComment | null {
   if (!isRecord(data) || !str(data.id)) return null;
@@ -117,6 +133,20 @@ function parseStoryComment(data: unknown): StoryComment | null {
     content: str(data.content),
     createdAt: timestamp(data.createdAt),
     canDelete: bool(data.canDelete),
+    replyCount: count(data.replyCount),
+  };
+}
+
+function parseStoryReply(data: unknown): StoryCommentReply | null {
+  if (!isRecord(data) || !str(data.id)) return null;
+  return {
+    id: str(data.id),
+    author: parseAuthor(data.author),
+    content: str(data.content),
+    createdAt: timestamp(data.createdAt),
+    canDelete: bool(data.canDelete),
+    parentReplyId: str(data.parentReplyId),
+    replyingTo: str(data.replyingTo).trim(),
   };
 }
 
@@ -201,8 +231,8 @@ const byCreatedAt = (value: string) => {
  * id — the later copy wins, it is the fresher one — then the backend's own
  * order, createdAt ascending with the id as tie-break.
  */
-export function mergeReplies(...lists: InkMarkReply[][]): InkMarkReply[] {
-  const byId = new Map<string, InkMarkReply>();
+export function mergeReplies<T extends { id: string; createdAt: string }>(...lists: T[][]): T[] {
+  const byId = new Map<string, T>();
   for (const list of lists) for (const reply of list) byId.set(reply.id, reply);
   return [...byId.values()].sort(
     (a, b) => byCreatedAt(a.createdAt) - byCreatedAt(b.createdAt) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
@@ -303,12 +333,13 @@ export const storyCommentsApi = {
       signal,
       query: { cursor: pageCursor ?? undefined },
     });
-    if (!isRecord(data)) return { items: [], nextCursor: null, commentsCount: 0, canComment: false };
+    if (!isRecord(data)) return { items: [], nextCursor: null, commentsCount: 0, canComment: false, canReply: false };
     return {
       items: list(data.items).map(parseStoryComment).filter(present),
       nextCursor: cursor(data.nextCursor),
       commentsCount: count(data.commentsCount),
       canComment: bool(data.canComment),
+      canReply: bool(data.canReply),
     };
   },
 
@@ -347,6 +378,70 @@ export const storyCommentsApi = {
         query: { cursor: pageCursor ?? undefined, limit: String(limit) },
       }),
     );
+  },
+};
+
+/** Replies inside a duel story Marca (one level; answering a reply stays in the thread). */
+export const storyRepliesApi = {
+  /** Oldest first. [limit] 1 is the cheap way to read replyCount. */
+  async list(
+    duelId: string,
+    storyId: string,
+    commentId: string,
+    pageCursor: string | null,
+    { locale, signal, limit }: Ctx & { limit?: number },
+  ): Promise<StoryCommentRepliesPage> {
+    const data = await apiRequest('GET', storyPath(duelId, storyId, commentId, 'replies'), {
+      locale,
+      signal,
+      query: { cursor: pageCursor ?? undefined, limit: limit ? String(limit) : undefined },
+    });
+    if (!isRecord(data)) return { items: [], nextCursor: null, replyCount: 0, canReply: false };
+    return {
+      items: list(data.items).map(parseStoryReply).filter(present),
+      nextCursor: cursor(data.nextCursor),
+      replyCount: count(data.replyCount),
+      canReply: bool(data.canReply),
+    };
+  },
+
+  /** Idempotent for the same clientRequestId and content (201 new, 200 replay). */
+  async create(
+    duelId: string,
+    storyId: string,
+    commentId: string,
+    clientRequestId: string,
+    content: string,
+    parentReplyId: string | null,
+    { locale }: Ctx,
+  ) {
+    let status = 0;
+    const body: Record<string, string> = { clientRequestId, content };
+    if (parentReplyId) body.parentReplyId = parentReplyId;
+    const data = await apiRequest('POST', storyPath(duelId, storyId, commentId, 'replies'), {
+      locale,
+      body,
+      onStatus: (value) => (status = value),
+    });
+    const reply = isRecord(data) ? parseStoryReply(data.reply) : null;
+    if (!isRecord(data) || !reply) throw new ApiError(200, 'parse');
+    // Web-only event, like story_comment_created: a 200 replay is not counted.
+    if (status === 201) track('story_comment_reply_created', { is_nested: !!parentReplyId });
+    return { reply, replyCount: count(data.replyCount) };
+  },
+
+  async remove(duelId: string, storyId: string, commentId: string, replyId: string, { locale }: Ctx) {
+    const data = await apiRequest('DELETE', storyPath(duelId, storyId, commentId, 'replies', replyId), { locale });
+    if (!isRecord(data) || str(data.replyId) !== replyId || bool(data.visible)) throw new ApiError(200, 'parse');
+    return { replyCount: count(data.replyCount) };
+  },
+
+  async report(duelId: string, storyId: string, commentId: string, replyId: string, reason: ReportReason, { locale }: Ctx) {
+    const data = await apiRequest('POST', storyPath(duelId, storyId, commentId, 'replies', replyId, 'report'), {
+      locale,
+      body: { reason },
+    });
+    if (!isRecord(data) || str(data.replyId) !== replyId || !bool(data.reported)) throw new ApiError(200, 'parse');
   },
 };
 
