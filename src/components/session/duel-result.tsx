@@ -17,7 +17,20 @@ import { useRanked } from './ranked-runtime';
 import { useSessionLocale } from './session-root';
 import { StoryComments } from './story-comments';
 
-export function DuelResultView({ duel, locale, onRanked }: { duel: DuelDetail; locale: Locale; onRanked?: () => void }) {
+/** ?story=&comment=: the relato whose Marcas open, and the thread to bring into view. */
+export type DuelResultFocus = { storyId: string; commentId: string | null };
+
+export function DuelResultView({
+  duel,
+  locale,
+  onRanked,
+  focus = null,
+}: {
+  duel: DuelDetail;
+  locale: Locale;
+  onRanked?: () => void;
+  focus?: DuelResultFocus | null;
+}) {
   const copy = DUELS_COPY[locale];
   const winner = duel.userA.id === duel.winnerId ? duel.userA : duel.userB?.id === duel.winnerId ? duel.userB : null;
   const { user } = useSession();
@@ -59,6 +72,7 @@ export function DuelResultView({ duel, locale, onRanked }: { duel: DuelDetail; l
       <div className="grid gap-5 lg:grid-cols-2">
         {stories.map(({ player, text, score, marcas }) => {
           const isOwnStory = !!user && user.id === player.id;
+          const focused = !!focus && !!marcas && marcas.storyId === focus.storyId;
           return (
             <div key={player.id} className="flex min-w-0 flex-col">
               <InkCard className="min-w-0">
@@ -79,12 +93,14 @@ export function DuelResultView({ duel, locale, onRanked }: { duel: DuelDetail; l
               </InkCard>
               {/* Marcas under each relato, as the app's result. Your own relato
                   with none yet has nothing to show (duel_result_comments_bar.dart). */}
-              {marcas && text && !(isOwnStory && marcas.commentsCount === 0) ? (
+              {marcas && text && (focused || !(isOwnStory && marcas.commentsCount === 0)) ? (
                 <StoryComments
                   duelId={duel.id}
                   storyId={marcas.storyId}
                   isOwnStory={isOwnStory}
                   initialCount={marcas.commentsCount}
+                  focusId={focused ? focus.commentId : null}
+                  autoOpen={focused}
                   locale={locale}
                 />
               ) : null}
@@ -103,7 +119,7 @@ export function DuelResultView({ duel, locale, onRanked }: { duel: DuelDetail; l
     </div>
   );
 }
-export function DuelResult({ duelId }: { duelId: string }) {
+export function DuelResult({ duelId, focus = null }: { duelId: string; focus?: DuelResultFocus | null }) {
   const { locale } = useSessionLocale();
   const { runtime } = useRanked();
   const copy = DUELS_COPY[locale];
@@ -156,7 +172,7 @@ export function DuelResult({ duelId }: { duelId: string }) {
       clearTimeout(firstLoad);
     };
   }, [duelId, locale, attempt]);
-  if (duel) return <DuelResultView duel={duel} locale={locale} onRanked={runtime.reset} />;
+  if (duel) return <DuelResultView duel={duel} locale={locale} onRanked={runtime.reset} focus={focus} />;
   if (error)
     return (
       <div className="flex flex-col gap-4 pt-6">

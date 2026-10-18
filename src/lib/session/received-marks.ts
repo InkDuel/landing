@@ -1,7 +1,7 @@
 import type { ReceivedMark } from './marks';
 
-// «Marcas recibidas»: duel-story comments and chapter Marcas merged into one
-// newest-first list. A port of inkduel_mobile's ReceivedMarksMergeEngine.
+// «Marcas recibidas»: duel-story comments, chapter Marcas and the replies to
+// the Marcas you left elsewhere, merged into one newest-first list. A port of inkduel_mobile's ReceivedMarksMergeEngine.
 //
 // Not «first page of A + first page of B, sorted»: with sources of different
 // density, B's second page can hold rows that belong above A's first. So it is
@@ -14,7 +14,8 @@ import type { ReceivedMark } from './marks';
 // Web rule (founder, phase 3): a source answering 503 is switched off by the
 // backend and leaves the merge, so the inbox keeps working with the other.
 // Any other failure blocks, offers a retry of that source alone, and is never
-// read as «no Marcas».
+// read as «no Marcas». A source may widen what counts as switched off: the
+// reply sources also read a 404 that way, for a backend without the route.
 
 export type MarkSource = ReceivedMark['source'];
 
@@ -23,9 +24,11 @@ export type SourcePage = { items: ReceivedMark[]; nextCursor: string | null };
 export type SourceConfig = {
   source: MarkSource;
   fetch: (limit: number, cursor: string | null) => Promise<SourcePage>;
+  /** Overrides the merge's own rule for this source. */
+  isUnavailable?: (error: unknown) => boolean;
 };
 
-const SOURCE_ORDER: Record<MarkSource, number> = { duelStory: 0, workChapter: 1 };
+const SOURCE_ORDER: Record<MarkSource, number> = { duelStory: 0, workChapter: 1, duelStoryReply: 2, workChapterReply: 3 };
 
 /** Newest first; ties broken by source then id so the merge is deterministic. */
 export function compareNewestFirst(a: ReceivedMark, b: ReceivedMark): number {
@@ -161,7 +164,7 @@ export class ReceivedMarksMerge {
         emptyPages += 1;
       } catch (error) {
         source.loadedOnce = true;
-        if (this.isUnavailable(error)) {
+        if ((source.config.isUnavailable ?? this.isUnavailable)(error)) {
           source.unavailable = true;
           source.exhausted = true;
           return;

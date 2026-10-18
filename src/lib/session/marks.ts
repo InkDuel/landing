@@ -264,6 +264,37 @@ export type ReceivedMark =
       chapterOrderIndex: number;
       chapterTitle: string;
       rootId: string;
+    }
+  | {
+      /** A reply to a Marca (or a reply) you left on someone else's relato. */
+      source: 'duelStoryReply';
+      id: string;
+      author: MarkAuthor;
+      content: string;
+      createdAt: string;
+      duelId: string;
+      storyId: string;
+      prompt: string;
+      /** The Marca whose thread holds the reply: what the link opens. */
+      rootCommentId: string;
+      /** The reply comes from the relato's author. */
+      isStoryAuthor: boolean;
+    }
+  | {
+      /** A reply to a Marca (or a reply) you left on someone else's chapter. */
+      source: 'workChapterReply';
+      id: string;
+      author: MarkAuthor;
+      content: string;
+      createdAt: string;
+      workId: string;
+      workTitle: string;
+      chapterId: string;
+      chapterOrderIndex: number;
+      chapterTitle: string;
+      rootId: string;
+      /** The reply comes from the Work's author. */
+      isWorkAuthor: boolean;
     };
 
 function parseReceivedStoryComments(data: unknown): Page<ReceivedMark> {
@@ -312,6 +343,67 @@ function parseReceivedWorkMarks(data: unknown): Page<ReceivedMark> {
       chapterOrderIndex: count(row.chapter.orderIndex),
       chapterTitle: str(row.chapter.title),
       rootId: str(row.rootId) || id,
+    });
+  }
+  return { items, nextCursor: cursor(data.nextCursor) };
+}
+
+/**
+ * GET /api/me/comments/replies-received. Strict: a row without its reply id,
+ * timestamp, thread or relato cannot be placed or opened, so it is dropped.
+ */
+export function parseStoryRepliesReceived(data: unknown): Page<ReceivedMark> {
+  if (!isRecord(data)) return { items: [], nextCursor: null };
+  const items: ReceivedMark[] = [];
+  for (const row of list(data.items)) {
+    if (!isRecord(row) || !isRecord(row.story) || !isRecord(row.reply)) continue;
+    const id = str(row.reply.id);
+    const createdAt = timestamp(row.reply.createdAt);
+    const rootCommentId = str(row.rootCommentId);
+    const duelId = str(row.story.duelId);
+    const storyId = str(row.story.storyId);
+    if (!id || !createdAt || !rootCommentId || !duelId || !storyId) continue;
+    items.push({
+      source: 'duelStoryReply',
+      id,
+      author: parseAuthor(row.reply.author),
+      content: str(row.reply.content),
+      createdAt,
+      duelId,
+      storyId,
+      prompt: str(row.story.prompt),
+      rootCommentId,
+      isStoryAuthor: bool(row.isStoryAuthor),
+    });
+  }
+  return { items, nextCursor: cursor(data.nextCursor) };
+}
+
+/** GET /api/me/work-ink-marks/replies-received, as strict as the relatos one. */
+export function parseWorkRepliesReceived(data: unknown): Page<ReceivedMark> {
+  if (!isRecord(data)) return { items: [], nextCursor: null };
+  const items: ReceivedMark[] = [];
+  for (const row of list(data.items)) {
+    if (!isRecord(row) || !isRecord(row.work) || !isRecord(row.chapter)) continue;
+    const id = str(row.id);
+    const createdAt = timestamp(row.createdAt);
+    const rootId = str(row.rootId);
+    const workId = str(row.work.id);
+    const chapterId = str(row.chapter.id);
+    if (!id || !createdAt || !rootId || !workId || !chapterId) continue;
+    items.push({
+      source: 'workChapterReply',
+      id,
+      author: parseAuthor(row.author),
+      content: str(row.content),
+      createdAt,
+      workId,
+      workTitle: str(row.work.title),
+      chapterId,
+      chapterOrderIndex: count(row.chapter.orderIndex),
+      chapterTitle: str(row.chapter.title),
+      rootId,
+      isWorkAuthor: bool(row.isWorkAuthor),
     });
   }
   return { items, nextCursor: cursor(data.nextCursor) };
@@ -373,6 +465,17 @@ export const storyCommentsApi = {
   async received(pageCursor: string | null, limit: number, { locale, signal }: Ctx): Promise<Page<ReceivedMark>> {
     return parseReceivedStoryComments(
       await apiRequest('GET', '/api/me/comments/received', {
+        locale,
+        signal,
+        query: { cursor: pageCursor ?? undefined, limit: String(limit) },
+      }),
+    );
+  },
+
+  /** Replies to Marcas you left on other relatos (not on your own: those come in received). */
+  async repliesReceived(pageCursor: string | null, limit: number, { locale, signal }: Ctx): Promise<Page<ReceivedMark>> {
+    return parseStoryRepliesReceived(
+      await apiRequest('GET', '/api/me/comments/replies-received', {
         locale,
         signal,
         query: { cursor: pageCursor ?? undefined, limit: String(limit) },
@@ -506,6 +609,17 @@ export const inkMarksApi = {
   async received(pageCursor: string | null, limit: number, { locale, signal }: Ctx): Promise<Page<ReceivedMark>> {
     return parseReceivedWorkMarks(
       await apiRequest('GET', '/api/me/work-ink-marks/received', {
+        locale,
+        signal,
+        query: { cursor: pageCursor ?? undefined, limit: String(limit) },
+      }),
+    );
+  },
+
+  /** Replies to Marcas you left on other chapters. */
+  async repliesReceived(pageCursor: string | null, limit: number, { locale, signal }: Ctx): Promise<Page<ReceivedMark>> {
+    return parseWorkRepliesReceived(
+      await apiRequest('GET', '/api/me/work-ink-marks/replies-received', {
         locale,
         signal,
         query: { cursor: pageCursor ?? undefined, limit: String(limit) },
