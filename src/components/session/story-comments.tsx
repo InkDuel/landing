@@ -38,7 +38,10 @@ import {
 // respuestas». Create and delete are optimistic with rollback; a report hides
 // nothing. Deleting a Marca takes its thread with it (no tombstones).
 
-const FOCUS_PAGE_BUDGET = 5;
+/** Pages a ?comment= search may scan, as the app's duel-story thread search
+ * (gallery_comments_cubit.dart _maxThreadSearchPages). Not found by then: the
+ * conversation opens as usual. */
+const FOCUS_PAGE_BUDGET = 10;
 const PENDING_ID = '__pending__';
 
 type Pending = StoryComment & { pending?: boolean };
