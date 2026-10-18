@@ -111,6 +111,12 @@ export type MarksCopy = {
     loadMore: string;
     storyContext: (prompt: string) => string;
     workContext: (work: string, order: number, chapter: string) => string;
+    /** A reply to your Marca: follows the replier's @name. */
+    repliedToYou: string;
+    /** The same, when the relato's or the Work's author replied. */
+    authorRepliedToYou: string;
+    /** Someone else's relato, where your Marca was answered. */
+    otherStoryContext: (prompt: string) => string;
     failure: Record<'unavailable' | 'session' | 'network' | 'generic', string>;
     /** web: the received-comment page (the app opens the duel result). */
     yourStory: string;
@@ -233,7 +239,7 @@ export const MARKS_COPY: Record<Locale, MarksCopy> = {
     inbox: {
       title: 'Marcas recibidas',
       headline: 'Marcas recibidas.',
-      lead: 'Lo que tus lectores dejaron en tus relatos y capítulos.',
+      lead: 'Lo que tus lectores dejaron en tus relatos y capítulos, y las respuestas a tus Marcas.',
       viewAll: 'Ver todas',
       newBadge: (n, capped) => (capped ? `${n}+ nuevas` : n === 1 ? '1 nueva' : `${n} nuevas`),
       emptyTitle: 'Todavía no recibiste Marcas',
@@ -244,6 +250,9 @@ export const MARKS_COPY: Record<Locale, MarksCopy> = {
       storyContext: (prompt) => `en tu relato de «${prompt}»`,
       workContext: (work, order, chapter) =>
         chapter ? `en ${work} · Capítulo ${order}: ${chapter}` : `en ${work} · Capítulo ${order}`,
+      repliedToYou: 'respondió a tu Marca',
+      authorRepliedToYou: 'El autor respondió a tu Marca',
+      otherStoryContext: (prompt) => `en el relato de «${prompt}»`,
       failure: {
         unavailable: 'Las Marcas recibidas no están disponibles por ahora.',
         session: 'Inicia sesión de nuevo para ver tus Marcas.',
@@ -367,7 +376,7 @@ export const MARKS_COPY: Record<Locale, MarksCopy> = {
     inbox: {
       title: 'Received marks',
       headline: 'Marks received.',
-      lead: 'What your readers left on your stories and chapters.',
+      lead: 'What your readers left on your stories and chapters, and the replies to your Marks.',
       viewAll: 'See all',
       newBadge: (n, capped) => `${n}${capped ? '+' : ''} new`,
       emptyTitle: "You haven't received Marks yet",
@@ -378,6 +387,9 @@ export const MARKS_COPY: Record<Locale, MarksCopy> = {
       storyContext: (prompt) => `on your story for “${prompt}”`,
       workContext: (work, order, chapter) =>
         chapter ? `on ${work} · Chapter ${order}: ${chapter}` : `on ${work} · Chapter ${order}`,
+      repliedToYou: 'replied to your Mark',
+      authorRepliedToYou: 'The author replied to your Mark',
+      otherStoryContext: (prompt) => `on the story for “${prompt}”`,
       failure: {
         unavailable: "Received marks aren't available right now.",
         session: 'Sign in again to see your marks.',
@@ -501,7 +513,7 @@ export const MARKS_COPY: Record<Locale, MarksCopy> = {
     inbox: {
       title: 'Marcas recebidas',
       headline: 'Marcas recebidas.',
-      lead: 'O que seus leitores deixaram nos seus contos e capítulos.',
+      lead: 'O que seus leitores deixaram nos seus contos e capítulos, e as respostas às suas Marcas.',
       viewAll: 'Ver todas',
       newBadge: (n, capped) => (capped ? `${n}+ novas` : n === 1 ? '1 nova' : `${n} novas`),
       emptyTitle: 'Você ainda não recebeu Marcas',
@@ -512,6 +524,9 @@ export const MARKS_COPY: Record<Locale, MarksCopy> = {
       storyContext: (prompt) => `no seu conto de “${prompt}”`,
       workContext: (work, order, chapter) =>
         chapter ? `em ${work} · Capítulo ${order}: ${chapter}` : `em ${work} · Capítulo ${order}`,
+      repliedToYou: 'respondeu à sua Marca',
+      authorRepliedToYou: 'O autor respondeu à sua Marca',
+      otherStoryContext: (prompt) => `no conto de “${prompt}”`,
       failure: {
         unavailable: 'As Marcas recebidas não estão disponíveis por enquanto.',
         session: 'Entre de novo para ver suas Marcas.',

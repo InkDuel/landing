@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '@/lib/session/api';
 import { parseDuelDetail, parseDuelHistory, duelsApi } from '@/lib/session/duels';
+import { storyCommentsApi, storyRepliesApi } from '@/lib/session/marks';
 import { RankedSession } from '@/lib/session/ranked-session';
 import { DuelHistory, DuelHistoryRow, RankedQueue } from './duel-history';
 import { DuelResult, DuelResultView } from './duel-result';
@@ -21,6 +22,14 @@ vi.mock('next/link', () => ({
 vi.mock('@/lib/session/duels', async (original) => {
   const actual = await original<typeof import('@/lib/session/duels')>();
   return { ...actual, duelsApi: { ...actual.duelsApi, history: vi.fn(), detail: vi.fn(), status: vi.fn(), queued: vi.fn() } };
+});
+vi.mock('@/lib/session/marks', async (original) => {
+  const actual = await original<typeof import('@/lib/session/marks')>();
+  return {
+    ...actual,
+    storyCommentsApi: { ...actual.storyCommentsApi, list: vi.fn() },
+    storyRepliesApi: { ...actual.storyRepliesApi, list: vi.fn() },
+  };
 });
 const row = parseDuelHistory({
   duels: [
@@ -143,6 +152,28 @@ describe('Results and pending states', () => {
 
     render(<DuelResultView duel={marcas({ id: 'sa', text: 'Mi relato', commentsCount: 3 }, { id: 'sb', text: 'Otro relato' })} locale="es" />);
     expect(screen.queryByRole('heading', { name: /Marca/ })).toBeNull();
+  });
+  it('opens the ?story= relato on the ?comment= thread, and only that one', async () => {
+    Element.prototype.scrollIntoView = vi.fn();
+    vi.mocked(storyCommentsApi.list).mockResolvedValue({
+      items: [{ id: 'c1', author: { userId: 'u-ana', displayName: 'ana' }, content: 'Mi Marca', createdAt: '2026-10-16T10:00:00Z', canDelete: true, replyCount: 1 }],
+      nextCursor: null,
+      commentsCount: 1,
+      canComment: true,
+      canReply: true,
+    });
+    vi.mocked(storyRepliesApi.list).mockResolvedValue({ items: [], nextCursor: null, replyCount: 1, canReply: true });
+    const duel = parseDuelDetail({
+      id: 'd',
+      userA: { id: 'me', username: 'Autor' },
+      userB: { id: 'rival', username: 'Rival' },
+      storyA: { id: 'sa', text: 'Mi relato', commentable: true, commentsCount: 2 },
+      storyB: { id: 'sb', text: 'Otro relato', commentable: true, commentsCount: 1 },
+    });
+    render(<DuelResultView duel={duel} locale="es" focus={{ storyId: 'sb', commentId: 'c1' }} />);
+    await waitFor(() => expect(Element.prototype.scrollIntoView).toHaveBeenCalled());
+    expect(vi.mocked(storyCommentsApi.list).mock.calls.map((call) => call.slice(0, 2))).toEqual([['d', 'sb']]);
+    expect(vi.mocked(storyRepliesApi.list).mock.calls[0].slice(0, 3)).toEqual(['d', 'sb', 'c1']);
   });
   it('only offers participant result waiting if /status authorizes it', async () => {
     vi.mocked(duelsApi.detail).mockRejectedValue(new ApiError(403, 'http'));

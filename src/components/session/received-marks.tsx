@@ -8,7 +8,7 @@ import { InkButton } from '@/components/ink/ink-button';
 import { InkHeadline } from '@/components/ink/ink-headline';
 import { InkInlineBanner } from '@/components/ink/ink-inline-banner';
 import { InkEmptyState, InkSkeleton, InkTextAction } from '@/components/ink/ink-states';
-import type { Locale } from '@/lib/i18n';
+import { type Locale, withLang } from '@/lib/i18n';
 import { ApiError } from '@/lib/session/api';
 import { useSession } from '@/lib/session/auth-context';
 import { type ReceivedMark, inkMarksApi, markFailure, storyCommentsApi } from '@/lib/session/marks';
@@ -18,16 +18,23 @@ import { ReceivedMarksMerge, markKey, markSeen, readSeen } from '@/lib/session/r
 import { useSessionLocale } from './session-root';
 
 // «Marcas recibidas» (17 - Social): what readers left on your relatos and
-// chapters, newest first, from both sources through the same merge for the
+// chapters, and the replies to the Marcas you left on theirs (the web has no
+// push, so this is the only way to hear of them), newest first, from the four
+// sources through the same merge for the
 // three-row preview on /me and the full list on /me/marks. A source the
 // backend switched off (503) leaves the merge; any other failure keeps what
 // loaded, offers a retry of that source only, and never reads as «empty».
 
 export const receivedMarksHref = () => '/me/marks';
 
-export function receivedMarkHref(mark: ReceivedMark): string {
-  if (mark.source === 'workChapter') {
+export function receivedMarkHref(mark: ReceivedMark, locale: Locale): string {
+  if (mark.source === 'workChapter' || mark.source === 'workChapterReply') {
     return `/work/${encodeURIComponent(mark.workId)}/chapter/${encodeURIComponent(mark.chapterId)}?mark=${encodeURIComponent(mark.rootId)}`;
+  }
+  if (mark.source === 'duelStoryReply') {
+    // Someone else's relato: the duel result, with that relato's thread open.
+    const query = `story=${encodeURIComponent(mark.storyId)}&comment=${encodeURIComponent(mark.rootCommentId)}`;
+    return withLang(`/duels/${encodeURIComponent(mark.duelId)}?${query}`, locale);
   }
   return `/me/marks/story/${encodeURIComponent(mark.duelId)}/${encodeURIComponent(mark.storyId)}?comment=${encodeURIComponent(mark.id)}`;
 }
@@ -50,6 +57,8 @@ function failureKind(error: unknown): FailureKind {
 }
 
 const isUnavailable = (error: unknown) => error instanceof ApiError && error.status === 503;
+/** The reply routes are newer than the backend in production: no route is no source. */
+const isReplySourceUnavailable = (error: unknown) => error instanceof ApiError && (error.status === 503 || error.status === 404);
 
 /** Rows are new against «visto hasta» as it was when the list opened. */
 const toRows = (marks: ReceivedMark[], baseline: number | null): Row[] =>
@@ -120,6 +129,16 @@ export function useReceivedMarks(pageSize: number) {
       [
         { source: 'duelStory', fetch: (limit, cursor) => storyCommentsApi.received(cursor, limit, ctx) },
         { source: 'workChapter', fetch: (limit, cursor) => inkMarksApi.received(cursor, limit, ctx) },
+        {
+          source: 'duelStoryReply',
+          fetch: (limit, cursor) => storyCommentsApi.repliesReceived(cursor, limit, ctx),
+          isUnavailable: isReplySourceUnavailable,
+        },
+        {
+          source: 'workChapterReply',
+          fetch: (limit, cursor) => inkMarksApi.repliesReceived(cursor, limit, ctx),
+          isUnavailable: isReplySourceUnavailable,
+        },
       ],
       { isUnavailable },
     );
@@ -150,6 +169,7 @@ export function useReceivedMarks(pageSize: number) {
 function contextLine(mark: ReceivedMark, locale: Locale): string | null {
   const copy = MARKS_COPY[locale].inbox;
   if (mark.source === 'duelStory') return mark.prompt.trim() ? copy.storyContext(mark.prompt.trim()) : null;
+  if (mark.source === 'duelStoryReply') return mark.prompt.trim() ? copy.otherStoryContext(mark.prompt.trim()) : null;
   return copy.workContext(mark.workTitle.trim(), mark.chapterOrderIndex, mark.chapterTitle.trim());
 }
 
@@ -159,6 +179,18 @@ export function ReceivedMarkRow({ row, preview = false, locale }: { row: Row; pr
   const { mark, unread } = row;
   const name = mark.author.displayName.replace(/^@/, '') || copy.anonymous;
   const context = contextLine(mark, locale);
+  const isReply = mark.source === 'duelStoryReply' || mark.source === 'workChapterReply';
+  const byAuthor = (mark.source === 'duelStoryReply' && mark.isStoryAuthor) || (mark.source === 'workChapterReply' && mark.isWorkAuthor);
+  const profile = mark.author.userId ? (
+    <Link
+      href={`/profile/${encodeURIComponent(mark.author.userId)}`}
+      className="ink-focus ink-dim relative z-10 rounded-control font-bold text-primary no-underline"
+    >
+      @{name}
+    </Link>
+  ) : (
+    <span className="font-bold text-primary">@{name}</span>
+  );
   return (
     <li
       className={cx(
@@ -167,21 +199,20 @@ export function ReceivedMarkRow({ row, preview = false, locale }: { row: Row; pr
       )}
     >
       <p className="flex flex-wrap items-center gap-x-2 type-body text-[13.5px] text-secondary">
-        {mark.author.userId ? (
-          <Link
-            href={`/profile/${encodeURIComponent(mark.author.userId)}`}
-            className="ink-focus ink-dim relative z-10 rounded-control font-bold text-primary no-underline"
-          >
-            @{name}
-          </Link>
+        {byAuthor ? (
+          <span className="font-bold text-primary">{copy.inbox.authorRepliedToYou}</span>
+        ) : isReply ? (
+          <span>
+            {profile} {copy.inbox.repliedToYou}
+          </span>
         ) : (
-          <span className="font-bold text-primary">@{name}</span>
+          profile
         )}
         <span aria-hidden="true">·</span>
         <time dateTime={mark.createdAt}>{shortMarkDate(mark.createdAt, locale)}</time>
       </p>
       <Link
-        href={receivedMarkHref(mark)}
+        href={receivedMarkHref(mark, locale)}
         className={cx(
           'ink-focus rounded-control font-literary text-[16px] leading-[1.5] break-words whitespace-pre-wrap no-underline after:absolute after:inset-0 after:content-[\'\']',
           unread ? 'text-content' : 'text-secondary',
