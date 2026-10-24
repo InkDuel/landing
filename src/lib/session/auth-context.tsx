@@ -17,6 +17,7 @@ import { ApiError, apiGet } from './api';
 import { isFirebaseConfigured } from './config';
 import { getFirebaseAuth } from './firebase';
 import { type ProfileUser, parseProfileUser } from './models';
+import { clearAllRecovery } from './studio/local-recovery';
 
 // Founder decision A (2026-10-04): in phase 1 the web only lets existing
 // InkDuel accounts in. After Firebase signs someone in, the web asks
@@ -163,6 +164,8 @@ export function SessionProvider({
   const signOut = useCallback(async () => {
     const auth = getFirebaseAuth();
     noAccountRef.current = false;
+    // Studio's emergency copies never outlive the session on this device.
+    await clearAllRecovery().catch(() => {});
     if (auth) await firebaseSignOut(auth);
   }, []);
 

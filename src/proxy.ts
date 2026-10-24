@@ -34,6 +34,7 @@ function sessionPolicy(nonce: string): string {
       'https://firebaseremoteconfig.googleapis.com',
       GA_HIT_SOURCES,
       isDev ? 'ws: wss:' : '',
+      isDev && process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST ? `http://${process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST}` : '',
     ]
       .filter(Boolean)
       .join(' '),

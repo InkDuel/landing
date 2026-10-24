@@ -1,0 +1,25 @@
+{
+  "note": "Shared fixtures: inkduel-backend internal/models/testdata and landing src/lib/session/studio/. Keep both identical.",
+  "cases": [
+    { "text": "", "words": 0, "chars": 0 },
+    { "text": "   \n\t  ", "words": 0, "chars": 7 },
+    { "text": "Hola mundo", "words": 2, "chars": 10 },
+    { "text": "  Hola,   mundo.  ", "words": 2, "chars": 18 },
+    { "text": "¿Qué pasó? ¡Nada!", "words": 3, "chars": 17 },
+    { "text": "don't stop", "words": 2, "chars": 10 },
+    { "text": "rock’n’roll", "words": 1, "chars": 11 },
+    { "text": "bien-estar y anti-héroe", "words": 3, "chars": 23 },
+    { "text": "— Dijo ella —", "words": 2, "chars": 13 },
+    { "text": "fin.Luego", "words": 2, "chars": 9 },
+    { "text": "año 2026, 3.14", "words": 4, "chars": 14 },
+    { "text": "coração não", "words": 2, "chars": 11 },
+    { "text": "Café noir", "words": 2, "chars": 10 },
+    { "text": "emoji 🙂 aquí 👩‍💻", "words": 2, "chars": 16 },
+    { "text": "-guion inicial", "words": 2, "chars": 14 },
+    { "text": "palabra- suelta", "words": 2, "chars": 15 },
+    { "text": "東京は晴れ", "words": 5, "chars": 5 },
+    { "text": "abc漢字def", "words": 4, "chars": 8 },
+    { "text": "안녕하세요 세계", "words": 2, "chars": 8 },
+    { "text": "Línea uno\n\nLínea dos\r\nfin", "words": 5, "chars": 25 }
+  ]
+}

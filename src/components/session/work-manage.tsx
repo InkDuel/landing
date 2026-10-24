@@ -42,7 +42,7 @@ import { WORKS_COPY } from '@/lib/session/works-copy';
 
 const words = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
 
-function Requirement({ met, label }: { met: boolean; label: string }) {
+export function Requirement({ met, label }: { met: boolean; label: string }) {
   return (
     <li className="flex items-center gap-2 type-body text-[15px]">
       <span
@@ -108,7 +108,7 @@ function ChapterItem({
   );
 }
 
-function TitleDialog({
+export function TitleDialog({
   open,
   initial,
   onClose,
@@ -155,6 +155,70 @@ function TitleDialog({
         </InkButton>
       </form>
     </InkDialog>
+  );
+}
+
+/**
+ * «Publicar obra» / «Despublicar obra» with its requirements (title + one
+ * published chapter, moderation active). Shared by the legacy owner page and
+ * Studio's Publicar area.
+ */
+export function WorkPublishPanel({
+  work,
+  busy,
+  mutate,
+}: {
+  work: AuthorWork | (Pick<AuthorWork, 'id' | 'title' | 'published' | 'isGalleryEligible' | 'moderationState' | 'publishedChapterCount'> & { chapters?: AuthorChapter[] });
+  busy: boolean;
+  mutate: (action: () => Promise<unknown>) => Promise<boolean>;
+}) {
+  const { locale } = useSessionLocale();
+  const copy = WORKS_COPY[locale];
+  const hasTitle = work.title.trim() !== '';
+  const hasPublishedChapter = work.publishedChapterCount > 0;
+  const available = work.moderationState === 'active';
+  const canPublish = available && hasTitle && hasPublishedChapter;
+  return work.published ? (
+    <div className="flex flex-col gap-3">
+      <InkButton variant="secondary" busy={busy} onClick={() => void mutate(() => worksApi.unpublish(work.id, { locale }))}>
+        {copy.unpublishWork}
+      </InkButton>
+    </div>
+  ) : (
+    <section aria-label={copy.publishWork} className="flex flex-col gap-3 rounded-card border-quiet border-divider bg-surface p-4">
+      <ul className="m-0 flex flex-col gap-2 p-0">
+        <Requirement met={hasTitle} label={copy.requirementTitle} />
+        <Requirement met={hasPublishedChapter} label={copy.requirementChapter} />
+      </ul>
+      <p className="type-caption text-secondary">
+        {!available
+          ? copy.unavailableTitle
+          : canPublish
+            ? copy.readyToPublish
+            : !hasTitle
+              ? copy.addTitleToPublish
+              : copy.needsChapter}
+      </p>
+      <InkButton
+        disabled={!canPublish}
+        busy={busy}
+        onClick={() =>
+          void mutate(async () => {
+            try {
+              const published = await worksApi.publish(work.id, { locale });
+              trackWorkPublished(work as AuthorWork, published);
+              return published;
+            } catch (error) {
+              trackPublishFailed({ step: 'work', workId: work.id, reason: publishFailureReason(error) });
+              throw error;
+            }
+          })
+        }
+      >
+        {copy.publishWork}
+      </InkButton>
+      <p className="text-center type-caption text-tertiary">{copy.onlyYouCanSee}</p>
+    </section>
   );
 }
 
@@ -258,53 +322,11 @@ export function WorkManageView({ workId }: { workId: string }) {
   const hasTitle = work.title.trim() !== '';
   const hasPublishedChapter = work.publishedChapterCount > 0;
   const available = work.moderationState === 'active';
-  const canPublish = available && hasTitle && hasPublishedChapter;
   // MaxChaptersPerWork: past it AddWorkChapter only answers 409.
   const atChapterLimit = work.chapterCount >= WORK_LIMITS.maxChapters;
   const kicker = !work.published ? copy.statusDraft : work.isGalleryEligible ? copy.statusInStories : copy.statusPublished;
 
-  const panel = work.published ? (
-    <div className="flex flex-col gap-3">
-      <InkButton variant="secondary" busy={busy} onClick={() => void mutate(() => worksApi.unpublish(work.id, { locale }))}>
-        {copy.unpublishWork}
-      </InkButton>
-    </div>
-  ) : (
-    <section aria-label={copy.publishWork} className="flex flex-col gap-3 rounded-card border-quiet border-divider bg-surface p-4">
-      <ul className="m-0 flex flex-col gap-2 p-0">
-        <Requirement met={hasTitle} label={copy.requirementTitle} />
-        <Requirement met={hasPublishedChapter} label={copy.requirementChapter} />
-      </ul>
-      <p className="type-caption text-secondary">
-        {!available
-          ? copy.unavailableTitle
-          : canPublish
-            ? copy.readyToPublish
-            : !hasTitle
-              ? copy.addTitleToPublish
-              : copy.needsChapter}
-      </p>
-      <InkButton
-        disabled={!canPublish}
-        busy={busy}
-        onClick={() =>
-          void mutate(async () => {
-            try {
-              const published = await worksApi.publish(work.id, { locale });
-              trackWorkPublished(work, published);
-              return published;
-            } catch (error) {
-              trackPublishFailed({ step: 'work', workId: work.id, reason: publishFailureReason(error) });
-              throw error;
-            }
-          })
-        }
-      >
-        {copy.publishWork}
-      </InkButton>
-      <p className="text-center type-caption text-tertiary">{copy.onlyYouCanSee}</p>
-    </section>
-  );
+  const panel = <WorkPublishPanel work={work} busy={busy} mutate={mutate} />;
 
   return (
     <div className="flex flex-col gap-6 pt-2 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-x-14">

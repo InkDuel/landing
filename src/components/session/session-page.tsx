@@ -18,7 +18,7 @@ import { SESSION_COPY } from '@/lib/session/copy';
 
 import { useSessionLocale } from './session-root';
 
-type Width = 'reading' | 'product' | 'wide';
+type Width = 'reading' | 'product' | 'wide' | 'studio';
 
 /**
  * Header of the signed-in area: logo, Duelos · Historias · Perfil, language. Always
@@ -39,7 +39,7 @@ function SessionHeader() {
       : [{ href: '/login', label: copy.nav.signIn, active: pathname === '/login' }];
 
   return (
-    <header className="py-3">
+    <header className="session-chrome py-3">
       <PageColumn width="wide" className="flex flex-wrap items-center gap-1 sm:flex-nowrap sm:gap-3">
         <Link
           href={withLang(status === 'signedIn' ? '/ranked' : '/', locale)}
