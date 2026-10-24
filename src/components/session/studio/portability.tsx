@@ -186,7 +186,7 @@ export function ImportSheet({ open, onClose }: { open: boolean; onClose: () => v
     try {
       if (mode === 'replace') {
         const editor = studio.editor();
-        if (!editor) {
+        if (!editor || editor.readOnly()) {
           setError(x.importNoCurrent);
           return;
         }
@@ -199,7 +199,12 @@ export function ImportSheet({ open, onClose }: { open: boolean; onClose: () => v
         editor.adopt({ revision: saved.revision, title: local.title, content: file.text });
         studio.applyDraft(saved);
       } else if (mode === 'new') {
-        await studio.createChapter({ title: file.title, body: file.text, source: 'import' });
+        // The id fixed at preview time makes a retry idempotent.
+        const id = await studio.createChapter({ title: file.title, body: file.text, source: 'import', id: ids.current[0] });
+        if (!id) {
+          setError(x.importFailed);
+          return;
+        }
       } else {
         let first: string | null = null;
         for (const [i, chapter] of chapters.entries()) {
@@ -239,7 +244,7 @@ export function ImportSheet({ open, onClose }: { open: boolean; onClose: () => v
             <InkButton variant="secondary" fullWidth={false} onClick={close} disabled={busy}>
               {copy.shell.cancel}
             </InkButton>
-            <InkButton fullWidth={false} busy={busy} busyLabel={x.importing} disabled={tooLong || overCap || (mode === 'replace' && !ed)} onClick={() => void run()}>
+            <InkButton fullWidth={false} busy={busy} busyLabel={x.importing} disabled={tooLong || overCap || (mode === 'replace' && (!ed || ed.readOnly()))} onClick={() => void run()}>
               {x.importConfirm}
             </InkButton>
           </>
@@ -276,7 +281,7 @@ export function ImportSheet({ open, onClose }: { open: boolean; onClose: () => v
               onChange={setMode}
               options={[
                 { value: 'new', label: x.importAsNew },
-                ...(ed ? [{ value: 'replace' as const, label: x.importReplace }] : []),
+                ...(ed && !ed.readOnly() ? [{ value: 'replace' as const, label: x.importReplace }] : []),
                 ...(canSplit ? [{ value: 'split' as const, label: x.importSplit }] : []),
               ]}
             />

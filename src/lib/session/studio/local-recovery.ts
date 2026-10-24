@@ -1,5 +1,7 @@
 'use client';
 
+import { getFirebaseAuth } from '../firebase';
+
 // Emergency local copies of unsynced Studio text (PRD §10, DECISIONS D5).
 //
 // - IndexedDB `inkduel-studio-recovery`, one record per {uid, workId, draftId};
@@ -46,7 +48,10 @@ function openDb(): Promise<IDBDatabase | null> {
           store.createIndex('uid', 'uid');
         }
       };
-      request.onsuccess = () => resolve(request.result);
+      request.onsuccess = () => {
+        sweepExpired(request.result);
+        resolve(request.result);
+      };
       request.onerror = () => resolve(null);
       request.onblocked = () => resolve(null);
     } catch {
@@ -54,6 +59,24 @@ function openDb(): Promise<IDBDatabase | null> {
     }
   });
   return dbPromise;
+}
+
+/** Drops every copy older than the TTL (once per page, on open). */
+function sweepExpired(db: IDBDatabase) {
+  try {
+    const tx = db.transaction(STORE, 'readwrite');
+    const request = tx.objectStore(STORE).openCursor();
+    const cutoff = Date.now() - TTL_MS;
+    request.onsuccess = () => {
+      const cursor = request.result;
+      if (!cursor) return;
+      const value = cursor.value as Partial<RecoveryRecord>;
+      if (typeof value.savedAt !== 'number' || value.savedAt < cutoff) cursor.delete();
+      cursor.continue();
+    };
+  } catch {
+    // Best effort: getRecovery still ignores expired copies.
+  }
 }
 
 function run<T>(mode: IDBTransactionMode, work: (store: IDBObjectStore) => IDBRequest<T> | null): Promise<T | null> {
@@ -94,7 +117,9 @@ export async function setRecoveryEnabled(uid: string, enabled: boolean): Promise
 
 /** Resolves true only when the copy really reached IndexedDB. */
 export async function putRecovery(record: Omit<RecoveryRecord, 'key' | 'savedAt'>): Promise<boolean> {
-  if (!recoveryEnabled(record.uid)) return false;
+  // Never write for an account that is no longer the signed-in one (a timer
+  // that fires after sign-out) or that turned the option off.
+  if (!recoveryEnabled(record.uid) || getFirebaseAuth()?.currentUser?.uid !== record.uid) return false;
   const full: RecoveryRecord = { ...record, key: recoveryKey(record.uid, record.workId, record.draftId), savedAt: Date.now() };
   const db = await openDb();
   if (!db) return false;

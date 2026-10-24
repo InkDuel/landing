@@ -58,7 +58,9 @@ export function splitByHeadings(text: string): ImportedChapter[] {
     const heading = !fenced ? /^#{1,2}\s+(.+?)\s*#*\s*$/.exec(line) : null;
     if (heading) {
       push();
-      current = { title: heading[1].trim().slice(0, 120), lines: [] };
+      const full = heading[1].trim();
+      // A heading longer than a title keeps its full text as the first line.
+      current = { title: Array.from(full).slice(0, 120).join(''), lines: Array.from(full).length > 120 ? [full, ''] : [] };
     } else {
       current ??= { title: '', lines: [] };
       current.lines.push(line);

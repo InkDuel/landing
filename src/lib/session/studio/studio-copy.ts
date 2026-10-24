@@ -41,6 +41,7 @@ export type StudioCopy = {
     tipsTitle: string;
     tips: [string, string, string];
     tipsDismiss: string;
+    cannotLeave: string;
   };
   manuscript: {
     title: string;
@@ -159,6 +160,9 @@ export type StudioCopy = {
     keepMineConfirmBody: string;
     copyTitle: (title: string) => string;
     copySaved: string;
+    useServerTitle: string;
+    useServerBody: string;
+    keepMineFailed: string;
   };
   recovery: {
     title: (when: string) => string;
@@ -172,7 +176,7 @@ export type StudioCopy = {
     settingHelp: string;
     unavailable: string;
   };
-  lock: { title: string; body: string; takeOver: string; taken: string; unsupported: string };
+  lock: { title: string; body: string; takeOver: string; taken: string; unsupported: string; otherUnsynced: string; unsyncedHere: string; taking: string };
   prefs: {
     title: string;
     font: string;
@@ -282,6 +286,9 @@ export type StudioCopy = {
     moderationHidden: string;
     wordsDelta: (delta: string) => string;
     nothingToPublish: string;
+    checkMet: string;
+    checkMissing: string;
+    blockedReason: string;
   };
   portability: {
     title: string;
@@ -373,6 +380,7 @@ const es: StudioCopy = {
       'Publicar es siempre una decisión tuya: tus lectores ven la versión publicada hasta que confirmes otra.',
     ],
     tipsDismiss: 'Entendido',
+    cannotLeave: 'Primero resuelve los cambios sin guardar de este capítulo.',
   },
   manuscript: {
     title: 'Manuscrito',
@@ -492,6 +500,9 @@ const es: StudioCopy = {
     keepMineConfirmBody: 'La versión guardada se conserva en Versiones y la tuya pasa a ser la actual.',
     copyTitle: (t) => (t ? `${t} (copia)` : 'Copia'),
     copySaved: 'Tu versión se guardó como un capítulo nuevo.',
+    useServerTitle: '¿Reemplazar tu texto por la versión guardada?',
+    useServerBody: 'El texto de este dispositivo se perderá. Si quieres conservarlo, guárdalo antes como copia.',
+    keepMineFailed: 'No pudimos guardar la versión del servidor en Versiones, así que no la reemplazamos. Guarda tu versión como copia.',
   },
   recovery: {
     title: (when) => `Encontramos texto sin sincronizar de ${when}`,
@@ -512,6 +523,9 @@ const es: StudioCopy = {
     takeOver: 'Editar aquí',
     taken: 'Seguiste en otra pestaña. Aquí el capítulo quedó en modo lectura.',
     unsupported: 'Este navegador no puede coordinar pestañas: edita este capítulo en una sola.',
+    otherUnsynced: 'La otra pestaña no pudo sincronizar todo: su texto sigue allí.',
+    unsyncedHere: 'Este texto no se sincronizó. Descárgalo o guárdalo como copia antes de seguir.',
+    taking: 'Pasando a esta pestaña…',
   },
   prefs: {
     title: 'Ajustes de escritura',
@@ -630,6 +644,9 @@ const es: StudioCopy = {
     moderationHidden: 'Moderación: no disponible para lectores',
     wordsDelta: (d) => `${d} palabras respecto a la versión publicada`,
     nothingToPublish: 'No hay cambios por publicar.',
+    checkMet: 'Cumplido',
+    checkMissing: 'Pendiente',
+    blockedReason: 'No se puede publicar todavía: revisa la lista.',
   },
   portability: {
     title: 'Tu obra es tuya. Llévala contigo.',
@@ -721,6 +738,7 @@ const en: StudioCopy = {
       'Publishing is always your call: readers see the published version until you confirm a new one.',
     ],
     tipsDismiss: 'Got it',
+    cannotLeave: 'First resolve the unsaved changes in this chapter.',
   },
   manuscript: {
     title: 'Manuscript',
@@ -840,6 +858,9 @@ const en: StudioCopy = {
     keepMineConfirmBody: 'The saved version is kept in Versions and yours becomes the current one.',
     copyTitle: (t) => (t ? `${t} (copy)` : 'Copy'),
     copySaved: 'Your version was saved as a new chapter.',
+    useServerTitle: 'Replace your text with the saved version?',
+    useServerBody: 'The text on this device will be lost. To keep it, save it as a copy first.',
+    keepMineFailed: "We couldn't keep the server's version in Versions, so we didn't replace it. Save your version as a copy.",
   },
   recovery: {
     title: (when) => `We found unsynced text from ${when}`,
@@ -860,6 +881,9 @@ const en: StudioCopy = {
     takeOver: 'Edit here',
     taken: 'You continued in another tab. This one is now read-only.',
     unsupported: "This browser can't coordinate tabs: edit this chapter in a single one.",
+    otherUnsynced: "The other tab couldn't sync everything: its text is still there.",
+    unsyncedHere: "This text wasn't synced. Download it or save it as a copy before continuing.",
+    taking: 'Moving to this tab…',
   },
   prefs: {
     title: 'Writing settings',
@@ -978,6 +1002,9 @@ const en: StudioCopy = {
     moderationHidden: 'Moderation: not available to readers',
     wordsDelta: (d) => `${d} words compared to the published version`,
     nothingToPublish: 'Nothing new to publish.',
+    checkMet: 'Done',
+    checkMissing: 'Missing',
+    blockedReason: "It can't be published yet: check the list.",
   },
   portability: {
     title: 'Your work is yours. Take it with you.',
@@ -1069,6 +1096,7 @@ const pt: StudioCopy = {
       'Publicar é sempre decisão sua: os leitores veem a versão publicada até você confirmar outra.',
     ],
     tipsDismiss: 'Entendi',
+    cannotLeave: 'Primeiro resolva as alterações não salvas deste capítulo.',
   },
   manuscript: {
     title: 'Manuscrito',
@@ -1188,6 +1216,9 @@ const pt: StudioCopy = {
     keepMineConfirmBody: 'A versão salva fica em Versões e a sua passa a ser a atual.',
     copyTitle: (t) => (t ? `${t} (cópia)` : 'Cópia'),
     copySaved: 'Sua versão foi salva como um capítulo novo.',
+    useServerTitle: 'Substituir seu texto pela versão salva?',
+    useServerBody: 'O texto deste dispositivo será perdido. Para mantê-lo, salve-o antes como cópia.',
+    keepMineFailed: 'Não conseguimos guardar a versão do servidor em Versões, então não a substituímos. Salve sua versão como cópia.',
   },
   recovery: {
     title: (when) => `Encontramos texto não sincronizado de ${when}`,
@@ -1208,6 +1239,9 @@ const pt: StudioCopy = {
     takeOver: 'Editar aqui',
     taken: 'Você continuou em outra aba. Aqui o capítulo ficou só para leitura.',
     unsupported: 'Este navegador não consegue coordenar abas: edite este capítulo em uma só.',
+    otherUnsynced: 'A outra aba não conseguiu sincronizar tudo: o texto dela continua lá.',
+    unsyncedHere: 'Este texto não foi sincronizado. Baixe-o ou salve-o como cópia antes de continuar.',
+    taking: 'Passando para esta aba…',
   },
   prefs: {
     title: 'Ajustes de escrita',
@@ -1326,6 +1360,9 @@ const pt: StudioCopy = {
     moderationHidden: 'Moderação: indisponível para leitores',
     wordsDelta: (d) => `${d} palavras em relação à versão publicada`,
     nothingToPublish: 'Nada novo para publicar.',
+    checkMet: 'Feito',
+    checkMissing: 'Pendente',
+    blockedReason: 'Ainda não dá para publicar: revise a lista.',
   },
   portability: {
     title: 'Sua obra é sua. Leve-a com você.',

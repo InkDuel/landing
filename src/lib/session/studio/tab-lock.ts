@@ -29,8 +29,8 @@ export class DraftTabLock {
     private readonly name: string,
     /** Called when this tab must stop editing (another tab took over). */
     private readonly onLost: () => void,
-    /** The owner saves before handing over. */
-    private readonly onFlushRequest: () => Promise<void>,
+    /** The owner saves before handing over; resolves whether all is synced. */
+    private readonly onFlushRequest: () => Promise<boolean>,
   ) {
     try {
       this.channel = typeof BroadcastChannel === 'undefined' ? null : new BroadcastChannel(CHANNEL);
@@ -39,7 +39,9 @@ export class DraftTabLock {
           const data = event.data as { type?: string; name?: string } | null;
           if (!data || data.name !== this.name || !this.release) return;
           if (data.type === 'flush') {
-            void this.onFlushRequest().finally(() => this.channel?.postMessage({ type: 'flushed', name: this.name }));
+            void this.onFlushRequest()
+              .catch(() => false)
+              .then((ok) => this.channel?.postMessage({ type: 'flushed', name: this.name, ok }));
           }
         };
       }
@@ -94,16 +96,22 @@ export class DraftTabLock {
     });
   }
 
-  /** Asks the owner to save (up to 4 s), then takes the lock. */
-  async takeOver(): Promise<LockState> {
+  /**
+   * Asks the owner to save (up to 4 s), then takes the lock. otherSynced is
+   * false when the owner answered that it could not sync everything (its
+   * text stays visible there) or did not answer at all.
+   */
+  async takeOver(): Promise<{ state: LockState; otherSynced: boolean }> {
     const manager = locks();
-    if (!manager) return 'unsupported';
+    if (!manager) return { state: 'unsupported', otherSynced: true };
+    let otherSynced = false;
     if (this.channel) {
       await new Promise<void>((resolve) => {
         const timer = setTimeout(resolve, 4000);
         const listener = (event: MessageEvent) => {
-          const data = event.data as { type?: string; name?: string } | null;
+          const data = event.data as { type?: string; name?: string; ok?: boolean } | null;
           if (data?.type === 'flushed' && data.name === this.name) {
+            otherSynced = data.ok === true;
             clearTimeout(timer);
             this.channel?.removeEventListener('message', listener);
             resolve();
@@ -113,6 +121,11 @@ export class DraftTabLock {
         this.channel?.postMessage({ type: 'flush', name: this.name });
       });
     }
+    const state = await this.steal(manager);
+    return { state, otherSynced };
+  }
+
+  private steal(manager: LockManagerLike): Promise<LockState> {
     return new Promise<LockState>((resolve) => {
       manager
         .request(this.name, { steal: true }, (lock) => this.hold(lock, resolve))

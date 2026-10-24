@@ -217,14 +217,17 @@ export function StudioShell({ initial, uid }: { initial: StudioOverview; uid: st
     async (nextArea: StudioArea, docId?: string | null, extra?: { tab?: string; item?: string }) => {
       const ed = editorRef.current;
       const leavingDoc = ed && (nextArea !== 'write' || (docId !== undefined && docId !== ed.draftId));
-      if (leavingDoc && !(await ed.flush())) return false;
+      if (leavingDoc && !(await ed.flush())) {
+        setToast(copy.shell.cannotLeave);
+        return false;
+      }
       const doc = docId === undefined ? (nextArea === 'write' ? docParam : null) : docId;
       const href = studioHref(workId, { area: nextArea, doc, ...extra });
       if (nextArea === area) router.replace(href, { scroll: false });
       else router.push(href);
       return true;
     },
-    [workId, area, docParam, router],
+    [workId, area, docParam, router, copy.shell.cannotLeave],
   );
 
   const refresh = useCallback(async () => {
@@ -300,8 +303,8 @@ export function StudioShell({ initial, uid }: { initial: StudioOverview; uid: st
       editor: () => editorRef.current,
       openEntry: (entry) => go('write', entry.id),
       createChapter: async (input) => {
-        const { open = true, ...rest } = input ?? {};
-        const id = await createChapter(rest);
+        const { open = true, id: pinned, ...rest } = input ?? {};
+        const id = await createChapter(rest, pinned ?? newClientId());
         if (id && open) await go('write', id);
         return id;
       },

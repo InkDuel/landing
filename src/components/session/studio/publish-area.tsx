@@ -31,7 +31,7 @@ import { StudioSheet } from './studio-ui';
 // guessing. Publication stays within 5,000 characters (what installed app
 // builds can edit), longer drafts are refused, never truncated.
 
-function Check({ ok, label, hint, soft = false }: { ok: boolean; label: string; hint?: string; soft?: boolean }) {
+function Check({ ok, label, hint, soft = false, status }: { ok: boolean; label: string; hint?: string; soft?: boolean; status: { met: string; missing: string } }) {
   return (
     <li className="flex items-start gap-2">
       <span
@@ -45,6 +45,7 @@ function Check({ ok, label, hint, soft = false }: { ok: boolean; label: string; 
       </span>
       <span className="min-w-0">
         <span className={cx('type-body text-[15px]', ok ? 'text-primary' : soft ? 'text-secondary' : 'text-danger')}>{label}</span>
+        <span className="sr-only">: {ok ? status.met : status.missing}</span>
         {hint ? <span className="block type-caption text-tertiary">{hint}</span> : null}
       </span>
     </li>
@@ -162,8 +163,14 @@ function ReviewSheet({ review, onClose, onPublished }: { review: Review | null; 
             <InkButton variant="secondary" fullWidth={false} onClick={onClose} disabled={busy}>
               {copy.shell.cancel}
             </InkButton>
+            {blocked ? (
+              <span id="publish-blocked" className="type-caption text-danger">
+                {p.blockedReason}
+              </span>
+            ) : null}
             <InkButton
               fullWidth={false}
+              aria-describedby={blocked ? 'publish-blocked' : undefined}
               disabled={blocked || unchanged}
               busy={busy}
               busyLabel={p.publishing}
@@ -188,13 +195,13 @@ function ReviewSheet({ review, onClose, onPublished }: { review: Review | null; 
             {p.checklist}
           </h3>
           <ul className="m-0 mt-2 flex list-none flex-col gap-2 p-0">
-            <Check ok={checks.body} label={p.checkBody} />
-            <Check ok={checks.limit} label={p.checkLimit(fmt(limits.publishBody))} hint={!checks.limit ? p.blockedTooLong(fmt(limits.publishBody)) : `${fmt(chars)} / ${fmt(limits.publishBody)}`} />
-            <Check ok={true} label={p.checkSynced} />
-            <Check ok={checks.title} soft label={p.checkTitle} hint={!checks.title ? label : undefined} />
-            <Check ok={checks.ready} soft label={p.checkReady} hint={p.checkReadyHint} />
-            {!checks.available ? <Check ok={false} label={p.blockedHidden} /> : null}
-            {!checks.capacity ? <Check ok={false} label={p.blockedLimit} /> : null}
+            <Check status={{ met: p.checkMet, missing: p.checkMissing }} ok={checks.body} label={p.checkBody} />
+            <Check status={{ met: p.checkMet, missing: p.checkMissing }} ok={checks.limit} label={p.checkLimit(fmt(limits.publishBody))} hint={!checks.limit ? p.blockedTooLong(fmt(limits.publishBody)) : `${fmt(chars)} / ${fmt(limits.publishBody)}`} />
+            <Check status={{ met: p.checkMet, missing: p.checkMissing }} ok={true} label={p.checkSynced} />
+            <Check status={{ met: p.checkMet, missing: p.checkMissing }} ok={checks.title} soft label={p.checkTitle} hint={!checks.title ? label : undefined} />
+            <Check status={{ met: p.checkMet, missing: p.checkMissing }} ok={checks.ready} soft label={p.checkReady} hint={p.checkReadyHint} />
+            {!checks.available ? <Check status={{ met: p.checkMet, missing: p.checkMissing }} ok={false} label={p.blockedHidden} /> : null}
+            {!checks.capacity ? <Check status={{ met: p.checkMet, missing: p.checkMissing }} ok={false} label={p.blockedLimit} /> : null}
           </ul>
           {delta !== null ? <p className="mt-3 type-caption text-secondary">{unchanged ? p.nothingToPublish : p.wordsDelta(delta > 0 ? `+${fmt(delta)}` : fmt(delta))}</p> : null}
           {isNewChapter ? <p className="mt-2 type-caption text-secondary">{p.willBe(orderForNew)}</p> : null}

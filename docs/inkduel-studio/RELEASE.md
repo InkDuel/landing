@@ -43,7 +43,7 @@ scenes 500 · relations 1,000 · snapshots per draft: auto 30 (90 days), backup
   (draft, day rollup, Work.updatedAt at most every 10 min), + 1 snapshot write
   every 15 min of editing.
 - Open Studio: chapters + drafts (no bodies) + settings ≈ N+M+1 reads.
-- Search reads every Studio document of the Work (rate-limited 240/h/user).
+- Search (`POST`, query in the body) reads every Studio document of the Work (rate-limited 240/h/user).
 - Rate limits per user/hour: read 1,200 · draft write 720 · write 600 ·
   publish 60 · search 240 · export 30.
 
@@ -68,6 +68,8 @@ Verified on 2026-10-24 against local emulators (marked ✓); repeat on staging.
 - ✓ Two tabs: second is read-only → «Editar aquí» → first becomes read-only.
 - ✓ `/me/works/:id/chapter/:id` and `/chapter/new` hand over to Studio (one draft created).
 - ✓ Kill switch: legacy page + export; API overview 503, export 200.
+- ✓ Conflict from another device: banner → «Usar la versión del servidor» asks first → «Guardar mi versión como copia» keeps the local text as a new chapter.
+- ✓ Plan: «Tres actos» template adds 8 cards; move to «Planificada» from the keyboard menu. Progress: totals, streak, calendar and how-it-counts with real data.
 - ✓ 375 px: no horizontal scroll; toolbar in two rows.
 - ✓ Backend down while typing → «Guardado en este dispositivo · Pendiente de sincronizar» → reload → recovery banner → «Recuperar» → synced.
 - ☐ Import .txt/.md (new chapter, replace, split by #) and export each format from the UI.

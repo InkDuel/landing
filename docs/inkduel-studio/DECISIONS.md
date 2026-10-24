@@ -104,3 +104,16 @@ silently — add `Update YYYY-MM-DD` under it. Product source of truth: `PRD.md`
 Rich text, EPUB/PDF, public reorder, long (>5k) publication, multi-layer
 timeline, visual diff beyond simple line compare, global replace, beta readers,
 offline mode, AI of any kind.
+
+## D11 · Review hardening (2026-10-24)
+- Search is `POST /studio/search {q}`: the query is the author's text and must
+  never sit in a URL (access logs).
+- «Usar la versión del servidor» requires a confirmation; «Conservar mi versión»
+  aborts unless the server's text was first kept as a version.
+- A 409 whose server text equals the text being saved is a lost ACK, not a
+  conflict: the engine adopts that revision.
+- Taking over a draft from another tab first saves this tab's unsynced text as
+  a copy; the owner reports whether it managed to sync.
+- An emergency copy waiting for the author's decision is never overwritten;
+  expired copies are swept on open; nothing is written after sign-out.
+- Synopsis edits count as unsaved work for navigation and publish.

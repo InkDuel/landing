@@ -250,7 +250,20 @@ export class ChapterAutosave {
       if (stillDirty) this.schedule();
     } catch (error) {
       const snapshot = this.deps.readConflict(error);
-      if (snapshot && !creating) {
+      if (snapshot && !creating && snapshot.content === content && snapshot.title === title.trim()) {
+        // An earlier attempt landed but its answer was lost (timeout, network):
+        // the server already holds exactly this text. Not a conflict.
+        this.backoffAttempt = 0;
+        this.backoffUntil = 0;
+        const stillDirty = this.state.localContent !== content || this.state.localTitle !== title;
+        this.set({
+          savedContent: content,
+          savedTitle: title,
+          savedRevision: snapshot.revision,
+          status: stillDirty ? 'idle' : 'saved',
+        });
+        if (stillDirty) this.schedule();
+      } else if (snapshot && !creating) {
         this.set({ status: 'conflict', conflict: snapshot });
       } else if (this.deps.isTransient(error)) {
         this.backoffUntil = this.now() + this.nextBackoff();
@@ -316,11 +329,19 @@ export class ChapterAutosave {
     return !isDirty(this.state) && this.state.status !== 'conflict';
   }
 
-  /** Best effort when the tab hides or the page goes away (keepalive request). */
+  /**
+   * Best effort when the tab hides or the page goes away (keepalive request).
+   * A save already in flight is awaited first, so edits typed meanwhile still
+   * get their own request.
+   */
   flushBestEffort() {
     if (this.timer) clearTimeout(this.timer);
     this.timer = null;
-    void this.attempt({ automatic: false, keepalive: true }).then(() => this.schedule());
+    const run = async () => {
+      if (this.inFlight) await this.inFlight.catch(() => {});
+      await this.attempt({ automatic: false, keepalive: true });
+    };
+    void run().then(() => this.schedule());
   }
 
   retryNow() {

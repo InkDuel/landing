@@ -9,9 +9,9 @@ import { InkChip } from '@/components/ink/ink-chip';
 import { InkInlineBanner } from '@/components/ink/ink-inline-banner';
 import { InkSkeleton, InkTextAction } from '@/components/ink/ink-states';
 import { INTL_LOCALE } from '@/lib/i18n';
-import { isTransient } from '@/lib/session/api';
+import { ApiError, isTransient } from '@/lib/session/api';
 import { ChapterAutosave, type ChapterEditorState, hasUnsavedWork, isDirty } from '@/lib/session/chapter-autosave';
-import { draftConflict, studioApi } from '@/lib/session/studio/api';
+import { conflictData, draftConflict, studioApi } from '@/lib/session/studio/api';
 import {
   getRecovery,
   putRecovery,
@@ -108,7 +108,10 @@ export function StudioEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workId, uid, entry.id, attempt]);
 
-  if (status === 'loading' || !loaded) {
+  // Only ever show the document the entry names: after switching chapters a
+  // failed load must not leave the previous draft on screen under the new
+  // chapter's label (its actions would hit the wrong document).
+  if (status !== 'ready' || !loaded || loaded.draft.id !== entry.id) {
     return status === 'error' ? (
       <InkInlineBanner
         className="mt-4"
@@ -239,41 +242,93 @@ function EditorSurface({
   const { draft } = loaded;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [openedAt] = useState(() => Date.now());
-  const [initialWords] = useState(draft.wordCount);
+  // Words written in this sitting: only persisted edits count. A version
+  // adopted from the server (restore, discard, import, split) moves the
+  // baseline instead of counting as writing.
+  const [sessionBase, setSessionBase] = useState(draft.wordCount);
+  const adoptVersion = useCallback(
+    (snapshot: { revision: number; title: string; content: string }) => {
+      const before = countWords(engine.getState().savedContent);
+      engine.adopt(snapshot);
+      setSessionBase((b) => b + countWords(snapshot.content) - before);
+    },
+    [engine],
+  );
 
   const state = useEngineState(engine);
   useLeaveGuard(engine);
+  const studioRef = useLatestRef(studio);
 
   // ---- one editing tab per draft ----
   const [lockState, setLockState] = useState<LockState>('pending');
   const [lostLock, setLostLock] = useState(false);
+  const [taking, setTaking] = useState(false);
   const lockRef = useRef<DraftTabLock | null>(null);
   useEffect(() => {
+    let active = true;
     const lock = new DraftTabLock(
       `inkduel-studio:${uid}:${workId}:${draft.id}`,
       () => {
+        if (!active) return;
         setLockState('readonly');
         setLostLock(true);
       },
-      async () => {
-        await engine.flush();
-      },
+      () => engine.flush(),
     );
     lockRef.current = lock;
-    void lock.acquire().then(setLockState);
-    return () => lock.dispose();
+    void lock.acquire().then((next) => {
+      if (active) setLockState(next);
+    });
+    return () => {
+      active = false;
+      lock.dispose();
+    };
   }, [uid, workId, draft.id, engine]);
   const readOnly = lockState === 'readonly' || lockState === 'pending';
+  const readOnlyRef = useLatestRef(readOnly);
+
+  async function takeOver() {
+    if (taking) return;
+    // Never trade this tab's unsynced text for the other tab's: keep it as a
+    // copy first, then let it go from here.
+    const s = engine.getState();
+    if (hasUnsavedWork(s)) {
+      const id = await saveLocalAsCopy(s.localTitle, s.localContent);
+      if (!id) return;
+      engine.adopt({ revision: s.savedRevision, title: s.savedTitle, content: s.savedContent });
+      studio.toast(copy.conflict.copySaved);
+    }
+    setTaking(true);
+    const result = await lockRef.current?.takeOver();
+    setTaking(false);
+    if (result?.state === 'owner') {
+      if (!result.otherSynced) studio.toast(copy.lock.otherUnsynced);
+      onReload();
+    }
+  }
 
   // ---- emergency local copy (only of text the server has not confirmed) ----
   const [recoveryOn, setRecoveryOn] = useState(() => recoveryEnabled(uid));
   const [recoveryAvailable] = useState(() => typeof indexedDB !== 'undefined');
   const [localCopied, setLocalCopied] = useState<string | null>(null);
+  const [recovery, setRecovery] = useState<RecoveryRecord | null>(() => {
+    const r = loaded.recovery;
+    if (!r) return null;
+    if (r.body === draft.body && r.title === draft.title) {
+      void removeRecovery(uid, workId, draft.id);
+      return null;
+    }
+    return r;
+  });
+  // While an older copy waits for the author's decision it is never
+  // overwritten or deleted by the copy of what is typed now.
+  const recoveryPending = recovery !== null;
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;
     const sync = () => {
       const s = engine.getState();
       if (timer) clearTimeout(timer);
+      if (recoveryPending) return;
       if (!isDirty(s)) {
         if (s.status === 'saved') {
           setLocalCopied(null);
@@ -294,41 +349,78 @@ function EditorSurface({
       unsubscribe();
       if (timer) clearTimeout(timer);
     };
-  }, [engine, uid, workId, draft.id, recoveryOn]);
+  }, [engine, uid, workId, draft.id, recoveryOn, recoveryPending]);
   const copiedNow = localCopied === state.localContent + '\u0000' + state.localTitle;
 
-  const [recovery, setRecovery] = useState<RecoveryRecord | null>(() => {
-    const r = loaded.recovery;
-    if (!r) return null;
-    if (r.body === draft.body && r.title === draft.title) {
-      void removeRecovery(uid, workId, draft.id);
-      return null;
-    }
-    return r;
-  });
+  // ---- synopsis and status (their own revision, saved one at a time) ----
+  const [synopsisOpen, setSynopsisOpen] = useState(draft.synopsis !== '');
+  const [synopsis, setSynopsis] = useState(draft.synopsis);
+  const synopsisRef = useLatestRef(synopsis);
+  const metaRef = useRef({ synopsis: draft.synopsis, status: draft.status, metaRevision: draft.metaRevision });
+  const [meta, setMeta] = useState(metaRef.current);
+  const [metaSaving, setMetaSaving] = useState(false);
+  const metaQueue = useRef<Promise<unknown>>(Promise.resolve());
+
+  function saveMeta(next: { synopsis?: string; status?: DraftStatus }): Promise<boolean> {
+    const run = metaQueue.current.then(async () => {
+      const before = metaRef.current;
+      setMeta({ ...before, ...next });
+      setMetaSaving(true);
+      try {
+        const saved = await studioApi.saveDraftMeta(workId, draft.id, { expectedMetaRevision: before.metaRevision, ...next }, { locale: studioRef.current.locale });
+        metaRef.current = { synopsis: saved.synopsis, status: saved.status, metaRevision: saved.metaRevision };
+        setMeta(metaRef.current);
+        studioRef.current.applyDraft(saved);
+        return true;
+      } catch (error) {
+        // A 409 carries the current values: adopt them so later saves work.
+        const data = conflictData(error);
+        if (data?.code === 'meta_conflict') {
+          metaRef.current = {
+            synopsis: typeof data.currentSynopsis === 'string' ? data.currentSynopsis : before.synopsis,
+            status: (DRAFT_STATUSES as readonly string[]).includes(String(data.currentStatus)) ? (data.currentStatus as DraftStatus) : before.status,
+            metaRevision: typeof data.currentMetaRevision === 'number' ? data.currentMetaRevision : before.metaRevision,
+          };
+        }
+        setMeta(metaRef.current);
+        studioRef.current.toast(STUDIO_COPY[studioRef.current.locale].editor.metaFailed);
+        return false;
+      } finally {
+        setMetaSaving(false);
+      }
+    });
+    metaQueue.current = run.catch(() => undefined);
+    return run;
+  }
+
+  /** The synopsis is part of «everything saved» for navigation and publish. */
+  function flushSynopsis(): Promise<boolean> {
+    return synopsisRef.current !== metaRef.current.synopsis ? saveMeta({ synopsis: synopsisRef.current }) : Promise.resolve(true);
+  }
 
   // ---- register for area navigation; session analytics ----
+  const sessionBaseRef = useLatestRef(sessionBase);
   useEffect(() => {
     studio.registerEditor({
       draftId: draft.id,
-      flush: () => engine.flush(),
-      hasUnsaved: () => hasUnsavedWork(engine.getState()),
+      flush: async () => (await engine.flush()) && (await flushSynopsis()),
+      hasUnsaved: () => hasUnsavedWork(engine.getState()) || synopsisRef.current !== metaRef.current.synopsis,
       localText: () => {
         const s = engine.getState();
         return { title: s.localTitle, body: s.localContent, revision: s.savedRevision };
       },
-      adopt: (snapshot) => engine.adopt(snapshot),
+      adopt: adoptVersion,
+      readOnly: () => readOnlyRef.current,
     });
     studioAnalytics.editorOpened(workId, entry.chapterId ? 'chapter' : 'draft', draft.revision === 0 && draft.body === '');
     const started = openedAt;
-    const startWords = initialWords;
     return () => {
       studio.registerEditor(null);
       const s = engine.getState();
-      const added = countWords(s.savedContent) - startWords;
+      const added = countWords(s.savedContent) - sessionBaseRef.current;
       if (Date.now() - started > 60_000 || added > 0) studioAnalytics.sessionCompleted(workId, Date.now() - started, Math.max(0, added));
     };
-    // Registered once per editor session.
+    // Registered once per editor session; everything it reads goes through refs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engine]);
 
@@ -338,11 +430,8 @@ function EditorSurface({
   const [prefsOpen, setPrefsOpen] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
   const [compare, setCompare] = useState<null | { kind: 'conflict' | 'outside'; text: string }>(null);
-  const [confirm, setConfirm] = useState<null | 'keepMine' | 'discard' | 'takeOutside' | 'trash' | 'split'>(null);
+  const [confirm, setConfirm] = useState<null | 'keepMine' | 'useServer' | 'discard' | 'takeOutside' | 'trash' | 'split'>(null);
   const [busy, setBusy] = useState(false);
-  const [synopsisOpen, setSynopsisOpen] = useState(draft.synopsis !== '');
-  const [synopsis, setSynopsis] = useState(draft.synopsis);
-  const [meta, setMeta] = useState({ synopsis: draft.synopsis, status: draft.status, metaRevision: draft.metaRevision });
   const splitAt = useRef<number | null>(null);
 
   // ---- keyboard ----
@@ -381,7 +470,7 @@ function EditorSurface({
   const words = useMemo(() => countWords(deferredBody), [deferredBody]);
   const chars = useMemo(() => countChars(deferredBody), [deferredBody]);
   const savedWords = useMemo(() => countWords(state.savedContent), [state.savedContent]);
-  const sessionWords = Math.max(0, savedWords - initialWords);
+  const sessionWords = Math.max(0, savedWords - sessionBase);
   const sessionGoal = studio.overview.settings.sessionGoalWords;
   const overPublish = chars > limits.publishBody;
 
@@ -389,22 +478,6 @@ function EditorSurface({
   const label = entry.chapterId ? copy.manuscript.chapterLabel(entry.orderIndex) : copy.manuscript.newDraftLabel;
   const linkedUnpublishedExists = Boolean(entry.chapterId) && !entry.published;
   const pending = studio.overview.manuscript.find((e) => e.id === entry.id)?.draft?.pendingChanges ?? false;
-
-  async function saveMeta(next: { synopsis?: string; status?: DraftStatus }) {
-    const before = meta;
-    setMeta({ ...meta, ...next });
-    try {
-      const saved = await studioApi.saveDraftMeta(workId, draft.id, { expectedMetaRevision: before.metaRevision, ...next }, { locale });
-      setMeta({ synopsis: saved.synopsis, status: saved.status, metaRevision: saved.metaRevision });
-      studio.applyDraft(saved);
-      return true;
-    } catch {
-      setMeta(before);
-      // Another device changed it: reopen the document to read the truth.
-      studio.toast(copy.editor.metaFailed);
-      return false;
-    }
-  }
 
   async function saveLocalAsCopy(title: string, body: string) {
     setBusy(true);
@@ -418,7 +491,7 @@ function EditorSurface({
     try {
       if (!(await engine.flush()) && engine.getState().status !== 'conflict') return;
       const next = await studioApi.discardDraft(workId, draft.id, engine.getState().savedRevision, { locale });
-      engine.adopt({ revision: next.revision, title: next.title, content: next.body });
+      adoptVersion({ revision: next.revision, title: next.title, content: next.body });
       studio.applyDraft(next);
       await studio.refresh();
       setConfirm(null);
@@ -432,11 +505,20 @@ function EditorSurface({
   async function runTrash() {
     setBusy(true);
     try {
-      if (!(await engine.flush())) return;
+      if (!(await engine.flush())) {
+        studio.toast(copy.shell.cannotLeave);
+        return;
+      }
       if (linkedUnpublishedExists && entry.chapterId) {
-        await worksApi.deleteChapter(workId, entry.chapterId, { locale });
+        try {
+          await worksApi.deleteChapter(workId, entry.chapterId, { locale });
+        } catch (error) {
+          // Already gone (an earlier attempt): continue with the draft.
+          if (!(error instanceof ApiError && error.status === 404)) throw error;
+        }
       }
       const trashed = await studioApi.trashDraft(workId, draft.id, { locale });
+      void removeRecovery(uid, workId, draft.id);
       studio.registerEditor(null);
       studio.applyDraft(trashed);
       await studio.refresh();
@@ -455,16 +537,25 @@ function EditorSurface({
     if (at === null) return;
     setBusy(true);
     try {
-      if (!(await engine.flush())) return;
+      // Over the draft limit nothing can be saved, which is exactly when the
+      // split is needed: then it splits the local text without a flush first.
+      if (engine.getState().status !== 'invalid' && !(await engine.flush())) {
+        studio.toast(copy.shell.cannotLeave);
+        return;
+      }
       const s = engine.getState();
       const head = s.localContent.slice(0, at).replace(/\s+$/, '');
       const tail = s.localContent.slice(at).replace(/^\s+/, '');
       if (!tail) return;
+      if (countChars(head) > limits.draftBody || countChars(tail) > limits.draftBody) {
+        studio.toast(copy.editor.tooLong(fmt(limits.draftBody)));
+        return;
+      }
       // Tail first: if the second step fails the text exists twice, never zero times.
       const newId = await studio.createChapter({ title: '', body: tail, source: 'split', open: false });
       if (!newId) return;
       const saved = await studioApi.saveDraft(workId, draft.id, { expectedRevision: s.savedRevision, title: s.localTitle, body: head, source: 'split' }, { locale });
-      engine.adopt({ revision: saved.revision, title: s.localTitle, content: head });
+      adoptVersion({ revision: saved.revision, title: s.localTitle, content: head });
       studio.applyDraft(saved);
       studio.toast(copy.editor.splitDone);
       setConfirm(null);
@@ -562,33 +653,24 @@ function EditorSurface({
       </div>
 
       <div className="flex flex-col gap-3 pt-3">
-        {lostLock ? <InkInlineBanner tone="info" title={copy.lock.taken} /> : null}
-        {lockState === 'readonly' && !lostLock ? (
+        {lockState === 'readonly' ? (
           <InkInlineBanner
             tone="notice"
-            title={copy.lock.title}
-            detail={copy.lock.body}
+            title={lostLock ? copy.lock.taken : copy.lock.title}
+            detail={
+              lostLock && hasUnsavedWork(state) ? copy.lock.unsyncedHere : lostLock ? undefined : copy.lock.body
+            }
             action={
-              <InkTextAction
-                onClick={async () => {
-                  const next = await lockRef.current?.takeOver();
-                  if (next === 'owner') onReload();
-                }}
-              >
-                {copy.lock.takeOver}
-              </InkTextAction>
+              <div className="flex flex-wrap gap-x-4">
+                {lostLock && hasUnsavedWork(state) ? (
+                  <InkTextAction onClick={() => downloadText(`InkDuel-copia-${draft.id.slice(0, 8)}.txt`, `${state.localTitle}\n\n${state.localContent}`)}>
+                    {copy.save.exportCopy}
+                  </InkTextAction>
+                ) : null}
+                <InkTextAction onClick={() => void takeOver()}>{taking ? copy.lock.taking : copy.lock.takeOver}</InkTextAction>
+              </div>
             }
           />
-        ) : null}
-        {lostLock ? (
-          <InkTextAction
-            onClick={async () => {
-              const next = await lockRef.current?.takeOver();
-              if (next === 'owner') onReload();
-            }}
-          >
-            {copy.lock.takeOver}
-          </InkTextAction>
         ) : null}
 
         {recovery && !readOnly ? (
@@ -598,7 +680,7 @@ function EditorSurface({
             detail={recovery.baseRevision === state.savedRevision ? copy.recovery.body : copy.recovery.conflictBody}
             action={
               <div className="flex flex-wrap gap-x-4">
-                {recovery.baseRevision === state.savedRevision ? (
+                {recovery.baseRevision === state.savedRevision && !isDirty(state) ? (
                   <InkTextAction
                     onClick={() => {
                       engine.setTitle(recovery.title);
@@ -658,7 +740,7 @@ function EditorSurface({
                 >
                   {copy.conflict.saveCopy}
                 </InkTextAction>
-                <InkTextAction onClick={() => engine.useServer()}>{copy.conflict.useServer}</InkTextAction>
+                <InkTextAction onClick={() => setConfirm('useServer')}>{copy.conflict.useServer}</InkTextAction>
               </div>
             }
           />
@@ -692,7 +774,15 @@ function EditorSurface({
           <p className="type-caption text-secondary">{copy.editor.publishedUnchanged}</p>
         ) : null}
 
-        {findOpen ? <FindBar textareaRef={textareaRef} text={state.localContent} copy={copy.editor} onClose={() => setFindOpen(false)} /> : null}
+        {findOpen ? <FindBar
+            textareaRef={textareaRef}
+            text={state.localContent}
+            copy={copy.editor}
+            onClose={() => {
+              setFindOpen(false);
+              textareaRef.current?.focus({ preventScroll: true });
+            }}
+          /> : null}
       </div>
 
       <div className={cx('mx-auto flex w-full flex-col gap-3 pt-4 pb-10', focus && 'pt-10')} style={{ maxWidth: textStyle.maxWidth }}>
@@ -715,7 +805,7 @@ function EditorSurface({
               {copy.status.label}
               <select
                 value={meta.status}
-                disabled={readOnly}
+                disabled={readOnly || metaSaving}
                 onChange={(event) => void saveMeta({ status: event.target.value as DraftStatus })}
                 className="ink-focus min-h-9 rounded-control border-quiet border-control bg-surface px-2 type-body-sm text-primary"
               >
@@ -747,6 +837,9 @@ function EditorSurface({
               readOnly={readOnly}
               maxLength={limits.synopsis}
               onChange={(event) => setSynopsis(event.target.value)}
+              onBlur={() => {
+                if (!readOnly && synopsis !== meta.synopsis) void saveMeta({ synopsis });
+              }}
               placeholder={copy.editor.synopsisHint}
               rows={2}
               className="w-full resize-y bg-transparent type-body-sm text-content outline-none placeholder:text-placeholder [field-sizing:content]"
@@ -842,6 +935,7 @@ function EditorSurface({
         onClose={() => setVersionsOpen(false)}
         draftId={draft.id}
         engine={engine}
+        adopt={adoptVersion}
         readOnly={readOnly}
       />
       <StudioSheet
@@ -882,14 +976,35 @@ function EditorSurface({
         destructive
         onClose={() => setConfirm(null)}
         onConfirm={async () => {
-          // The server's version stays in history before mine replaces it.
-          const server = state.conflict;
-          if (server) {
-            await studioApi
-              .createSnapshot(workId, draft.id, { snapshotId: crypto.randomUUID().toLowerCase(), label: copy.conflict.server.slice(0, limits.snapshotLabel) }, { locale })
-              .catch(() => {});
+          // The server's version stays in history before mine replaces it;
+          // without that backup nothing is replaced.
+          try {
+            await studioApi.createSnapshot(
+              workId,
+              draft.id,
+              { snapshotId: crypto.randomUUID().toLowerCase(), label: copy.conflict.server.slice(0, limits.snapshotLabel) },
+              { locale },
+            );
+          } catch {
+            studio.toast(copy.conflict.keepMineFailed);
+            setConfirm(null);
+            return;
           }
           engine.keepMine();
+          setConfirm(null);
+          setCompare(null);
+        }}
+      />
+      <StudioConfirm
+        open={confirm === 'useServer'}
+        title={copy.conflict.useServerTitle}
+        body={copy.conflict.useServerBody}
+        confirmLabel={copy.conflict.useServer}
+        cancelLabel={copy.shell.cancel}
+        destructive
+        onClose={() => setConfirm(null)}
+        onConfirm={() => {
+          engine.useServer();
           setConfirm(null);
           setCompare(null);
         }}

@@ -216,8 +216,9 @@ export const studioApi = {
     return parseProgress(await apiRequest('GET', base(workId, 'progress'), { locale, signal, query: range }));
   },
 
+  /** The query is the author's text: it goes in the body, never in the URL. */
   async search(workId: string, q: string, { locale, signal }: Ctx) {
-    return parseSearch(await apiRequest('GET', base(workId, 'search'), { locale, signal, query: { q } }));
+    return parseSearch(await apiRequest('POST', base(workId, 'search'), { locale, signal, body: { q } }));
   },
 
   async trash(workId: string, { locale, signal }: Ctx) {

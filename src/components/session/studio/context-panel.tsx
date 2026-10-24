@@ -330,7 +330,16 @@ export function ContextPanel({
           { value: 'search', label: copy.context.search },
         ]}
       />
-      {tab === 'notes' ? <QuickNotes draftId={draftId} /> : tab === 'pinned' ? <Pinned /> : <WorkSearch />}
+      {/* Panels stay mounted so a half-written note or a search survives switching tabs. */}
+      <div hidden={tab !== 'notes'}>
+        <QuickNotes draftId={draftId} />
+      </div>
+      <div hidden={tab !== 'pinned'}>
+        <Pinned />
+      </div>
+      <div hidden={tab !== 'search'}>
+        <WorkSearch />
+      </div>
     </section>
   );
 }

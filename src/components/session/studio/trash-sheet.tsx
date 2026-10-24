@@ -7,6 +7,7 @@ import { InkInlineBanner } from '@/components/ink/ink-inline-banner';
 import { InkSkeleton, InkTextAction } from '@/components/ink/ink-states';
 import { formatDate } from '@/lib/i18n';
 import { studioApi } from '@/lib/session/studio/api';
+import { removeRecovery } from '@/lib/session/studio/local-recovery';
 import { ENTITY_KINDS, type EntityKind, type TrashItem } from '@/lib/session/studio/models';
 import { STUDIO_COPY } from '@/lib/session/studio/studio-copy';
 
@@ -59,8 +60,10 @@ export function TrashSheet({ open, onClose }: { open: boolean; onClose: () => vo
   async function purgeNow(item: TrashItem) {
     setBusy(item.id);
     try {
-      if (item.kind === 'drafts') await studioApi.purgeDraft(workId, item.id, { locale });
-      else await studioApi.purgeEntity(workId, item.kind as EntityKind, item.id, { locale });
+      if (item.kind === 'drafts') {
+        await studioApi.purgeDraft(workId, item.id, { locale });
+        void removeRecovery(studio.uid, workId, item.id);
+      } else await studioApi.purgeEntity(workId, item.kind as EntityKind, item.id, { locale });
       if (item.kind === 'characters') store.dropRelationsOf(item.id);
       setItems((prev) => (prev ?? []).filter((i) => i.id !== item.id));
       setPurge(null);

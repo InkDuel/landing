@@ -27,12 +27,15 @@ export function VersionsSheet({
   onClose,
   draftId,
   engine,
+  adopt,
   readOnly,
 }: {
   open: boolean;
   onClose: () => void;
   draftId: string;
   engine: ChapterAutosave;
+  /** Takes a restored version as the editor's saved text. */
+  adopt: (snapshot: { revision: number; title: string; content: string }) => void;
   readOnly: boolean;
 }) {
   const studio = useStudio();
@@ -131,7 +134,7 @@ export function VersionsSheet({
           return;
         }
         const restored = await studioApi.restoreSnapshot(workId, draftId, confirm.snapshot.id, engine.getState().savedRevision, { locale });
-        engine.adopt({ revision: restored.revision, title: restored.title, content: restored.body });
+        adopt({ revision: restored.revision, title: restored.title, content: restored.body });
         studio.applyDraft(restored);
         setNotice(v.restored);
         setPreview(null);

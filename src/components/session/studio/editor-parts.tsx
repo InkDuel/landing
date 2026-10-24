@@ -45,9 +45,19 @@ export function SaveStatus({ view, className }: { view: SaveView; className?: st
   // Visible always; read aloud only when it matters (failures, local copy,
   // conflicts), so an autosave every 20 s never chatters.
   const [spoken, setSpoken] = useState('');
+  const hadProblem = useRef(false);
   useEffect(() => {
-    if (view.announce) setSpoken(view.text);
-  }, [view.announce, view.text]);
+    if (view.announce) {
+      hadProblem.current = true;
+      setSpoken(view.text);
+    } else if (hadProblem.current && view.tone === 'ok') {
+      // Say once that it is synced again, then stay quiet.
+      hadProblem.current = false;
+      setSpoken(view.text);
+    } else if (!hadProblem.current) {
+      setSpoken('');
+    }
+  }, [view.announce, view.text, view.tone]);
   return (
     <>
       <span
@@ -333,13 +343,30 @@ export function StudioMenu({ label, items }: { label: string; items: { key: stri
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const menuId = useId();
+  // Closing from the keyboard or by choosing returns focus to the trigger.
+  const close = (restore: boolean) => {
+    setOpen(false);
+    if (restore) ref.current?.querySelector<HTMLButtonElement>('button[aria-haspopup]')?.focus();
+  };
   useEffect(() => {
     if (!open) return;
+    ref.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
     const onDown = (event: MouseEvent) => {
       if (!ref.current?.contains(event.target as Node)) setOpen(false);
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
+      if (event.key === 'Escape') {
+        setOpen(false);
+        ref.current?.querySelector<HTMLButtonElement>('button[aria-haspopup]')?.focus();
+      } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        const items = [...(ref.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? [])];
+        const at = items.indexOf(document.activeElement as HTMLButtonElement);
+        const next = items[(at + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length];
+        if (next) {
+          event.preventDefault();
+          next.focus();
+        }
+      }
     };
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
@@ -352,20 +379,23 @@ export function StudioMenu({ label, items }: { label: string; items: { key: stri
   if (visible.length === 0) return null;
   return (
     <div ref={ref} className="relative">
-      <StudioIconButton label={label} aria-expanded={open} aria-controls={menuId} onClick={() => setOpen((v) => !v)}>
+      <StudioIconButton label={label} aria-haspopup="menu" aria-expanded={open} aria-controls={open ? menuId : undefined} onClick={() => setOpen((v) => !v)}>
         <MoreIcon size={20} />
       </StudioIconButton>
       {open ? (
         <ul
           id={menuId}
+          role="menu"
+          aria-label={label}
           className="absolute right-0 z-30 m-0 mt-1 min-w-[260px] list-none rounded-card border-brand border-outline bg-elevated p-1 ink-shadow-lift-sm"
         >
           {visible.map((item) => (
-            <li key={item.key}>
+            <li key={item.key} role="none">
               <button
                 type="button"
+                role="menuitem"
                 onClick={() => {
-                  setOpen(false);
+                  close(true);
                   item.onSelect();
                 }}
                 className={cx(

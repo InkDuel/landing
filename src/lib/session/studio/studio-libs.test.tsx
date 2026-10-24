@@ -102,6 +102,26 @@ describe('autosave engine with draft limits', () => {
     engine.dispose();
   });
 
+  it('treats a 409 that already holds exactly my text as a save (lost ACK), not a conflict', async () => {
+    const patch = vi.fn(async () => {
+      throw new Error('409');
+    });
+    const engine = new ChapterAutosave(
+      { ...base, localContent: 'viejo', savedContent: 'viejo', savedRevision: 3 },
+      {
+        add: vi.fn(),
+        patch,
+        remove: vi.fn(),
+        readConflict: () => ({ revision: 4, content: 'nuevo', title: '' }),
+        isTransient: () => false,
+      },
+    );
+    engine.setContent('nuevo');
+    await expect(engine.flush()).resolves.toBe(true);
+    expect(engine.getState()).toMatchObject({ status: 'saved', savedRevision: 4, conflict: null });
+    engine.dispose();
+  });
+
   it('adopts a restored version as saved text', () => {
     const engine = new ChapterAutosave(
       { ...base, localContent: 'mío', savedContent: 'viejo' },

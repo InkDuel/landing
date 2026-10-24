@@ -27,6 +27,8 @@ export type EditorHandle = {
   localText: () => { title: string; body: string; revision: number };
   /** Adopts a version the server just confirmed (import, restore). */
   adopt: (snapshot: { revision: number; title: string; content: string }) => void;
+  /** Another tab owns this draft: nothing may write it from here. */
+  readOnly: () => boolean;
 };
 
 export type StudioContextValue = {
@@ -48,7 +50,7 @@ export type StudioContextValue = {
   /** Opens (creating if needed) the draft of a manuscript entry. */
   openEntry: (entry: ManuscriptEntry) => Promise<boolean>;
   /** Creates a new private chapter draft and (unless open=false) opens it. */
-  createChapter: (input?: { title?: string; body?: string; source?: 'edit' | 'import' | 'split'; open?: boolean }) => Promise<string | null>;
+  createChapter: (input?: { title?: string; body?: string; source?: 'edit' | 'import' | 'split'; open?: boolean; id?: string }) => Promise<string | null>;
   toast: (message: string) => void;
 };
 
