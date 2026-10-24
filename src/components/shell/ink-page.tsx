@@ -30,17 +30,18 @@ export function InkPage({
  * Centred column. Desktop widths are a web decision (no mockups): «wide»
  * (1160) is the shell of every page (header, footer) and the exploration
  * screens (landing, Historias, Perfil); reading keeps the text at most
- * 680 px and product forms stay narrow on purpose.
+ * 680 px and product forms stay narrow on purpose. «studio» (1440) is the
+ * author workspace: manuscript, a 620–760 px page and references side by side.
  */
 export function PageColumn({
   width = 'product',
   className,
   children,
 }: {
-  width?: 'reading' | 'product' | 'wide';
+  width?: 'reading' | 'product' | 'wide' | 'studio';
   className?: string;
   children: ReactNode;
 }) {
-  const max = { reading: 'max-w-[720px]', product: 'max-w-[600px]', wide: 'max-w-[1160px]' }[width];
+  const max = { reading: 'max-w-[720px]', product: 'max-w-[600px]', wide: 'max-w-[1160px]', studio: 'max-w-[1440px]' }[width];
   return <div className={cx('mx-auto w-full px-5', max, className)}>{children}</div>;
 }

@@ -12,6 +12,9 @@
 // - transient errors back off; other errors wait for an explicit retry;
 // - invalid text (empty, over 5,000) is never sent.
 //
+// InkDuel Studio reuses this same engine for its private drafts with other
+// limits (40,000 characters, an empty body allowed): see AutosaveLimits.
+//
 // Framework-free so it can be tested with a fake backend and short timers.
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'retrying' | 'failed' | 'conflict' | 'invalid';
@@ -50,8 +53,11 @@ export type AutosaveTiming = { debounceMs: number; minGapMs: number; backoffBase
 
 export const WEB_TIMING: AutosaveTiming = { debounceMs: 2_000, minGapMs: 20_000, backoffBaseMs: 1_000, backoffMaxMs: 30_000 };
 
-const MAX_CONTENT = 5000;
-const MAX_TITLE = 120;
+/** What the server accepts. A chapter (5,000, never empty) by default. */
+export type AutosaveLimits = { maxContent: number; maxTitle: number; allowEmpty: boolean };
+
+export const CHAPTER_LIMITS: AutosaveLimits = { maxContent: 5000, maxTitle: 120, allowEmpty: false };
+
 const runes = (value: string) => Array.from(value).length;
 
 export function isDirty(state: ChapterEditorState): boolean {
@@ -80,17 +86,20 @@ export class ChapterAutosave {
   private readonly deps: AutosaveDeps;
   private readonly timing: AutosaveTiming;
   private readonly now: () => number;
+  private readonly limits: AutosaveLimits;
 
   constructor(
     initial: ChapterEditorState,
     deps: AutosaveDeps,
     timing: AutosaveTiming = WEB_TIMING,
     now: () => number = () => Date.now(),
+    limits: AutosaveLimits = CHAPTER_LIMITS,
   ) {
     this.state = initial;
     this.deps = deps;
     this.timing = timing;
     this.now = now;
+    this.limits = limits;
   }
 
   // --- store API ---
@@ -140,10 +149,10 @@ export class ChapterAutosave {
   }
 
   private validate(state: ChapterEditorState): Invalid {
-    if (runes(state.localContent) > MAX_CONTENT || runes(state.localTitle) > MAX_TITLE) return 'tooLong';
+    if (runes(state.localContent) > this.limits.maxContent || runes(state.localTitle) > this.limits.maxTitle) return 'tooLong';
     // A new chapter with no body yet is simply not created; only an existing
     // chapter cannot be emptied (the backend rejects empty content).
-    if (!state.isNew && state.localContent.trim() === '') return 'empty';
+    if (!this.limits.allowEmpty && !state.isNew && state.localContent.trim() === '') return 'empty';
     return null;
   }
 
@@ -347,6 +356,27 @@ export class ChapterAutosave {
       localTitle: snapshot.title,
       conflict: null,
       invalid: null,
+      status: 'saved',
+    });
+  }
+
+  /**
+   * Adopts a server version the author explicitly chose (a restored version,
+   * discarded changes): local and saved text both become it. Only call it
+   * when nothing is in flight and the local text is saved or kept elsewhere.
+   */
+  adopt(snapshot: ConflictSnapshot) {
+    if (this.timer) clearTimeout(this.timer);
+    this.timer = null;
+    this.dirtySince = null;
+    this.set({
+      savedRevision: snapshot.revision,
+      savedContent: snapshot.content,
+      savedTitle: snapshot.title,
+      localContent: snapshot.content,
+      localTitle: snapshot.title,
+      conflict: null,
+      invalid: this.validate({ ...this.state, localContent: snapshot.content, localTitle: snapshot.title }),
       status: 'saved',
     });
   }

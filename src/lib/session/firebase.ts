@@ -5,6 +5,7 @@ import {
   type Auth,
   browserLocalPersistence,
   browserPopupRedirectResolver,
+  connectAuthEmulator,
   indexedDBLocalPersistence,
   initializeAuth,
 } from '@firebase/auth';
@@ -26,5 +27,11 @@ export function getFirebaseAuth(): Auth | null {
     persistence: [indexedDBLocalPersistence, browserLocalPersistence],
     popupRedirectResolver: browserPopupRedirectResolver,
   });
+  // Local QA only (never in a production build): the Firebase Auth emulator,
+  // so the signed-in area can be exercised against local emulators.
+  const emulator = process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST;
+  if (process.env.NODE_ENV === 'development' && emulator) {
+    connectAuthEmulator(auth, `http://${emulator}`, { disableWarnings: true });
+  }
   return auth;
 }
