@@ -222,6 +222,11 @@ export type StudioCopy = {
   context: {
     title: string;
     quickNotes: string;
+    tabNotes: string;
+    tabPinned: string;
+    tabSearch: string;
+    noteFilter: string;
+    pinnedNote: string;
     quickNoteHint: string;
     addNote: string;
     noNotes: string;
@@ -572,6 +577,11 @@ const es: StudioCopy = {
   context: {
     title: 'Notas y referencias',
     quickNotes: 'Notas rápidas',
+    tabNotes: 'Notas',
+    tabPinned: 'Fijados',
+    tabSearch: 'Buscar',
+    noteFilter: 'Mostrar notas',
+    pinnedNote: 'Fijada',
     quickNoteHint: 'Anota una idea sin salir del capítulo',
     addNote: 'Añadir nota',
     noNotes: 'Sin notas por ahora.',
@@ -930,6 +940,11 @@ const en: StudioCopy = {
   context: {
     title: 'Notes and references',
     quickNotes: 'Quick notes',
+    tabNotes: 'Notes',
+    tabPinned: 'Pinned',
+    tabSearch: 'Search',
+    noteFilter: 'Show notes',
+    pinnedNote: 'Pinned',
     quickNoteHint: 'Jot down an idea without leaving the chapter',
     addNote: 'Add note',
     noNotes: 'No notes yet.',
@@ -1288,6 +1303,11 @@ const pt: StudioCopy = {
   context: {
     title: 'Notas e referências',
     quickNotes: 'Notas rápidas',
+    tabNotes: 'Notas',
+    tabPinned: 'Fixados',
+    tabSearch: 'Buscar',
+    noteFilter: 'Mostrar notas',
+    pinnedNote: 'Fixada',
     quickNoteHint: 'Anote uma ideia sem sair do capítulo',
     addNote: 'Adicionar nota',
     noNotes: 'Sem notas por enquanto.',

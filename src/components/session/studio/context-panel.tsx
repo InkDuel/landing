@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import { cx } from '@/components/ink/cx';
 import { CloseIcon, PinIcon, TrashIcon } from '@/components/ink/icons';
-import { InkButton } from '@/components/ink/ink-button';
 import { InkInlineBanner } from '@/components/ink/ink-inline-banner';
 import { InkSkeleton, InkTextAction } from '@/components/ink/ink-states';
 import { studioApi } from '@/lib/session/studio/api';
@@ -15,7 +14,7 @@ import { STUDIO_COPY } from '@/lib/session/studio/studio-copy';
 import { useStudioCollection } from '@/lib/session/studio/studio-store';
 
 import { useStudio } from './studio-context';
-import { StudioIconButton, StudioSegmented } from './studio-ui';
+import { StudioIconButton } from './studio-ui';
 
 // The editor's side panel, closed by default on small screens: quick notes a
 // click away, references pinned in sight, and a search of the whole Work —
@@ -65,26 +64,15 @@ function QuickNotes({ draftId }: { draftId: string | null }) {
     }
   }
 
+  const canAdd = text.trim() !== '' && !busy;
   return (
     <div className="flex flex-col gap-3">
-      {draftId ? (
-        <StudioSegmented
-          label={copy.quickNotes}
-          hideLabel
-          value={scope}
-          onChange={setScope}
-          options={[
-            { value: 'chapter', label: copy.thisChapter },
-            { value: 'all', label: copy.allChapters },
-          ]}
-        />
-      ) : null}
       <form
-        className="flex flex-col gap-2"
         onSubmit={(event) => {
           event.preventDefault();
           void add();
         }}
+        className="flex flex-col rounded-control border-quiet border-control bg-surface focus-within:border-outline"
       >
         <label htmlFor="studio-quick-note" className="sr-only">
           {copy.quickNoteHint}
@@ -102,12 +90,49 @@ function QuickNotes({ draftId }: { draftId: string | null }) {
           }}
           placeholder={copy.quickNoteHint}
           rows={2}
-          className="w-full resize-y rounded-control border-quiet border-control bg-surface px-3 py-2 type-body-sm text-content outline-none placeholder:text-placeholder focus:border-outline [field-sizing:content]"
+          className="min-h-[64px] w-full resize-none bg-transparent px-3 pt-2.5 type-body-sm text-content outline-none placeholder:text-placeholder [field-sizing:content]"
         />
-        <InkButton type="submit" variant="secondary" fullWidth={false} className="self-end" disabled={!text.trim()} busy={busy}>
-          {copy.addNote}
-        </InkButton>
+        <div className="flex items-center justify-between gap-2 px-2 pb-2">
+          <kbd aria-hidden="true" className="pl-1 font-ui text-[11px] text-tertiary">
+            ⌘/Ctrl + ↵
+          </kbd>
+          <button
+            type="submit"
+            disabled={!canAdd}
+            aria-busy={busy || undefined}
+            className={cx(
+              'ink-focus inline-flex min-h-9 items-center rounded-control px-3 type-button-sm text-[13px]',
+              canAdd ? 'bg-inverse text-inverse ink-dim' : 'bg-sunken text-disabled',
+            )}
+          >
+            {copy.addNote}
+          </button>
+        </div>
       </form>
+      {draftId ? (
+        <div role="radiogroup" aria-label={copy.noteFilter} className="flex gap-1">
+          {(
+            [
+              ['chapter', copy.thisChapter],
+              ['all', copy.allChapters],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              role="radio"
+              aria-checked={scope === value}
+              onClick={() => setScope(value)}
+              className={cx(
+                'ink-focus inline-flex min-h-8 items-center rounded-full px-3 type-caption font-extrabold',
+                scope === value ? 'bg-inverse text-inverse' : 'text-secondary hover:bg-surface hover:text-primary',
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      ) : null}
       {error ? <InkInlineBanner title={copy.noteSaveError} /> : null}
       {notes.status === 'loading' && notes.items.length === 0 ? <InkSkeleton lines={2} height="h-12" label={STUDIO_COPY[locale].shell.loading} /> : null}
       {notes.status === 'error' ? (
@@ -116,8 +141,11 @@ function QuickNotes({ draftId }: { draftId: string | null }) {
       {notes.status === 'ready' && quick.length === 0 ? <p className="type-body-sm text-secondary">{copy.noNotes}</p> : null}
       <ul className="m-0 flex list-none flex-col gap-2 p-0">
         {quick.map((note) => (
-          <li key={note.id} className="flex items-start gap-1 rounded-control border-quiet border-divider bg-surface p-2 pl-3">
-            <p className="min-w-0 flex-1 py-1.5 type-body-sm whitespace-pre-wrap break-words text-content">{note.fields.body}</p>
+          <li key={note.id} className="flex items-start gap-1 rounded-control border-quiet border-divider bg-surface py-1 pr-1 pl-3">
+            <div className="min-w-0 flex-1 py-2">
+              {note.fields.pinned ? <p className="type-label text-[10px] text-tertiary">{copy.pinnedNote}</p> : null}
+              <p className="type-body-sm whitespace-pre-wrap break-words text-content">{note.fields.body}</p>
+            </div>
             <StudioIconButton label={note.fields.pinned ? copy.unpin : copy.pin} pressed={note.fields.pinned} onClick={() => void togglePin(note)}>
               <PinIcon size={16} />
             </StudioIconButton>
@@ -309,6 +337,7 @@ export function ContextPanel({
   const { locale } = useStudio();
   const copy = STUDIO_COPY[locale];
   const [tab, setTab] = useState<Tab>('notes');
+  const tabsId = useId();
   return (
     <section aria-label={copy.context.title} className={cx('flex min-h-0 flex-col gap-3', className)}>
       {!inSheet ? (
@@ -319,27 +348,57 @@ export function ContextPanel({
           </StudioIconButton>
         </div>
       ) : null}
-      <StudioSegmented
-        label={copy.context.title}
-        hideLabel
-        value={tab}
-        onChange={setTab}
-        options={[
-          { value: 'notes', label: copy.context.quickNotes },
-          { value: 'pinned', label: copy.context.pinned },
-          { value: 'search', label: copy.context.search },
-        ]}
-      />
+      <div
+        role="tablist"
+        aria-label={copy.context.title}
+        className="grid grid-cols-3 border-b border-divider"
+        onKeyDown={(event) => {
+          if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+          event.preventDefault();
+          const order: Tab[] = ['notes', 'pinned', 'search'];
+          const next = order[(order.indexOf(tab) + (event.key === 'ArrowRight' ? 1 : 2)) % 3];
+          setTab(next);
+          document.getElementById(`${tabsId}-${next}`)?.focus();
+        }}
+      >
+        {(
+          [
+            ['notes', copy.context.tabNotes],
+            ['pinned', copy.context.tabPinned],
+            ['search', copy.context.tabSearch],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            id={`${tabsId}-${value}`}
+            type="button"
+            role="tab"
+            aria-selected={tab === value}
+            aria-controls={`${tabsId}-${value}-panel`}
+            tabIndex={tab === value ? 0 : -1}
+            onClick={() => setTab(value)}
+            className={cx(
+              'ink-focus relative inline-flex min-h-11 items-center justify-center px-1 type-button-sm text-[13px]',
+              tab === value ? 'text-primary' : 'text-secondary hover:text-primary',
+            )}
+          >
+            {label}
+            {tab === value ? <span aria-hidden="true" className="absolute inset-x-2 -bottom-px h-[3px] rounded-full bg-[var(--ink-brand-ink)]" /> : null}
+          </button>
+        ))}
+      </div>
       {/* Panels stay mounted so a half-written note or a search survives switching tabs. */}
-      <div hidden={tab !== 'notes'}>
-        <QuickNotes draftId={draftId} />
-      </div>
-      <div hidden={tab !== 'pinned'}>
-        <Pinned />
-      </div>
-      <div hidden={tab !== 'search'}>
-        <WorkSearch />
-      </div>
+      {(
+        [
+          ['notes', <QuickNotes key="notes" draftId={draftId} />],
+          ['pinned', <Pinned key="pinned" />],
+          ['search', <WorkSearch key="search" />],
+        ] as const
+      ).map(([value, panel]) => (
+        <div key={value} id={`${tabsId}-${value}-panel`} role="tabpanel" aria-labelledby={`${tabsId}-${value}`} hidden={tab !== value}>
+          {panel}
+        </div>
+      ))}
     </section>
   );
 }
