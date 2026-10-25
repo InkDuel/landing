@@ -189,6 +189,8 @@ export type StudioCopy = {
     width: string;
     widths: [string, string, string];
     spellcheck: string;
+    paper: string;
+    papers: { light: string; sepia: string; night: string };
     appearance: string;
     smaller: string;
     larger: string;
@@ -553,6 +555,8 @@ const es: StudioCopy = {
     width: 'Ancho del texto',
     widths: ['Estrecho', 'Normal', 'Amplio'],
     spellcheck: 'Corrector ortográfico del navegador',
+    paper: 'Fondo',
+    papers: { light: 'Claro', sepia: 'Sepia', night: 'Noche' },
     appearance: 'Apariencia del texto',
     smaller: 'Texto más pequeño',
     larger: 'Texto más grande',
@@ -925,6 +929,8 @@ const en: StudioCopy = {
     width: 'Text width',
     widths: ['Narrow', 'Normal', 'Wide'],
     spellcheck: "Browser's spell checker",
+    paper: 'Background',
+    papers: { light: 'Light', sepia: 'Sepia', night: 'Night' },
     appearance: 'Text appearance',
     smaller: 'Smaller text',
     larger: 'Larger text',
@@ -1297,6 +1303,8 @@ const pt: StudioCopy = {
     width: 'Largura do texto',
     widths: ['Estreita', 'Normal', 'Ampla'],
     spellcheck: 'Corretor ortográfico do navegador',
+    paper: 'Fundo',
+    papers: { light: 'Claro', sepia: 'Sépia', night: 'Noite' },
     appearance: 'Aparência do texto',
     smaller: 'Texto menor',
     larger: 'Texto maior',

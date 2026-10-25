@@ -21,7 +21,7 @@ import {
   setRecoveryEnabled,
 } from '@/lib/session/studio/local-recovery';
 import { DRAFT_STATUSES, type Draft, type DraftStatus, type ManuscriptEntry } from '@/lib/session/studio/models';
-import { useEditorPrefs } from '@/lib/session/studio/preferences';
+import { useEditorPrefs, useStudioPaper } from '@/lib/session/studio/preferences';
 import { studioAnalytics } from '@/lib/session/studio/studio-analytics';
 import { STUDIO_COPY } from '@/lib/session/studio/studio-copy';
 import { DraftTabLock, type LockState } from '@/lib/session/studio/tab-lock';
@@ -426,6 +426,7 @@ function EditorSurface({
 
   // ---- prefs, panels, dialogs ----
   const [prefs, setPrefs] = useEditorPrefs(uid);
+  const [paper, setPaper] = useStudioPaper(uid);
   const [findOpen, setFindOpen] = useState(false);
   const [prefsOpen, setPrefsOpen] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
@@ -611,7 +612,7 @@ function EditorSurface({
             </StudioIconButton>
           </>
         ) : null}
-        <AppearancePopover prefs={prefs} onChange={setPrefs} copy={copy} onMore={() => setPrefsOpen(true)} />
+        <AppearancePopover prefs={prefs} onChange={setPrefs} paper={paper} onPaper={setPaper} copy={copy} onMore={() => setPrefsOpen(true)} />
         <StudioIconButton label={focus ? copy.editor.exitFocus : copy.editor.focus} aria-keyshortcuts="Meta+Shift+Enter Control+Shift+Enter" pressed={focus} onClick={() => onFocusChange(!focus)}>
           <FocusIcon size={20} />
         </StudioIconButton>

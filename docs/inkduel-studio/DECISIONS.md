@@ -117,3 +117,16 @@ offline mode, AI of any kind.
 - An emergency copy waiting for the author's decision is never overwritten;
   expired copies are swept on open; nothing is written after sign-out.
 - Synopsis edits count as unsaved work for navigation and publish.
+
+## D12 · Page colour while writing (2026-10-25)
+- Founder decision: Studio offers «Fondo» in the «Aa» control — Claro
+  (default), Sepia, Noche. Long sessions at night were the reason; a free
+  colour picker was rejected (contrast can't be guaranteed).
+- It is the one exception to the light-only web (2026-10-04): Studio sets
+  `data-theme` (`dark` for Noche, `sepia`) on the page only while it is open
+  and removes it on the way out. «Noche» darkens the whole page, not just the
+  sheet, so nothing bright frames the text.
+- Choice per account and browser (`inkduel-studio-paper:<uid>`), shared by
+  the control and the shell, in step across tabs. Not synced to the server.
+- Text contrast is AA in both themes (night tertiary raised to `#8f95b5`).
+  «Automático» (follow the system) is left for later, after seeing use.

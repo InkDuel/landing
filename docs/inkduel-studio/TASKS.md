@@ -26,3 +26,4 @@ PRD codes in brackets. Update after every verifiable block.
 | W9 | Web tests (autosave, words, import/export, api parsing, publish flow) + typecheck/lint/build | web | W3–W8 | done |
 | V1 | Integrated QA (local backend + emulator + web), review, PRs | both | all | done |
 | V2 | Pre-merge review: overview cache per account, recovery clear on account change, import/export + network QA, Flutter compatibility replay (RELEASE.md) | both | V1 | done |
+| P1 | «Fondo» in «Aa»: Claro, Sepia, Noche for the whole Studio page (D12) | web | V2 | done |

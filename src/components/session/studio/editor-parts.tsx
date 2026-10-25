@@ -6,7 +6,7 @@ import { cx } from '@/components/ink/cx';
 import { ArrowDownIcon, ArrowUpIcon, CloseIcon, MoreIcon } from '@/components/ink/icons';
 import { type ChapterEditorState, isDirty } from '@/lib/session/chapter-autosave';
 import { diffLines } from '@/lib/session/studio/diff';
-import { type EditorPrefs, PREF_FONT_SIZE, PREF_LINE_HEIGHT, PREF_WIDTH } from '@/lib/session/studio/preferences';
+import { type EditorPrefs, PREF_FONT_SIZE, PREF_LINE_HEIGHT, PREF_WIDTH, type StudioPaper } from '@/lib/session/studio/preferences';
 import type { StudioCopy } from '@/lib/session/studio/studio-copy';
 
 import { StudioIconButton, StudioSegmented, StudioSheet, StudioToggle } from './studio-ui';
@@ -231,11 +231,15 @@ export function FindBar({
 export function AppearancePopover({
   prefs,
   onChange,
+  paper,
+  onPaper,
   copy,
   onMore,
 }: {
   prefs: EditorPrefs;
   onChange: (patch: Partial<EditorPrefs>) => void;
+  paper: StudioPaper;
+  onPaper: (paper: StudioPaper) => void;
   copy: StudioCopy;
   onMore: () => void;
 }) {
@@ -311,6 +315,12 @@ export function AppearancePopover({
               </button>
             </div>
           </div>
+          <StudioSegmented
+            label={p.paper}
+            value={paper}
+            onChange={onPaper}
+            options={(['light', 'sepia', 'night'] as const).map((value) => ({ value, label: p.papers[value] }))}
+          />
           <StudioSegmented
             label={p.font}
             value={prefs.font}
