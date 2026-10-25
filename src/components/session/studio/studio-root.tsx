@@ -7,8 +7,9 @@ import { InkInlineBanner } from '@/components/ink/ink-inline-banner';
 import { InkSkeleton, InkTextAction } from '@/components/ink/ink-states';
 import { ApiError } from '@/lib/session/api';
 import { useSession } from '@/lib/session/auth-context';
-import { isStudioUnavailable, studioApi } from '@/lib/session/studio/api';
+import { isStudioUnavailable } from '@/lib/session/studio/api';
 import type { StudioOverview } from '@/lib/session/studio/models';
+import { loadOverview } from '@/lib/session/studio/overview-cache';
 import { STUDIO_COPY } from '@/lib/session/studio/studio-copy';
 
 import { useSessionLocale } from '../session-root';
@@ -24,31 +25,25 @@ import { StudioShell } from './studio-shell';
 
 type Load = { status: 'loading' } | { status: 'ready'; overview: StudioOverview } | { status: 'legacy' } | { status: 'notFound' } | { status: 'error' };
 
-// One overview request serves the chapter-route redirect and the page that
-// follows it.
-let recent: { workId: string; at: number; promise: Promise<StudioOverview> } | null = null;
-
-export function loadOverview(workId: string, locale: Parameters<typeof studioApi.overview>[1]['locale'], fresh = false) {
-  if (!fresh && recent && recent.workId === workId && Date.now() - recent.at < 5_000) return recent.promise;
-  const promise = studioApi.overview(workId, { locale });
-  recent = { workId, at: Date.now(), promise };
-  promise.catch(() => {
-    if (recent?.promise === promise) recent = null;
-  });
-  return promise;
-}
-
 export function StudioRoot({ workId }: { workId: string }) {
   const { locale } = useSessionLocale();
-  const copy = STUDIO_COPY[locale].shell;
   const { user } = useSession();
+  if (!user) return <InkSkeleton className="mt-6" lines={5} label={STUDIO_COPY[locale].shell.loading} />;
+  // Keyed by account: another account signing in starts from nothing, never
+  // from the previous one's overview.
+  return <StudioRootFor key={user.id} uid={user.id} workId={workId} />;
+}
+
+function StudioRootFor({ uid, workId }: { uid: string; workId: string }) {
+  const { locale } = useSessionLocale();
+  const copy = STUDIO_COPY[locale].shell;
   const [load, setLoad] = useState<Load>({ status: 'loading' });
   const [attempt, setAttempt] = useState(0);
   const localeRef = useLatestRef(locale);
 
   useEffect(() => {
     let cancelled = false;
-    loadOverview(workId, localeRef.current, attempt > 0)
+    loadOverview(uid, workId, localeRef.current, attempt > 0)
       .then((overview) => !cancelled && setLoad({ status: 'ready', overview }))
       .catch((error) => {
         if (cancelled) return;
@@ -59,9 +54,9 @@ export function StudioRoot({ workId }: { workId: string }) {
     return () => {
       cancelled = true;
     };
-  }, [workId, attempt, localeRef]);
+  }, [uid, workId, attempt, localeRef]);
 
-  if (load.status === 'loading' || !user) return <InkSkeleton className="mt-6" lines={5} label={copy.loading} />;
+  if (load.status === 'loading') return <InkSkeleton className="mt-6" lines={5} label={copy.loading} />;
   if (load.status === 'legacy') {
     return (
       <div className="mx-auto w-full max-w-[1120px]">
@@ -79,7 +74,7 @@ export function StudioRoot({ workId }: { workId: string }) {
       />
     );
   }
-  return <StudioShell key={workId} initial={load.overview} uid={user.id} />;
+  return <StudioShell key={workId} initial={load.overview} uid={uid} />;
 }
 
 /**
@@ -90,10 +85,12 @@ export function StudioRoot({ workId }: { workId: string }) {
 export function StudioChapterHandoff({ workId, chapterId, legacy }: { workId: string; chapterId: string; legacy: ReactNode }) {
   const { locale } = useSessionLocale();
   const router = useRouter();
+  const uid = useSession().user?.id;
   const [mode, setMode] = useState<'checking' | 'legacy'>('checking');
   useEffect(() => {
+    if (!uid) return;
     let cancelled = false;
-    loadOverview(workId, locale)
+    loadOverview(uid, workId, locale)
       .then(() => {
         if (cancelled) return;
         const doc = chapterId === 'new' ? 'new' : chapterId;
@@ -103,7 +100,7 @@ export function StudioChapterHandoff({ workId, chapterId, legacy }: { workId: st
     return () => {
       cancelled = true;
     };
-  }, [workId, chapterId, locale, router]);
+  }, [uid, workId, chapterId, locale, router]);
   if (mode === 'legacy') return <>{legacy}</>;
   return <InkSkeleton className="mt-6" lines={6} height="h-6" label={STUDIO_COPY[locale].shell.loading} />;
 }

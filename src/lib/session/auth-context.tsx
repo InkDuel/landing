@@ -18,6 +18,7 @@ import { isFirebaseConfigured } from './config';
 import { getFirebaseAuth } from './firebase';
 import { type ProfileUser, parseProfileUser } from './models';
 import { clearAllRecovery } from './studio/local-recovery';
+import { clearOverviewCache } from './studio/overview-cache';
 
 // Founder decision A (2026-10-04): in phase 1 the web only lets existing
 // InkDuel accounts in. After Firebase signs someone in, the web asks
@@ -94,6 +95,11 @@ export function SessionProvider({
   const pendingMethodRef = useRef<SignInMethod | null>(null);
   // Fixed per request by the session layout (server geo), so read once.
   const identifyRef = useRef(identifyAllowed);
+  // The account this tab last saw signed in. Leaving it (here or from another
+  // tab, whose sign-out reaches this one a moment later) drops every Studio
+  // emergency copy again: a copy this tab wrote after the other tab's clear
+  // must not outlive the session.
+  const lastUidRef = useRef<string | null>(null);
 
   useEffect(() => {
     const auth = getFirebaseAuth();
@@ -102,6 +108,11 @@ export function SessionProvider({
     let active = true;
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!active) return;
+      // A response cached for one account is never served to the next.
+      clearOverviewCache();
+      const uid = firebaseUser?.uid ?? null;
+      if (lastUidRef.current && lastUidRef.current !== uid) void clearAllRecovery().catch(() => {});
+      lastUidRef.current = uid;
       if (!firebaseUser) {
         setAnalyticsUser(null, false);
         setUser(null);
@@ -164,6 +175,7 @@ export function SessionProvider({
   const signOut = useCallback(async () => {
     const auth = getFirebaseAuth();
     noAccountRef.current = false;
+    clearOverviewCache();
     // Studio's emergency copies never outlive the session on this device.
     await clearAllRecovery().catch(() => {});
     if (auth) await firebaseSignOut(auth);
