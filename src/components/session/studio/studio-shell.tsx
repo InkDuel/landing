@@ -5,8 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { type KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { cx } from '@/components/ink/cx';
-import { ArrowUpRightIcon, ChevronLeftIcon, CloseIcon } from '@/components/ink/icons';
-import { InkButton } from '@/components/ink/ink-button';
+import { ArrowUpRightIcon, ChevronLeftIcon, CloseIcon, PencilIcon } from '@/components/ink/icons';
 import { InkInlineBanner } from '@/components/ink/ink-inline-banner';
 import { Kicker } from '@/components/ink/kicker';
 import { ApiError } from '@/lib/session/api';
@@ -379,14 +378,30 @@ export function StudioShell({ initial, uid }: { initial: StudioOverview; uid: st
               </Link>
             ) : null}
           </div>
-          <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
-            <h1 className="min-w-0 font-literary text-[26px] leading-[1.1] font-bold break-words text-primary sm:text-[30px]">
-              {hasTitle ? work.title : copy.shell.untitled}
-            </h1>
-            <InkButton variant="link" fullWidth={false} className="-ml-2" onClick={() => setEditingTitle(true)}>
-              {hasTitle ? copy.shell.editTitle : copy.shell.addTitle}
-            </InkButton>
-          </div>
+          {/* The title is the edit control: click it (or its pencil) to rename. */}
+          <h1 className="m-0 min-w-0">
+            <button
+              type="button"
+              onClick={() => setEditingTitle(true)}
+              aria-label={hasTitle ? `${copy.shell.editTitle}: ${work.title}` : copy.shell.addTitle}
+              className="ink-focus group -mx-1 inline-flex max-w-full items-center gap-2 rounded-control px-1 text-left"
+            >
+              <span
+                className={cx(
+                  'min-w-0 font-literary text-[26px] leading-[1.15] font-bold break-words sm:text-[30px]',
+                  hasTitle ? 'text-primary' : 'text-placeholder italic',
+                )}
+              >
+                {hasTitle ? work.title : copy.shell.addTitle}
+              </span>
+              <span
+                aria-hidden="true"
+                className="inline-flex size-8 shrink-0 items-center justify-center rounded-control text-tertiary group-hover:bg-sunken group-hover:text-primary"
+              >
+                <PencilIcon size={16} />
+              </span>
+            </button>
+          </h1>
           <nav aria-label={copy.areas.label} className="-mx-1 flex gap-1 overflow-x-auto border-b border-divider">
             {STUDIO_AREAS.map((a) => (
               <Link

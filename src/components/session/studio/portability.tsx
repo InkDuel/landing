@@ -16,7 +16,7 @@ import { newClientId } from '@/lib/session/works';
 
 import { useSessionLocale } from '../session-root';
 import { type EditorHandle, useStudio } from './studio-context';
-import { StudioConfirm, StudioSegmented, StudioSheet } from './studio-ui';
+import { StudioConfirm, StudioRadioCards, StudioSelect, StudioSheet } from './studio-ui';
 
 // «Tu obra es tuya. Llévala contigo.» Export is never gated (it also renders
 // on the legacy Works page when Studio is off). Import creates private drafts
@@ -85,21 +85,21 @@ export function StudioExportPanel({
         </h2>
         <p className="mt-1 type-body-sm text-secondary">{compact ? copy.shell.unavailableExportBody : x.intro}</p>
       </div>
-      <StudioSegmented
+      <StudioRadioCards
         label={x.exportTitle}
         value={format}
         onChange={setFormat}
         options={[
-          { value: 'docx', label: x.formatDocx },
-          { value: 'md', label: x.formatMd },
-          { value: 'txt', label: x.formatTxt },
-          { value: 'json', label: x.formatJson },
+          { value: 'docx', label: x.formatDocx, hint: x.formatDocxHint },
+          { value: 'md', label: x.formatMd, hint: x.formatMdHint },
+          { value: 'txt', label: x.formatTxt, hint: x.formatTxtHint },
+          { value: 'json', label: x.formatJson, hint: x.formatJsonShort },
         ]}
       />
       {format === 'json' ? (
         <p className="type-caption text-secondary">{x.formatJsonHint}</p>
       ) : (
-        <StudioSegmented
+        <StudioSelect
           label={x.versionLabel}
           value={version}
           onChange={setVersion}
@@ -275,28 +275,24 @@ export function ImportSheet({ open, onClose }: { open: boolean; onClose: () => v
               <span className="font-extrabold">{file.name}</span> · {x.importStats(fmt(words), fmt(chars))}
               {mode === 'split' ? ` · ${x.importChapters(chapters.length, fmt(chapters.length))}` : ''}
             </p>
-            <StudioSegmented
+            <StudioRadioCards
               label={x.importTitle}
               value={mode}
               onChange={setMode}
               options={[
                 { value: 'new', label: x.importAsNew },
-                ...(ed && !ed.readOnly() ? [{ value: 'replace' as const, label: x.importReplace }] : []),
-                ...(canSplit ? [{ value: 'split' as const, label: x.importSplit }] : []),
+                ...(ed && !ed.readOnly() ? [{ value: 'replace' as const, label: x.importReplace, hint: x.importReplaceHint }] : []),
+                ...(canSplit ? [{ value: 'split' as const, label: x.importSplit, hint: x.importSplitHint(fmt(splitByHeadings(file.text).length)) }] : []),
               ]}
             />
-            {mode === 'replace' ? <p className="type-caption text-secondary">{x.importReplaceHint}</p> : null}
             {mode === 'split' ? (
-              <>
-                <p className="type-caption text-secondary">{x.importSplitHint(fmt(chapters.length))}</p>
-                <ol className="m-0 flex list-decimal flex-col gap-1 pl-5 type-body-sm text-primary">
-                  {chapters.map((c, i) => (
-                    <li key={i} className="break-words">
-                      {c.title || copy.manuscript.untitledDraft} <span className="text-tertiary">· {fmt(countWords(c.body))}</span>
-                    </li>
-                  ))}
-                </ol>
-              </>
+              <ol className="m-0 flex list-decimal flex-col gap-1 pl-5 type-body-sm text-primary">
+                {chapters.map((c, i) => (
+                  <li key={i} className="break-words">
+                    {c.title || copy.manuscript.untitledDraft} <span className="text-tertiary">· {fmt(countWords(c.body))}</span>
+                  </li>
+                ))}
+              </ol>
             ) : null}
             {tooLong ? <InkInlineBanner title={x.importTooLong(fmt(limits.draftBody))} /> : null}
             {overCap ? <InkInlineBanner title={copy.manuscript.limitReached(fmt(limits.maxDrafts))} /> : null}

@@ -309,6 +309,10 @@ export type StudioCopy = {
     formatDocx: string;
     formatJson: string;
     formatJsonHint: string;
+    formatDocxHint: string;
+    formatMdHint: string;
+    formatTxtHint: string;
+    formatJsonShort: string;
     versionLabel: string;
     versionDraft: string;
     versionPublished: string;
@@ -676,6 +680,10 @@ const es: StudioCopy = {
     formatMd: 'Markdown (.md)',
     formatDocx: 'Word (.docx)',
     formatJson: 'Respaldo completo (.json)',
+    formatDocxHint: 'Para seguir editando o enviarlo a una editorial.',
+    formatMdHint: 'Texto con títulos, para otros editores.',
+    formatTxtHint: 'Solo el texto, sin formato.',
+    formatJsonShort: 'Todo lo privado: borradores, fichas, notas y metas.',
     formatJsonHint: 'Incluye borradores, personajes, lugares, notas, escenas, relaciones y metas. Es un respaldo; todavía no se puede importar.',
     versionLabel: 'Versión',
     versionDraft: 'Manuscrito de trabajo',
@@ -1044,6 +1052,10 @@ const en: StudioCopy = {
     formatMd: 'Markdown (.md)',
     formatDocx: 'Word (.docx)',
     formatJson: 'Full backup (.json)',
+    formatDocxHint: 'To keep editing or send it to a publisher.',
+    formatMdHint: 'Text with headings, for other editors.',
+    formatTxtHint: 'Just the text, no formatting.',
+    formatJsonShort: 'Everything private: drafts, profiles, notes and goals.',
     formatJsonHint: "Includes drafts, characters, places, notes, scenes, relationships and goals. It's a backup; it can't be imported yet.",
     versionLabel: 'Version',
     versionDraft: 'Working manuscript',
@@ -1412,6 +1424,10 @@ const pt: StudioCopy = {
     formatMd: 'Markdown (.md)',
     formatDocx: 'Word (.docx)',
     formatJson: 'Backup completo (.json)',
+    formatDocxHint: 'Para continuar editando ou enviar a uma editora.',
+    formatMdHint: 'Texto com títulos, para outros editores.',
+    formatTxtHint: 'Só o texto, sem formatação.',
+    formatJsonShort: 'Tudo o que é privado: rascunhos, fichas, notas e metas.',
     formatJsonHint: 'Inclui rascunhos, personagens, lugares, notas, cenas, relações e metas. É um backup; ainda não pode ser importado.',
     versionLabel: 'Versão',
     versionDraft: 'Manuscrito de trabalho',

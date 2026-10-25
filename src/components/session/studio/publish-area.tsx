@@ -316,7 +316,9 @@ export function PublishArea() {
             const chars = entryChars(entry);
             const tooLong = chars > overview.limits.publishBody;
             const pending = entry.published && entry.draft?.pendingChanges;
-            const state = entry.published ? (pending ? p.pendingChanges : p.upToDate) : entry.chapterId ? p.neverPublished : p.willBe(work.nextChapterOrder);
+            // The number a new chapter would take is shown in its review, where
+            // it is exact; in the list every unpublished draft just says so.
+            const state = entry.published ? (pending ? p.pendingChanges : p.upToDate) : p.neverPublished;
             return (
               <li key={entry.id} className="flex flex-col gap-2 border-t border-divider py-4 first:border-t-0 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
@@ -332,7 +334,7 @@ export function PublishArea() {
                   {tooLong ? <p className="mt-1 type-caption text-warning">{p.blockedTooLong(fmt(overview.limits.publishBody))}</p> : null}
                 </div>
                 <InkButton
-                  variant={entry.published && !pending ? 'secondary' : 'primary'}
+                  variant="secondary"
                   fullWidth={false}
                   busy={loading === entry.id}
                   disabled={loading !== null}
@@ -348,9 +350,14 @@ export function PublishArea() {
 
       <aside className="flex flex-col gap-6 lg:sticky lg:top-6">
         <section aria-labelledby="publish-work" className="flex flex-col gap-3">
-          <h2 id="publish-work" className="type-title-section text-primary">
-            {p.workTitle}
-          </h2>
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 id="publish-work" className="type-title-section text-primary">
+              {p.workTitle}
+            </h2>
+            <span className={cx('type-caption', work.moderationState === 'active' ? 'text-tertiary' : 'text-danger')}>
+              {work.moderationState === 'active' ? p.moderationActive : p.moderationHidden}
+            </span>
+          </div>
           <p className="type-body-sm text-secondary">{p.workIntro}</p>
           <WorkPublishPanel
             work={{
@@ -364,7 +371,6 @@ export function PublishArea() {
             busy={busy}
             mutate={mutateWork}
           />
-          <p className="type-caption text-secondary">{work.moderationState === 'active' ? p.moderationActive : p.moderationHidden}</p>
           {work.isGalleryEligible ? (
             <Link href={`/work/${encodeURIComponent(work.id)}`} className="ink-focus type-button-sm text-blue">
               {p.readerLink}

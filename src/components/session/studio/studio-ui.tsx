@@ -508,3 +508,52 @@ export function StudioSectionTitle({ children, action, id }: { children: string;
     </div>
   );
 }
+
+/**
+ * Choices with long labels as stacked radio rows (a segmented control would
+ * wrap into a broken pill). Native radios: arrow keys move the choice.
+ */
+export function StudioRadioCards<T extends string>({
+  label,
+  value,
+  onChange,
+  options,
+  className,
+}: {
+  label: string;
+  value: T;
+  onChange: (value: T) => void;
+  options: readonly { value: T; label: string; hint?: string }[];
+  className?: string;
+}) {
+  const name = useId();
+  return (
+    <fieldset className={cx('m-0 min-w-0 border-0 p-0', className)}>
+      <legend className="mb-1.5 font-ui text-[12.5px] font-extrabold text-primary">{label}</legend>
+      <div className="flex flex-col gap-1.5">
+        {options.map((option) => (
+          <label
+            key={option.value}
+            className={cx(
+              'flex cursor-pointer items-start gap-3 rounded-control border-quiet px-3 py-2.5 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-blue',
+              value === option.value ? 'border-outline bg-tint-yellow' : 'border-control bg-surface hover:border-outline',
+            )}
+          >
+            <input
+              type="radio"
+              name={name}
+              value={option.value}
+              checked={value === option.value}
+              onChange={() => onChange(option.value)}
+              className="mt-1 size-4 shrink-0 accent-[var(--ink-brand-ink)]"
+            />
+            <span className="min-w-0">
+              <span className="block type-body-strong text-[15px] text-primary">{option.label}</span>
+              {option.hint ? <span className="block type-caption text-secondary">{option.hint}</span> : null}
+            </span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}

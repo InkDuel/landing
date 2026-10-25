@@ -383,3 +383,12 @@ export function SplitIcon(props: IconProps) {
     </Svg>
   );
 }
+
+export function PencilIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 20h4L19 9l-4-4L4 16z" />
+      <path d="m13.5 6.5 4 4" />
+    </Svg>
+  );
+}
