@@ -588,3 +588,10 @@
     opacity: 0.7;
   }
 }
+
+/* ── InkDuel Studio ────────────────────────────────────────────────────── */
+/* Focus mode: only the page and its save state remain on screen. */
+[data-studio-focus] .studio-chrome,
+[data-studio-focus] .session-chrome {
+  display: none !important;
+}

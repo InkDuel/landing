@@ -5,6 +5,7 @@ import {
   type Auth,
   browserLocalPersistence,
   browserPopupRedirectResolver,
+  connectAuthEmulator,
   indexedDBLocalPersistence,
   initializeAuth,
 } from '@firebase/auth';
@@ -12,6 +13,13 @@ import {
 import { firebaseWebConfig, isFirebaseConfigured } from './config';
 
 let auth: Auth | null = null;
+
+/**
+ * Local QA against the Firebase emulators (development builds only). Remote
+ * Config has no emulator, so flags read from it stay at their defaults.
+ */
+export const usingAuthEmulator =
+  process.env.NODE_ENV === 'development' && Boolean(process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST);
 
 /**
  * The Firebase Auth instance, created on first use in the browser. The
@@ -26,5 +34,10 @@ export function getFirebaseAuth(): Auth | null {
     persistence: [indexedDBLocalPersistence, browserLocalPersistence],
     popupRedirectResolver: browserPopupRedirectResolver,
   });
+  // Local QA only (never in a production build): the Firebase Auth emulator,
+  // so the signed-in area can be exercised against local emulators.
+  if (usingAuthEmulator) {
+    connectAuthEmulator(auth, `http://${process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST}`, { disableWarnings: true });
+  }
   return auth;
 }

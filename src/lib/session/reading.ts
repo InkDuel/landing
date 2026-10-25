@@ -6,7 +6,7 @@ import { track } from '@/lib/analytics';
 import { type Locale, parseLocale } from '@/lib/i18n';
 
 import { ApiError, apiPath, apiRequest } from './api';
-import { getFirebaseAuth } from './firebase';
+import { getFirebaseAuth, usingAuthEmulator } from './firebase';
 import {
   type GalleryReaction,
   type GalleryReactionCounts,
@@ -106,7 +106,7 @@ const FIRST_FETCH_BUDGET_MS = 3000;
  */
 export async function readingFlags(): Promise<ReadingFlags> {
   try {
-    if (!getFirebaseAuth()) return OFF;
+    if (!getFirebaseAuth() || usingAuthEmulator) return OFF;
     const { getRemoteConfig, ensureInitialized, fetchAndActivate, getBoolean, isSupported } = await import('@firebase/remote-config');
     if (!(await isSupported())) return OFF;
     const config = getRemoteConfig(getApp());

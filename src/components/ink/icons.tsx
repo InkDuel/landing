@@ -201,3 +201,194 @@ export function BoltIcon(props: IconProps) {
     </Svg>
   );
 }
+
+// ---- InkDuel Studio ----
+
+export function SearchIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </Svg>
+  );
+}
+
+export function CloseIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M18 6 6 18M6 6l12 12" />
+    </Svg>
+  );
+}
+
+export function HistoryIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+      <path d="M3 3v5h5" />
+      <path d="M12 7v5l3 2" />
+    </Svg>
+  );
+}
+
+export function SlidersIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" />
+      <circle cx="16" cy="6" r="2" />
+      <circle cx="10" cy="12" r="2" />
+      <circle cx="18" cy="18" r="2" />
+    </Svg>
+  );
+}
+
+export function FocusIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+    </Svg>
+  );
+}
+
+export function NoteIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M5 3h10l4 4v14H5z" />
+      <path d="M15 3v4h4M9 12h6M9 16h4" />
+    </Svg>
+  );
+}
+
+export function PinIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M9 3h6l-1 6 4 3v2H6v-2l4-3z" />
+      <path d="M12 14v7" />
+    </Svg>
+  );
+}
+
+export function TrashIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
+    </Svg>
+  );
+}
+
+export function DownloadIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 4v12M7 11l5 5 5-5M5 20h14" />
+    </Svg>
+  );
+}
+
+export function UploadIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 20V8M7 13l5-5 5 5M5 4h14" />
+    </Svg>
+  );
+}
+
+export function MoreIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="5" cy="12" r="1" />
+      <circle cx="12" cy="12" r="1" />
+      <circle cx="19" cy="12" r="1" />
+    </Svg>
+  );
+}
+
+export function ArrowUpIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 19V5M6 11l6-6 6 6" />
+    </Svg>
+  );
+}
+
+export function ArrowDownIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 5v14M6 13l6 6 6-6" />
+    </Svg>
+  );
+}
+
+export function BoardIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="3" y="4" width="5" height="16" rx="1" />
+      <rect x="10" y="4" width="5" height="11" rx="1" />
+      <rect x="17" y="4" width="4" height="7" rx="1" />
+    </Svg>
+  );
+}
+
+export function UsersIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5" />
+    </Svg>
+  );
+}
+
+export function MapPinIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 21s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z" />
+      <circle cx="12" cy="9" r="2.5" />
+    </Svg>
+  );
+}
+
+export function GraphIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="6" cy="6" r="2.5" />
+      <circle cx="18" cy="8" r="2.5" />
+      <circle cx="10" cy="18" r="2.5" />
+      <path d="M8.3 7 15.6 7.6M7 8.4l2.2 7.2M16.4 10l-4.6 6.3" />
+    </Svg>
+  );
+}
+
+export function CalendarIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M3 10h18M8 3v4M16 3v4" />
+    </Svg>
+  );
+}
+
+export function SidebarIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M9 4v16" />
+    </Svg>
+  );
+}
+
+export function SplitIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 6h16M4 10h10M4 15h16M4 19h8" />
+      <path d="M18 9l2 3-2 3" />
+    </Svg>
+  );
+}
+
+export function PencilIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 20h4L19 9l-4-4L4 16z" />
+      <path d="m13.5 6.5 4 4" />
+    </Svg>
+  );
+}

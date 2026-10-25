@@ -128,6 +128,33 @@ export async function apiRequest(method: Method, path: string, options: RequestO
   }
 }
 
+/**
+ * Downloads a file from an authenticated endpoint (Studio export). The body
+ * stays in memory as a Blob; the name comes from Content-Disposition.
+ */
+export async function apiDownload(
+  path: string,
+  options: Pick<RequestOptions, 'locale' | 'query' | 'signal'>,
+): Promise<{ blob: Blob; filename: string }> {
+  const user = getFirebaseAuth()?.currentUser;
+  if (!user) throw new ApiError(401, 'signedOut');
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(options.query ?? {})) {
+    if (value) params.set(key, value);
+  }
+  const target = params.size > 0 ? `${path}?${params.toString()}` : path;
+  let response = await send('GET', target, await user.getIdToken(), options);
+  if (response.status === 401) response = await send('GET', target, await user.getIdToken(true), options);
+  if (!response.ok) throw new ApiError(response.status, 'http');
+  const disposition = response.headers.get('Content-Disposition') ?? '';
+  const match = /filename="([^"]+)"/.exec(disposition);
+  try {
+    return { blob: await response.blob(), filename: match?.[1] ?? 'InkDuel-export' };
+  } catch {
+    throw new ApiError(response.status, 'network');
+  }
+}
+
 export function apiGet(path: string, options: Omit<RequestOptions, 'body' | 'keepalive'>): Promise<unknown> {
   return apiRequest('GET', path, options);
 }

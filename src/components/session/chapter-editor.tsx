@@ -52,7 +52,7 @@ type NavigationLike = EventTarget & {
 };
 
 /** Saves before any in-app navigation while the editor holds unsaved text. */
-function useLeaveGuard(engine: ChapterAutosave) {
+export function useLeaveGuard(engine: ChapterAutosave) {
   const router = useRouter();
   useEffect(() => {
     let active = true;
