@@ -223,55 +223,146 @@ export function FindBar({
   );
 }
 
-export function PrefsSheet({
-  open,
-  onClose,
+/**
+ * «Aa»: how the page looks while writing, a click away and live — like the
+ * reading/writing apps people already know (Apple Books, Kindle, iA Writer).
+ * It never changes the text that is saved or published.
+ */
+export function AppearancePopover({
   prefs,
   onChange,
+  copy,
+  onMore,
+}: {
+  prefs: EditorPrefs;
+  onChange: (patch: Partial<EditorPrefs>) => void;
+  copy: StudioCopy;
+  onMore: () => void;
+}) {
+  const p = copy.prefs;
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const panelId = useId();
+  const trigger = () => ref.current?.querySelector<HTMLButtonElement>('button[aria-haspopup]');
+  useEffect(() => {
+    if (!open) return;
+    ref.current?.querySelector<HTMLElement>('[data-autofocus]')?.focus();
+    const onDown = (event: MouseEvent) => {
+      if (!ref.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        setOpen(false);
+        trigger()?.focus();
+      }
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+  const idx = (values: readonly string[]) => values.map((label, i) => ({ value: String(i), label }));
+  const step = (delta: -1 | 1) => onChange({ size: Math.min(3, Math.max(0, prefs.size + delta)) as EditorPrefs['size'] });
+  const stepper = 'ink-focus inline-flex size-10 items-center justify-center rounded-control border-quiet border-control bg-surface font-literary text-primary disabled:text-disabled';
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        aria-label={p.appearance}
+        title={p.appearance}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-controls={open ? panelId : undefined}
+        onClick={() => setOpen((v) => !v)}
+        className={cx(
+          'ink-focus inline-flex size-11 shrink-0 items-center justify-center rounded-control font-literary text-[18px] leading-none text-primary ink-dim hover:bg-sunken',
+          open && 'bg-tint-yellow',
+        )}
+      >
+        <span aria-hidden="true">
+          A<span className="text-[13px]">a</span>
+        </span>
+      </button>
+      {open ? (
+        <div
+          id={panelId}
+          role="dialog"
+          aria-label={p.appearance}
+          className={cx(
+            'z-30 flex flex-col gap-4 overflow-y-auto rounded-card border-brand border-outline bg-elevated p-4 ink-shadow-lift-sm',
+            // Under the button on wide screens; a bottom panel on phones.
+            'fixed inset-x-4 bottom-4 max-h-[70dvh] sm:absolute sm:inset-x-auto sm:right-0 sm:bottom-auto sm:mt-1 sm:max-h-[min(560px,calc(100dvh-180px))] sm:w-[320px]',
+          )}
+        >
+          <div className="flex flex-col gap-1.5">
+            <span className="font-ui text-[12.5px] font-extrabold text-primary">{p.size}</span>
+            <div className="flex items-center gap-2">
+              <button type="button" data-autofocus className={cx(stepper, 'text-[14px]')} aria-label={p.smaller} disabled={prefs.size === 0} onClick={() => step(-1)}>
+                A
+              </button>
+              <span aria-live="polite" className="min-w-0 flex-1 text-center type-body-sm text-secondary">
+                {p.sizes[prefs.size]}
+              </span>
+              <button type="button" className={cx(stepper, 'text-[20px]')} aria-label={p.larger} disabled={prefs.size === 3} onClick={() => step(1)}>
+                A
+              </button>
+            </div>
+          </div>
+          <StudioSegmented
+            label={p.font}
+            value={prefs.font}
+            onChange={(font) => onChange({ font })}
+            options={[
+              { value: 'serif', label: p.serif },
+              { value: 'sans', label: p.sans },
+            ]}
+          />
+          <StudioSegmented label={p.lineHeight} value={String(prefs.line)} onChange={(v) => onChange({ line: Number(v) as EditorPrefs['line'] })} options={idx(p.lineHeights)} />
+          <StudioSegmented label={p.width} value={String(prefs.width)} onChange={(v) => onChange({ width: Number(v) as EditorPrefs['width'] })} options={idx(p.widths)} />
+          <StudioToggle label={p.spellcheck} checked={prefs.spellcheck} onChange={(spellcheck) => onChange({ spellcheck })} />
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              onMore();
+            }}
+            className="ink-focus -mb-1 inline-flex min-h-10 items-center self-start rounded-control type-button-sm text-[14px] text-blue ink-dim"
+          >
+            {p.more}
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/** The rarely needed settings: the emergency copy and the shortcuts. */
+export function MoreSettingsSheet({
+  open,
+  onClose,
   copy,
   closeLabel,
   recovery,
 }: {
   open: boolean;
   onClose: () => void;
-  prefs: EditorPrefs;
-  onChange: (patch: Partial<EditorPrefs>) => void;
   copy: StudioCopy;
   closeLabel: string;
   recovery: { enabled: boolean; available: boolean; onChange: (enabled: boolean) => void };
 }) {
-  const p = copy.prefs;
-  const idx = (values: readonly string[]) => values.map((label, i) => ({ value: String(i), label }));
   return (
-    <StudioSheet open={open} onClose={onClose} title={p.title} closeLabel={closeLabel}>
+    <StudioSheet open={open} onClose={onClose} title={copy.prefs.moreTitle} closeLabel={closeLabel}>
       <div className="flex flex-col gap-5">
-        <StudioSegmented
-          label={p.font}
-          value={prefs.font}
-          onChange={(font) => onChange({ font })}
-          options={[
-            { value: 'serif', label: p.serif },
-            { value: 'sans', label: p.sans },
-          ]}
+        <StudioToggle
+          label={copy.recovery.settingLabel}
+          help={recovery.available ? copy.recovery.settingHelp : copy.recovery.unavailable}
+          checked={recovery.enabled && recovery.available}
+          disabled={!recovery.available}
+          onChange={recovery.onChange}
         />
-        <StudioSegmented label={p.size} value={String(prefs.size)} onChange={(v) => onChange({ size: Number(v) as EditorPrefs['size'] })} options={idx(p.sizes)} />
-        <StudioSegmented
-          label={p.lineHeight}
-          value={String(prefs.line)}
-          onChange={(v) => onChange({ line: Number(v) as EditorPrefs['line'] })}
-          options={idx(p.lineHeights)}
-        />
-        <StudioSegmented label={p.width} value={String(prefs.width)} onChange={(v) => onChange({ width: Number(v) as EditorPrefs['width'] })} options={idx(p.widths)} />
-        <StudioToggle label={p.spellcheck} checked={prefs.spellcheck} onChange={(spellcheck) => onChange({ spellcheck })} />
-        <div className="border-t border-divider pt-4">
-          <StudioToggle
-            label={copy.recovery.settingLabel}
-            help={recovery.available ? copy.recovery.settingHelp : copy.recovery.unavailable}
-            checked={recovery.enabled && recovery.available}
-            disabled={!recovery.available}
-            onChange={recovery.onChange}
-          />
-        </div>
         <div className="border-t border-divider pt-4">
           <p className="type-label text-secondary">{copy.editor.shortcuts}</p>
           <dl className="m-0 mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 type-body-sm">

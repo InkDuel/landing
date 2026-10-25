@@ -189,6 +189,11 @@ export type StudioCopy = {
     width: string;
     widths: [string, string, string];
     spellcheck: string;
+    appearance: string;
+    smaller: string;
+    larger: string;
+    more: string;
+    moreTitle: string;
   };
   versions: {
     title: string;
@@ -544,6 +549,11 @@ const es: StudioCopy = {
     width: 'Ancho del texto',
     widths: ['Estrecho', 'Normal', 'Amplio'],
     spellcheck: 'Corrector ortográfico del navegador',
+    appearance: 'Apariencia del texto',
+    smaller: 'Texto más pequeño',
+    larger: 'Texto más grande',
+    more: 'Más ajustes…',
+    moreTitle: 'Más ajustes',
   },
   versions: {
     title: 'Versiones',
@@ -907,6 +917,11 @@ const en: StudioCopy = {
     width: 'Text width',
     widths: ['Narrow', 'Normal', 'Wide'],
     spellcheck: "Browser's spell checker",
+    appearance: 'Text appearance',
+    smaller: 'Smaller text',
+    larger: 'Larger text',
+    more: 'More settings…',
+    moreTitle: 'More settings',
   },
   versions: {
     title: 'Versions',
@@ -1270,6 +1285,11 @@ const pt: StudioCopy = {
     width: 'Largura do texto',
     widths: ['Estreita', 'Normal', 'Ampla'],
     spellcheck: 'Corretor ortográfico do navegador',
+    appearance: 'Aparência do texto',
+    smaller: 'Texto menor',
+    larger: 'Texto maior',
+    more: 'Mais ajustes…',
+    moreTitle: 'Mais ajustes',
   },
   versions: {
     title: 'Versões',

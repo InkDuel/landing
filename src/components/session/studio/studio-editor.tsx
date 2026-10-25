@@ -3,7 +3,7 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 
 import { cx } from '@/components/ink/cx';
-import { FocusIcon, HistoryIcon, NoteIcon, SearchIcon, SidebarIcon, SlidersIcon } from '@/components/ink/icons';
+import { FocusIcon, HistoryIcon, NoteIcon, SearchIcon, SidebarIcon } from '@/components/ink/icons';
 import { InkButton } from '@/components/ink/ink-button';
 import { InkChip } from '@/components/ink/ink-chip';
 import { InkInlineBanner } from '@/components/ink/ink-inline-banner';
@@ -29,7 +29,7 @@ import { countChars, countWords, readingMinutes } from '@/lib/session/studio/wor
 import { worksApi } from '@/lib/session/works';
 
 import { useLeaveGuard } from '../chapter-editor';
-import { CompareView, editorTextStyle, FindBar, PrefsSheet, SaveStatus, saveView, StudioMenu, ToolbarDivider } from './editor-parts';
+import { AppearancePopover, CompareView, editorTextStyle, FindBar, MoreSettingsSheet, SaveStatus, saveView, StudioMenu, ToolbarDivider } from './editor-parts';
 import { entryTitle, useLatestRef, useStudio } from './studio-context';
 import { StudioConfirm, StudioIconButton, StudioSheet } from './studio-ui';
 import { VersionsSheet } from './versions-sheet';
@@ -611,9 +611,7 @@ function EditorSurface({
             </StudioIconButton>
           </>
         ) : null}
-        <StudioIconButton label={copy.editor.settings} onClick={() => setPrefsOpen(true)}>
-          <SlidersIcon size={20} />
-        </StudioIconButton>
+        <AppearancePopover prefs={prefs} onChange={setPrefs} copy={copy} onMore={() => setPrefsOpen(true)} />
         <StudioIconButton label={focus ? copy.editor.exitFocus : copy.editor.focus} aria-keyshortcuts="Meta+Shift+Enter Control+Shift+Enter" pressed={focus} onClick={() => onFocusChange(!focus)}>
           <FocusIcon size={20} />
         </StudioIconButton>
@@ -913,11 +911,9 @@ function EditorSurface({
         ) : null}
       </div>
 
-      <PrefsSheet
+      <MoreSettingsSheet
         open={prefsOpen}
         onClose={() => setPrefsOpen(false)}
-        prefs={prefs}
-        onChange={setPrefs}
         copy={copy}
         closeLabel={copy.shell.close}
         recovery={{
