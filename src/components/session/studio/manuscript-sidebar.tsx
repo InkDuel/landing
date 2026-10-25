@@ -81,8 +81,10 @@ export function ManuscriptSidebar({ onSelected }: { onSelected?: () => void }) {
                 aria-current={active ? 'page' : undefined}
                 onClick={() => void select(entry)}
                 className={cx(
-                  'ink-focus flex w-full flex-col items-start gap-0.5 rounded-control px-3 py-2 text-left',
-                  active ? 'bg-surface ring-2 ring-[var(--ink-brand-ink)]' : 'hover:bg-surface',
+                  // A border inside the box (never a ring outside it): the
+                  // scrolling sidebar would clip anything drawn outside.
+                  'ink-focus flex w-full flex-col items-start gap-0.5 rounded-control border-brand px-3 py-2 text-left',
+                  active ? 'border-outline bg-surface' : 'border-transparent hover:bg-surface',
                 )}
               >
                 <span className="type-label text-[10.5px] text-tertiary">{entry.chapterId ? m.chapterLabel(entry.orderIndex) : m.newDraftLabel}</span>

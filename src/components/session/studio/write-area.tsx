@@ -93,7 +93,7 @@ export function WriteArea() {
         !focus && wide && (showContext && xl ? 'grid-cols-[250px_minmax(0,1fr)_300px]' : 'grid-cols-[250px_minmax(0,1fr)]'),
       )}
     >
-      {!focus && wide ? <aside className="studio-chrome sticky top-4 max-h-[calc(100dvh-32px)] self-start overflow-y-auto pr-1">{sidebar}</aside> : null}
+      {!focus && wide ? <aside className="studio-chrome sticky top-4 -mx-1 max-h-[calc(100dvh-32px)] self-start overflow-y-auto px-1 pb-1">{sidebar}</aside> : null}
       <div className="ctx-reading min-w-0 rounded-card border-quiet border-divider px-3 sm:px-6">
         {entry ? (
           <StudioEditor
@@ -115,7 +115,7 @@ export function WriteArea() {
           </div>
         )}
       </div>
-      {!focus && showContext && xl ? <aside className="studio-chrome sticky top-4 max-h-[calc(100dvh-32px)] self-start overflow-y-auto">{context}</aside> : null}
+      {!focus && showContext && xl ? <aside className="studio-chrome sticky top-4 -mx-1 max-h-[calc(100dvh-32px)] self-start overflow-y-auto px-1 pb-1">{context}</aside> : null}
 
       {!wide ? (
         <StudioSheet open={manuscriptOpen} onClose={() => setManuscriptOpen(false)} title={copy.manuscript.title} closeLabel={copy.shell.close}>
