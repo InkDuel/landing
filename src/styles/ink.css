@@ -91,9 +91,35 @@
 
 /*
  * The web is light only (founder decision, 2026-10-04): it does not follow
- * the system theme. The dark values stay here, unused, in case a manual
- * toggle ever arrives; nothing sets data-theme today.
+ * the system theme. Studio is the one exception, by the author's choice: its
+ * «Aa» control sets data-theme to `dark` («Noche») or `sepia` while Studio
+ * is open, and removes it on the way out.
  */
+:root[data-theme='sepia'] {
+  /* Warm paper for long sessions; only surfaces, text and lines change. */
+  --ink-bg-primary: #f3ecdc;
+  --ink-bg-secondary: #e8dfca;
+  --ink-bg-surface: #f9f4e8;
+  --ink-bg-elevated: #fbf7ee;
+  --ink-bg-arena: #f3ecdc;
+  --ink-bg-reader: #f3ecdc;
+
+  --ink-text-primary: #33291d;
+  --ink-text-secondary: #5f5240;
+  --ink-text-tertiary: #6f6150;
+  --ink-text-disabled: #a0937e;
+
+  --ink-reader-text: #33291d;
+  --ink-reader-muted: #6f6150;
+  --ink-reader-line: #ddd1b8;
+  --ink-reader-surface: #f9f4e8;
+  --ink-reader-border: #8c7c62;
+
+  --ink-border-default: #b8a888;
+  --ink-border-strong: #7d6d54;
+  --ink-border-subtle: #ddd1b8;
+}
+
 :root[data-theme='dark'] {
   color-scheme: dark;
 
@@ -106,7 +132,7 @@
 
   --ink-text-primary: #d5d6e2;
   --ink-text-secondary: #9ea3c0;
-  --ink-text-tertiary: #8288a9;
+  --ink-text-tertiary: #8f95b5; /* AA on elevated panels (Studio «Noche») */
   --ink-text-inverse: #12162b;
   --ink-text-disabled: #5b6181;
   --ink-text-on-accent: #131a3a;

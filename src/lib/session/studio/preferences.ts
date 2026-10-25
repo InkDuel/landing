@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useSyncExternalStore } from 'react';
 
 // Writing preferences, local to this browser and account (PRD §7.2): they
 // change how the page looks while writing, never the text that is published.
@@ -55,6 +55,55 @@ export function useEditorPrefs(uid: string): [EditorPrefs, (patch: Partial<Edito
     [uid],
   );
   return [prefs, update];
+}
+
+/**
+ * The page colour while Studio is open: light (the web's own), sepia, or
+ * night. Shared by the «Aa» control and the shell that paints the page, and
+ * kept in step across tabs.
+ */
+export type StudioPaper = 'light' | 'sepia' | 'night';
+
+const paperKey = (uid: string) => `inkduel-studio-paper:${uid}`;
+const paperListeners = new Set<() => void>();
+
+function readPaper(uid: string): StudioPaper {
+  try {
+    const value = localStorage.getItem(paperKey(uid));
+    return value === 'sepia' || value === 'night' ? value : 'light';
+  } catch {
+    return 'light';
+  }
+}
+
+function subscribePaper(listener: () => void) {
+  paperListeners.add(listener);
+  window.addEventListener('storage', listener);
+  return () => {
+    paperListeners.delete(listener);
+    window.removeEventListener('storage', listener);
+  };
+}
+
+export function useStudioPaper(uid: string): [StudioPaper, (paper: StudioPaper) => void] {
+  const paper = useSyncExternalStore(
+    subscribePaper,
+    () => readPaper(uid),
+    () => 'light' as StudioPaper,
+  );
+  const set = useCallback(
+    (next: StudioPaper) => {
+      try {
+        if (next === 'light') localStorage.removeItem(paperKey(uid));
+        else localStorage.setItem(paperKey(uid), next);
+      } catch {
+        // No storage: the choice does not survive this visit.
+      }
+      paperListeners.forEach((listener) => listener());
+    },
+    [uid],
+  );
+  return [paper, set];
 }
 
 /** Pinned references of the editor's side panel (per account and Work). */

@@ -11,6 +11,7 @@ import { Kicker } from '@/components/ink/kicker';
 import { ApiError } from '@/lib/session/api';
 import { studioApi } from '@/lib/session/studio/api';
 import type { DraftSummary, ManuscriptEntry, StudioOverview } from '@/lib/session/studio/models';
+import { useStudioPaper } from '@/lib/session/studio/preferences';
 import { studioAnalytics } from '@/lib/session/studio/studio-analytics';
 import { STUDIO_COPY } from '@/lib/session/studio/studio-copy';
 import { StudioStore } from '@/lib/session/studio/studio-store';
@@ -200,6 +201,18 @@ export function StudioShell({ initial, uid }: { initial: StudioOverview; uid: st
   const editorRef = useRef<EditorHandle | null>(null);
   const localeRef = useLatestRef(locale);
   const [store] = useState(() => new StudioStore(initial.work.id, () => localeRef.current));
+
+  // The author's page colour (the «Aa» control) paints the whole page while
+  // Studio is open; leaving Studio returns the web to its light theme.
+  const [paper] = useStudioPaper(uid);
+  useEffect(() => {
+    if (paper === 'light') return;
+    const root = document.documentElement;
+    root.dataset.theme = paper === 'night' ? 'dark' : 'sepia';
+    return () => {
+      delete root.dataset.theme;
+    };
+  }, [paper]);
   const workId = overview.work.id;
 
   useEffect(() => setOverview(initial), [initial]);
