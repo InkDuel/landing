@@ -15,6 +15,13 @@ import { firebaseWebConfig, isFirebaseConfigured } from './config';
 let auth: Auth | null = null;
 
 /**
+ * Local QA against the Firebase emulators (development builds only). Remote
+ * Config has no emulator, so flags read from it stay at their defaults.
+ */
+export const usingAuthEmulator =
+  process.env.NODE_ENV === 'development' && Boolean(process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST);
+
+/**
  * The Firebase Auth instance, created on first use in the browser. The
  * session persists like the app's (founder decision C): Firebase keeps it in
  * IndexedDB; this code never copies the token anywhere.
@@ -29,9 +36,8 @@ export function getFirebaseAuth(): Auth | null {
   });
   // Local QA only (never in a production build): the Firebase Auth emulator,
   // so the signed-in area can be exercised against local emulators.
-  const emulator = process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST;
-  if (process.env.NODE_ENV === 'development' && emulator) {
-    connectAuthEmulator(auth, `http://${emulator}`, { disableWarnings: true });
+  if (usingAuthEmulator) {
+    connectAuthEmulator(auth, `http://${process.env.NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST}`, { disableWarnings: true });
   }
   return auth;
 }
