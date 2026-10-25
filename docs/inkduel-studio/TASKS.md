@@ -24,4 +24,5 @@ PRD codes in brackets. Update after every verifiable block.
 | W7 | Progress: goals, stats, calendar, streak [F11] | web | W2 | done |
 | W8 | Publish: checklist, preview, confirm, conflicts; work publish panel; import/export [F05 F13 F14] | web | W3 | done |
 | W9 | Web tests (autosave, words, import/export, api parsing, publish flow) + typecheck/lint/build | web | W3–W8 | done |
-| V1 | Integrated QA (local backend + emulator + web), review, PRs | both | all | in_progress |
+| V1 | Integrated QA (local backend + emulator + web), review, PRs | both | all | done |
+| V2 | Pre-merge review: overview cache per account, recovery clear on account change, import/export + network QA, Flutter compatibility replay (RELEASE.md) | both | V1 | done |

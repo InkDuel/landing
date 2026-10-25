@@ -11,7 +11,9 @@
 - **Tests:** backend `go test ./...` and emulator suites green except the
   pre-existing `internal/controllers TestEmulatorGalleryReadingQueueRemembersWhatWasRead`
   (fails on origin/main too). Web: typecheck OK, lint 0 errors (29 warnings,
-  18 pre-existing), vitest 222/222, `next build` OK.
+  18 pre-existing), vitest 228/228, `next build` OK.
+- **Pre-merge review (2026-10-24):** done; findings, fixes and what remains
+  manual are in `RELEASE.md` → «Pre-merge review».
 - **Local QA recipe:** Firestore emulator (backend `firebase.json`, 8080) + Auth
   emulator (9099, `--only auth`, separate config) + backend binary with
   `ENV=development PORT=8090 FIRESTORE_EMULATOR_HOST FIREBASE_AUTH_EMULATOR_HOST
@@ -22,7 +24,8 @@
   values and `NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099` (dev-only
   hook). Create accounts through the Auth emulator REST API, then
   `POST /auth/login` to create the InkDuel user.
-- **Open items (not blocking review):** manual pass with a screen reader and at
+- **Open items (not blocking review):** account switch by hand on staging;
+  manual pass with a screen reader and at
   200 % zoom; real-browser drag-and-drop on touch devices; staging QA with old
   app builds; index exemptions only verifiable on real Firestore; unify the
   scene sheet with the Universe sheet (small duplication, see plan-scene-sheet).
