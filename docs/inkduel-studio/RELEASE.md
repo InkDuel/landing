@@ -111,9 +111,14 @@ Verified on 2026-10-24 against local emulators (marked ✓); repeat on staging.
   (create a chapter first); a `.docx` import says «no es texto UTF-8 válido»
   instead of pointing to .txt/.md; export file dates are UTC (a 23:00 export in
   America shows the next day); an empty untitled draft exports as «Sin título»
-  with no body; in `auth-context`, a `/api/me` response for an account that
-  signed out within the same request could still land (pre-existing, outside
-  Studio, extremely unlikely).
+  with no body.
+- **Fixed — stale `/api/me` answers (follow-up review).** Every
+  `onAuthStateChanged` callback now takes a generation number; an `/api/me`
+  answer for an older auth change is dropped. Before, an older answer could
+  set the previous account over the newer one, sign an account back in after
+  sign-out, or (a stale 404) sign out the newer session. Tests in
+  `auth-context.test.tsx` reproduce the three cases (they failed before the
+  fix) and pin the normal login, logout, no-account and error flows.
 
 ## Known gaps (documented, no fake UI)
 Rich text, EPUB/PDF, public chapter reorder, publication > 5,000, multi-layer

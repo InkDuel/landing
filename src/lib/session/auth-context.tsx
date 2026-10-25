@@ -100,6 +100,10 @@ export function SessionProvider({
   // emergency copy again: a copy this tab wrote after the other tab's clear
   // must not outlive the session.
   const lastUidRef = useRef<string | null>(null);
+  // Bumped on every auth change: an /api/me answer for an older change (a
+  // previous account, or one that signed out meanwhile) is dropped, so it can
+  // neither set the session nor sign out the newer one.
+  const generationRef = useRef(0);
 
   useEffect(() => {
     const auth = getFirebaseAuth();
@@ -108,6 +112,8 @@ export function SessionProvider({
     let active = true;
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!active) return;
+      const generation = ++generationRef.current;
+      const current = () => active && generation === generationRef.current;
       // A response cached for one account is never served to the next.
       clearOverviewCache();
       const uid = firebaseUser?.uid ?? null;
@@ -123,7 +129,7 @@ export function SessionProvider({
       setStatus('loading');
       try {
         const me = parseProfileUser(await apiGet('/api/me', { locale: localeRef.current }));
-        if (!active) return;
+        if (!current()) return;
         if (!me) throw new ApiError(200, 'parse');
         setAnalyticsUser(me, identifyRef.current);
         if (pendingMethodRef.current) track('login', { method: pendingMethodRef.current });
@@ -131,7 +137,7 @@ export function SessionProvider({
         setUser(me);
         setStatus('signedIn');
       } catch (error) {
-        if (!active) return;
+        if (!current()) return;
         pendingMethodRef.current = null;
         if (error instanceof ApiError && error.status === 404) {
           noAccountRef.current = true;

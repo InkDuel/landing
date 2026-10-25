@@ -11,7 +11,7 @@
 - **Tests:** backend `go test ./...` and emulator suites green except the
   pre-existing `internal/controllers TestEmulatorGalleryReadingQueueRemembersWhatWasRead`
   (fails on origin/main too). Web: typecheck OK, lint 0 errors (29 warnings,
-  18 pre-existing), vitest 228/228, `next build` OK.
+  18 pre-existing), vitest 232/232, `next build` OK.
 - **Pre-merge review (2026-10-24):** done; findings, fixes and what remains
   manual are in `RELEASE.md` → «Pre-merge review».
 - **Local QA recipe:** Firestore emulator (backend `firebase.json`, 8080) + Auth
