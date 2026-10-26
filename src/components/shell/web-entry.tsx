@@ -20,24 +20,37 @@ import { StoreButtons } from './store-buttons';
 // per-request CSP from src/proxy.ts (a client-side navigation would run them
 // under the public static policy, without the Firebase auth frame).
 
-export type WebEntryPoint = 'header' | 'hero' | 'web_section' | 'final_cta';
+export type WebEntryPoint = 'header' | 'hero' | 'web_section' | 'web_feature' | 'final_cta';
+
+/** Where a web entry leads once signed in; /login sends the visitor there after. */
+export type WebDestination = '/stories' | '/me/works' | '/me/marks' | '/ranked';
+
+function webEntryHref(signedIn: boolean, destination: WebDestination, locale: Locale): string {
+  if (signedIn) return withLang(destination, locale);
+  // Without `next`, /login already lands on Historias (postLoginHref).
+  return withLang(destination === '/stories' ? '/login' : `/login?next=${encodeURIComponent(destination)}`, locale);
+}
 
 function WebEntryLink({
   locale,
   entryPoint,
+  destination = '/stories',
   className,
   children,
 }: {
   locale: Locale;
   entryPoint: WebEntryPoint;
+  destination?: WebDestination;
   className?: string;
   children: (signedIn: boolean) => ReactNode;
 }) {
   const signedIn = useWebSessionHint();
-  // Signed in, the same first page as after a sign-in (postLoginHref).
-  const href = withLang(signedIn ? '/stories' : '/login', locale);
   return (
-    <a href={href} className={className} onClick={() => track('web_entry_tapped', { entry_point: entryPoint, signed_in: signedIn })}>
+    <a
+      href={webEntryHref(signedIn, destination, locale)}
+      className={className}
+      onClick={() => track('web_entry_tapped', { entry_point: entryPoint, destination, signed_in: signedIn })}
+    >
       {children(signedIn)}
     </a>
   );
@@ -113,7 +126,13 @@ export function HeroEntry({ locale }: { locale: Locale }) {
   );
 }
 
-const FEATURE_ICONS = [BookOpenIcon, PencilIcon, NoteIcon, BoltIcon];
+// Same order as SITE_COPY.web.features: each tile opens its own place.
+const FEATURES = [
+  { icon: BookOpenIcon, destination: '/stories' },
+  { icon: PencilIcon, destination: '/me/works' },
+  { icon: NoteIcon, destination: '/me/marks' },
+  { icon: BoltIcon, destination: '/ranked' },
+] as const satisfies readonly { icon: unknown; destination: WebDestination }[];
 
 /** What the web holds today, with the same yellow button. */
 export function WebSection({ locale }: { locale: Locale }) {
@@ -134,16 +153,28 @@ export function WebSection({ locale }: { locale: Locale }) {
           </div>
           <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2">
             {copy.features.map((feature, index) => {
-              const Icon = FEATURE_ICONS[index] ?? BookOpenIcon;
+              const { icon: Icon, destination } = FEATURES[index] ?? FEATURES[0];
               return (
-                <li key={feature.title} className="flex gap-3 rounded-card border-quiet border-divider bg-primary p-4">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-control border-brand border-outline bg-yellow text-on-accent">
-                    <Icon size={20} />
-                  </span>
-                  <span className="flex min-w-0 flex-col gap-1">
-                    <span className="type-body-strong text-primary">{feature.title}</span>
-                    <span className="type-caption text-secondary">{feature.body}</span>
-                  </span>
+                <li key={feature.title} className="flex">
+                  <WebEntryLink
+                    locale={locale}
+                    entryPoint="web_feature"
+                    destination={destination}
+                    className="ink-focus ink-dim group flex flex-1 gap-3 rounded-card border-quiet border-divider bg-primary p-4 no-underline hover:border-outline"
+                  >
+                    {() => (
+                      <>
+                        <span className="flex size-10 shrink-0 items-center justify-center rounded-control border-brand border-outline bg-yellow text-on-accent">
+                          <Icon size={20} />
+                        </span>
+                        <span className="flex min-w-0 flex-1 flex-col gap-1">
+                          <span className="type-body-strong text-primary">{feature.title}</span>
+                          <span className="type-caption text-secondary">{feature.body}</span>
+                        </span>
+                        <ArrowRightIcon size={16} className="mt-1 shrink-0 text-secondary group-hover:text-primary" />
+                      </>
+                    )}
+                  </WebEntryLink>
                 </li>
               );
             })}

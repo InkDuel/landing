@@ -69,7 +69,7 @@ export const SITE_COPY: Record<Locale, SiteCopy> = {
       sectionBody: 'La misma cuenta, el mismo rango, tus mismas Obras. Entra desde cualquier navegador y sigue donde lo dejaste.',
       features: [
         { title: 'Historias', body: 'Lee los relatos de la comunidad, uno tras otro.' },
-        { title: 'Obras', body: 'Escribe y publica tus Obras por capítulos.' },
+        { title: 'Obras', body: 'Escribe por capítulos en InkDuel Studio.' },
         { title: 'Marcas', body: 'Subraya, comenta y responde a quien te lee.' },
         { title: 'Duelos', body: 'Escribe tu relato ahora; el veredicto llega después.' },
       ],
@@ -103,7 +103,7 @@ export const SITE_COPY: Record<Locale, SiteCopy> = {
       sectionBody: 'Same account, same rank, same Works. Sign in from any browser and pick up where you left off.',
       features: [
         { title: 'Stories', body: 'Read the community’s stories, one after another.' },
-        { title: 'Works', body: 'Write and publish your Works chapter by chapter.' },
+        { title: 'Works', body: 'Write chapter by chapter in InkDuel Studio.' },
         { title: 'Marks', body: 'Highlight, comment and reply to your readers.' },
         { title: 'Duels', body: 'Write your story now; the verdict comes later.' },
       ],
@@ -137,7 +137,7 @@ export const SITE_COPY: Record<Locale, SiteCopy> = {
       sectionBody: 'A mesma conta, o mesmo rank, as mesmas Obras. Entre de qualquer navegador e continue de onde parou.',
       features: [
         { title: 'Histórias', body: 'Leia as histórias da comunidade, uma após a outra.' },
-        { title: 'Obras', body: 'Escreva e publique suas Obras por capítulos.' },
+        { title: 'Obras', body: 'Escreva capítulo a capítulo no InkDuel Studio.' },
         { title: 'Marcas', body: 'Sublinhe, comente e responda a quem lê você.' },
         { title: 'Duelos', body: 'Escreva sua história agora; o veredito chega depois.' },
       ],
