@@ -21,7 +21,8 @@ import { useSessionLocale } from './session-root';
 type Width = 'reading' | 'product' | 'wide' | 'studio';
 
 /**
- * Header of the signed-in area: logo, Duelos · Historias · Perfil, language. Always
+ * Header of the signed-in area: logo, Duelos · Historias · Escribir · Perfil,
+ * language. Always
  * the shell's desktop width; the content below keeps its own.
  */
 function SessionHeader() {
@@ -34,6 +35,8 @@ function SessionHeader() {
       ? [
           { href: '/ranked', label: DUELS_COPY[locale].nav, active: pathname === '/ranked' || pathname.startsWith('/duels/') },
           { href: '/stories', label: copy.nav.stories, active: pathname === '/stories' || pathname.startsWith('/work/') },
+          // Tus obras, the door to InkDuel Studio («Nueva obra» opens it).
+          { href: '/me/works', label: copy.nav.write, active: pathname.startsWith('/me/works') },
           { href: '/me', label: copy.nav.profile, active: pathname === '/me' },
         ]
       : [{ href: '/login', label: copy.nav.signIn, active: pathname === '/login' }];

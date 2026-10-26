@@ -7,6 +7,7 @@ import { PlusIcon } from '@/components/ink/icons';
 import { InkButton } from '@/components/ink/ink-button';
 import { InkDialog } from '@/components/ink/ink-dialog';
 import { InkHeadline } from '@/components/ink/ink-headline';
+import { Kicker } from '@/components/ink/kicker';
 import { InkInlineBanner } from '@/components/ink/ink-inline-banner';
 import { InkEmptyState, InkSkeleton, InkTextAction } from '@/components/ink/ink-states';
 import { InkTextField } from '@/components/ink/ink-text-field';
@@ -124,7 +125,10 @@ export function MyWorksView() {
     <div className="flex flex-col gap-5 pt-2">
       <BackLink href="/me" label={SESSION_COPY[locale].nav.profile} />
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <InkHeadline text={copy.headline} size="title-page" />
+        <div className="flex flex-col gap-1">
+          <Kicker>{copy.studioKicker}</Kicker>
+          <InkHeadline text={copy.headline} size="title-page" />
+        </div>
         <button
           type="button"
           onClick={() => setCreating(true)}

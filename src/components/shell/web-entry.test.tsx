@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { track } from '@/lib/analytics';
 import { setWebSessionHint } from '@/lib/web-session-hint';
 
-import { HeaderWebAction, HeroEntry } from './web-entry';
+import { HeaderWebAction, HeroEntry, WebSection } from './web-entry';
 
 vi.mock('@/lib/analytics', () => ({ track: vi.fn() }));
 
@@ -46,6 +46,16 @@ describe('entry to the web app from the public pages', () => {
     document.addEventListener('click', stay);
     fireEvent.click(screen.getByRole('link', { name: 'Entrar na web' }));
     document.removeEventListener('click', stay);
-    expect(track).toHaveBeenCalledWith('web_entry_tapped', { entry_point: 'hero', signed_in: false });
+    expect(track).toHaveBeenCalledWith('web_entry_tapped', { entry_point: 'hero', destination: '/stories', signed_in: false });
+  });
+
+  it('each web tile opens its own place, through /login when signed out', () => {
+    render(<WebSection locale="es" />);
+    const obras = screen.getByRole('link', { name: /Obras.*InkDuel Studio/ });
+    expect(obras.getAttribute('href')).toBe('/login?next=%2Fme%2Fworks&lang=es');
+    expect(screen.getByRole('link', { name: /Historias/ }).getAttribute('href')).toBe('/login?lang=es');
+    act(() => setWebSessionHint(true));
+    expect(screen.getByRole('link', { name: /Obras.*InkDuel Studio/ }).getAttribute('href')).toBe('/me/works?lang=es');
+    expect(screen.getByRole('link', { name: /Duelos/ }).getAttribute('href')).toBe('/ranked?lang=es');
   });
 });

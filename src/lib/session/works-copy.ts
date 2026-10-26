@@ -27,6 +27,8 @@ export type WorksCopy = {
   growError: string;
   /** web: the backend switched works off (503); there is nothing to retry here. */
   growUnavailable: string;
+  /** web: names the place «Nueva obra» opens. */
+  studioKicker: string;
   headline: string;
   filterAll: string;
   filterDrafts: string;
@@ -142,6 +144,7 @@ export const WORKS_COPY: Record<Locale, WorksCopy> = {
     growSubtitle: 'Dale nuevos capítulos y conviértela en una obra.',
     growError: 'No se pudo abrir la historia. Inténtalo de nuevo.',
     growUnavailable: 'Esta función no está disponible por ahora.',
+    studioKicker: 'InkDuel Studio',
     headline: 'Tus obras.',
     filterAll: 'Todas',
     filterDrafts: 'Borradores',
@@ -247,6 +250,7 @@ export const WORKS_COPY: Record<Locale, WorksCopy> = {
     growSubtitle: 'Give it new chapters and turn it into a work.',
     growError: "Couldn't open the story. Try again.",
     growUnavailable: "This feature isn't available right now.",
+    studioKicker: 'InkDuel Studio',
     headline: 'Your works.',
     filterAll: 'All',
     filterDrafts: 'Drafts',
@@ -352,6 +356,7 @@ export const WORKS_COPY: Record<Locale, WorksCopy> = {
     growSubtitle: 'Dê novos capítulos a ela e transforme-a em uma obra.',
     growError: 'Não foi possível abrir a história. Tente de novo.',
     growUnavailable: 'Esta função não está disponível por enquanto.',
+    studioKicker: 'InkDuel Studio',
     headline: 'Suas obras.',
     filterAll: 'Todas',
     filterDrafts: 'Rascunhos',

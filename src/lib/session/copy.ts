@@ -8,7 +8,7 @@ import type { Locale } from '@/lib/i18n';
 type Plural = (count: number) => string;
 
 export type SessionCopy = {
-  nav: { stories: string; profile: string; signIn: string; mainLabel: string };
+  nav: { stories: string; write: string; profile: string; signIn: string; mainLabel: string };
   login: {
     title: string;
     subtitle: string;
@@ -104,7 +104,7 @@ const plural = (one: string, other: (n: number) => string, zero?: string): Plura
 
 export const SESSION_COPY: Record<Locale, SessionCopy> = {
   es: {
-    nav: { stories: 'Historias', profile: 'Perfil', signIn: 'Inicia sesión', mainLabel: 'Navegación principal' },
+    nav: { stories: 'Historias', write: 'Escribir', profile: 'Perfil', signIn: 'Inicia sesión', mainLabel: 'Navegación principal' },
     login: {
       title: 'Inicia sesión.',
       subtitle: 'Escribe, compite y descubre de qué está hecha tu voz.',
@@ -198,7 +198,7 @@ export const SESSION_COPY: Record<Locale, SessionCopy> = {
     },
   },
   en: {
-    nav: { stories: 'Stories', profile: 'Profile', signIn: 'Sign in', mainLabel: 'Main navigation' },
+    nav: { stories: 'Stories', write: 'Write', profile: 'Profile', signIn: 'Sign in', mainLabel: 'Main navigation' },
     login: {
       title: 'Sign in.',
       subtitle: 'Write, compete, and discover what your voice is made of.',
@@ -292,7 +292,7 @@ export const SESSION_COPY: Record<Locale, SessionCopy> = {
     },
   },
   pt: {
-    nav: { stories: 'Histórias', profile: 'Perfil', signIn: 'Entrar', mainLabel: 'Navegação principal' },
+    nav: { stories: 'Histórias', write: 'Escrever', profile: 'Perfil', signIn: 'Entrar', mainLabel: 'Navegação principal' },
     login: {
       title: 'Entre na sua conta.',
       subtitle: 'Escreva, compita e descubra do que a sua voz é feita.',
