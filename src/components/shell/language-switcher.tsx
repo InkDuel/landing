@@ -24,7 +24,7 @@ export function LanguageSwitcher({
         onChange={(event) => {
           if (isLocale(event.target.value)) onChange(event.target.value);
         }}
-        className="ink-focus min-h-11 cursor-pointer appearance-none rounded-pill border-quiet border-control bg-surface py-2 pr-9 pl-4 type-button-sm text-[14px] text-primary"
+        className="ink-focus min-h-11 cursor-pointer appearance-none rounded-pill border-quiet border-control bg-surface py-2 pr-9 pl-4 type-button-sm max-[400px]:pr-8 max-[400px]:pl-3 text-[14px] text-primary"
       >
         {LOCALES.map((code) => (
           <option key={code} value={code}>
@@ -32,7 +32,7 @@ export function LanguageSwitcher({
           </option>
         ))}
       </select>
-      <ChevronDownIcon size={16} className="pointer-events-none absolute right-3 text-secondary" />
+      <ChevronDownIcon size={16} className="pointer-events-none absolute right-3 text-secondary max-[400px]:right-2.5" />
     </label>
   );
 }

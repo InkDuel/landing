@@ -154,3 +154,39 @@ describe('stale /api/me answers', () => {
     expect(shown()).toBe('error:-');
   });
 });
+
+// The public pages read a local hint to say «Ir a InkDuel» instead of «Inicia
+// sesión» (src/lib/web-session-hint.ts): only a confirmed InkDuel account sets
+// it, and any sign-out (including «no account») removes it.
+describe('signed-in hint for the public pages', () => {
+  const hint = () => window.localStorage.getItem('inkduel.web.signedIn');
+  beforeEach(() => {
+    window.localStorage.clear();
+    vi.mocked(apiGet).mockReset();
+    render(
+      <SessionProvider locale="es">
+        <span />
+      </SessionProvider>,
+    );
+  });
+  afterEach(cleanup);
+
+  it('is set once /api/me confirms the account and removed on sign-out', async () => {
+    vi.mocked(apiGet).mockResolvedValueOnce({ id: 'alice', username: 'alice' } as never);
+    await act(() => emit({ uid: 'alice' }));
+    expect(hint()).toBe('1');
+    await act(() => emit(null));
+    expect(hint()).toBeNull();
+  });
+
+  it('is never set for a Firebase user without an InkDuel account, or when /api/me fails', async () => {
+    vi.mocked(apiGet).mockRejectedValueOnce(new ApiError(404, 'http'));
+    await act(() => emit({ uid: 'carol' }));
+    await act(() => emit(null));
+    expect(hint()).toBeNull();
+
+    vi.mocked(apiGet).mockRejectedValueOnce(new ApiError(503, 'http'));
+    await act(() => emit({ uid: 'dave' }));
+    expect(hint()).toBeNull();
+  });
+});
