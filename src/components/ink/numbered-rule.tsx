@@ -6,7 +6,7 @@ export function DashedLine({ className }: { className?: string }) {
     <span
       aria-hidden="true"
       className={cx(
-        'block h-[2px] w-full bg-[linear-gradient(to_right,var(--line,var(--ink-c-divider))_6px,transparent_6px)] bg-[length:10px_2px]',
+        'block h-[2px] bg-[linear-gradient(to_right,var(--line,var(--ink-c-divider))_6px,transparent_6px)] bg-[length:10px_2px]',
         className,
       )}
     />

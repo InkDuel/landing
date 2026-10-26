@@ -26,6 +26,18 @@ export type SiteCopy = {
     googlePlayAria: string;
     groupAria: string;
   };
+  /** The web app, seen from the public pages. Sign-up stays in the app. */
+  web: {
+    signIn: string;
+    goToApp: string;
+    kicker: string;
+    cta: string;
+    lead: string;
+    noAccount: string;
+    sectionTitle: string;
+    sectionBody: string;
+    features: { title: string; body: string }[];
+  };
 };
 
 export const SITE_COPY: Record<Locale, SiteCopy> = {
@@ -46,6 +58,22 @@ export const SITE_COPY: Record<Locale, SiteCopy> = {
       googlePlayAria: 'Descargar InkDuel en Google Play',
       groupAria: 'Descargar la app',
     },
+    web: {
+      signIn: 'Inicia sesión',
+      goToApp: 'Ir a InkDuel',
+      kicker: 'También en la web',
+      cta: 'Entra en la web',
+      lead: 'Lee, escribe y compite desde el navegador con tu cuenta de InkDuel.',
+      noAccount: '¿Aún no tienes cuenta? Créala en la app.',
+      sectionTitle: 'La arena también cabe en tu navegador.',
+      sectionBody: 'La misma cuenta, el mismo rango, tus mismas Obras. Entra desde cualquier navegador y sigue donde lo dejaste.',
+      features: [
+        { title: 'Historias', body: 'Lee los relatos de la comunidad, uno tras otro.' },
+        { title: 'Obras', body: 'Escribe y publica tus Obras por capítulos.' },
+        { title: 'Marcas', body: 'Subraya, comenta y responde a quien te lee.' },
+        { title: 'Duelos', body: 'Escribe tu relato ahora; el veredicto llega después.' },
+      ],
+    },
   },
   en: {
     homeAria: 'InkDuel, home',
@@ -64,6 +92,22 @@ export const SITE_COPY: Record<Locale, SiteCopy> = {
       googlePlayAria: 'Get InkDuel on Google Play',
       groupAria: 'Get the app',
     },
+    web: {
+      signIn: 'Sign in',
+      goToApp: 'Go to InkDuel',
+      kicker: 'Also on the web',
+      cta: 'Use it on the web',
+      lead: 'Read, write and compete from your browser with your InkDuel account.',
+      noAccount: 'No account yet? Create one in the app.',
+      sectionTitle: 'The arena fits in your browser too.',
+      sectionBody: 'Same account, same rank, same Works. Sign in from any browser and pick up where you left off.',
+      features: [
+        { title: 'Stories', body: 'Read the community’s stories, one after another.' },
+        { title: 'Works', body: 'Write and publish your Works chapter by chapter.' },
+        { title: 'Marks', body: 'Highlight, comment and reply to your readers.' },
+        { title: 'Duels', body: 'Write your story now; the verdict comes later.' },
+      ],
+    },
   },
   pt: {
     homeAria: 'InkDuel, início',
@@ -81,6 +125,22 @@ export const SITE_COPY: Record<Locale, SiteCopy> = {
       appStoreAria: 'Baixar InkDuel na App Store',
       googlePlayAria: 'Baixar InkDuel no Google Play',
       groupAria: 'Baixar o app',
+    },
+    web: {
+      signIn: 'Entrar',
+      goToApp: 'Ir para o InkDuel',
+      kicker: 'Também na web',
+      cta: 'Entrar na web',
+      lead: 'Leia, escreva e compita pelo navegador com sua conta do InkDuel.',
+      noAccount: 'Ainda não tem conta? Crie uma no app.',
+      sectionTitle: 'A arena também cabe no seu navegador.',
+      sectionBody: 'A mesma conta, o mesmo rank, as mesmas Obras. Entre de qualquer navegador e continue de onde parou.',
+      features: [
+        { title: 'Histórias', body: 'Leia as histórias da comunidade, uma após a outra.' },
+        { title: 'Obras', body: 'Escreva e publique suas Obras por capítulos.' },
+        { title: 'Marcas', body: 'Sublinhe, comente e responda a quem lê você.' },
+        { title: 'Duelos', body: 'Escreva sua história agora; o veredito chega depois.' },
+      ],
     },
   },
 };

@@ -12,7 +12,7 @@ import { PlayerIdentity } from '@/components/ink/player-identity';
 import { InkPage, PageColumn } from '@/components/shell/ink-page';
 import { SiteFooter } from '@/components/shell/site-footer';
 import { SiteHeader } from '@/components/shell/site-header';
-import { StoreButtons } from '@/components/shell/store-buttons';
+import { HeroEntry, WebAndStoreButtons, WebSection } from '@/components/shell/web-entry';
 import { type Locale, withLang } from '@/lib/i18n';
 import { LEAGUE_NAMES, LEAGUE_ORDER } from '@/lib/league';
 import { useLocale } from '@/lib/use-locale';
@@ -367,7 +367,7 @@ export default function Home() {
             <InkHeadline text={copy.hero.title} size="display-lg" className="whitespace-pre-line" />
             <p className="type-title-section-lg text-primary">{copy.hero.tagline}</p>
             <p className="max-w-[52ch] type-body text-secondary">{copy.hero.subtitle}</p>
-            <StoreButtons locale={locale} className="mt-2" />
+            <HeroEntry locale={locale} />
             <InkButton href={withLang('/about', locale)} variant="ghost" fullWidth={false} className="self-start">
               {copy.nav.about}
             </InkButton>
@@ -376,6 +376,9 @@ export default function Home() {
             <DuelPreview copy={copy.hero} />
           </div>
         </PageColumn>
+
+        {/* The web app */}
+        <WebSection locale={locale} />
 
         {/* The duel */}
         <section aria-labelledby="duelo" className="scroll-mt-6 py-16">
@@ -475,7 +478,7 @@ export default function Home() {
           <PageColumn width="product" className="flex flex-col items-center gap-5 text-center">
             <InkHeadline as="h2" text={copy.finalCta.title} size="display" />
             <p className="type-body text-secondary">{copy.finalCta.body}</p>
-            <StoreButtons locale={locale} className="justify-center" />
+            <WebAndStoreButtons locale={locale} entryPoint="final_cta" className="w-full sm:justify-center" />
             <p className="type-caption text-tertiary">{copy.finalCta.micro}</p>
           </PageColumn>
         </section>

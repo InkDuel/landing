@@ -12,6 +12,7 @@ import { createContext, type ReactNode, useCallback, useContext, useEffect, useM
 
 import { setAnalyticsUser, track } from '@/lib/analytics';
 import type { Locale } from '@/lib/i18n';
+import { setWebSessionHint } from '@/lib/web-session-hint';
 
 import { ApiError, apiGet } from './api';
 import { isFirebaseConfigured } from './config';
@@ -120,6 +121,7 @@ export function SessionProvider({
       if (lastUidRef.current && lastUidRef.current !== uid) void clearAllRecovery().catch(() => {});
       lastUidRef.current = uid;
       if (!firebaseUser) {
+        setWebSessionHint(false);
         setAnalyticsUser(null, false);
         setUser(null);
         setStatus(noAccountRef.current ? 'noAccount' : 'signedOut');
@@ -136,6 +138,8 @@ export function SessionProvider({
         pendingMethodRef.current = null;
         setUser(me);
         setStatus('signedIn');
+        // Lets the public pages offer «Ir a InkDuel» (src/lib/web-session-hint.ts).
+        setWebSessionHint(true);
       } catch (error) {
         if (!current()) return;
         pendingMethodRef.current = null;
