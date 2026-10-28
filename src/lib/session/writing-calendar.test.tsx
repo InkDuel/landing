@@ -10,6 +10,7 @@ import {
   moveInGrid,
   parseYmd,
   startOfWeek,
+  studioCalendarDays,
   weekdayOf,
   weekdayOfRow,
   weekStartFor,
@@ -17,7 +18,7 @@ import {
   wordsLevel,
   writingDaysInMonth,
   writingDaysList,
-} from './progress-calendar';
+} from './writing-calendar';
 
 // 2026-10-24 is a Saturday.
 const TODAY = '2026-10-24';
@@ -68,7 +69,7 @@ describe('calendar dates', () => {
 describe('calendar grid', () => {
   it('has 53 weeks of 7 days, the first on the week start and the last holding today', () => {
     for (const weekStart of [0, 1] as const) {
-      const grid = buildCalendar([], TODAY, weekStart, 20);
+      const grid = buildCalendar([], TODAY, weekStart);
       expect(grid.weeks).toHaveLength(CALENDAR_WEEKS);
       expect(grid.weeks.every((week) => week.length === 7)).toBe(true);
       expect(weekdayOf(grid.weeks[0][0].date)).toBe(weekStart);
@@ -82,9 +83,9 @@ describe('calendar grid', () => {
   });
 
   it('marks the days after today as future (Saturday ends the Monday-first week; Sunday-first has one more)', () => {
-    const monday = buildCalendar([], TODAY, 1, 20);
+    const monday = buildCalendar([], TODAY, 1);
     expect(monday.weeks[52].filter((c) => c.future).map((c) => c.date)).toEqual(['2026-10-25']);
-    const sunday = buildCalendar([], TODAY, 0, 20);
+    const sunday = buildCalendar([], TODAY, 0);
     expect(sunday.weeks[52].filter((c) => c.future)).toHaveLength(0); // Saturday is the last row
   });
 
@@ -95,7 +96,7 @@ describe('calendar grid', () => {
         process.env.TZ = tz;
         // Each of these grids spans a spring and an autumn transition of the zone.
         for (const today of ['2026-03-29', '2026-03-08', '2026-11-01', '2026-10-25', '2026-04-05', '2026-09-27']) {
-          const grid = buildCalendar([], today, 1, 20);
+          const grid = buildCalendar([], today, 1);
           const dates = grid.weeks.flat().map((c) => c.date);
           expect(new Set(dates).size).toBe(dates.length);
           for (let i = 1; i < dates.length; i += 1) expect(diffDays(dates[i], dates[i - 1])).toBe(1);
@@ -123,17 +124,16 @@ describe('calendar grid', () => {
 
   it('counts a day as written only from the minimum characters and never leaves it blank', () => {
     const grid = buildCalendar(
-      [
+      studioCalendarDays([
         day('2026-10-24', 340, 1900), // a real day
         day('2026-10-23', 3, 15), // below the threshold: shown as nothing
         day('2026-10-22', 0, 25), // enough characters, no whole word: still visible
         day('2026-10-21', 1200, 6000),
         day('2026-10-20', 120, 20), // exactly the threshold counts
         day('2026-10-26', 900, 9000), // a future day is ignored
-      ],
+      ], 20),
       TODAY,
       1,
-      20,
     );
     const at = (date: string) => findCell(grid, date)!.cell;
     expect(at('2026-10-24')).toMatchObject({ active: true, level: 2, words: 340 });
@@ -147,7 +147,7 @@ describe('calendar grid', () => {
   });
 
   it('places each month label on the column that holds its first day', () => {
-    const grid = buildCalendar([], TODAY, 1, 20);
+    const grid = buildCalendar([], TODAY, 1);
     expect(grid.months.map((m) => `${m.year}-${m.month}`)).toEqual([
       '2025-11', '2025-12', '2026-1', '2026-2', '2026-3', '2026-4', '2026-5', '2026-6', '2026-7', '2026-8', '2026-9', '2026-10',
     ]);
@@ -159,7 +159,7 @@ describe('calendar grid', () => {
   });
 
   it('moves with the arrows, week by week and day by day, and never onto the future', () => {
-    const grid = buildCalendar([], TODAY, 1, 20); // today is the Saturday (row 5); Sunday (row 6) is tomorrow
+    const grid = buildCalendar([], TODAY, 1); // today is the Saturday (row 5); Sunday (row 6) is tomorrow
     expect(moveInGrid(grid, { col: 10, row: 2 }, 'ArrowRight')).toEqual({ col: 11, row: 2 });
     expect(moveInGrid(grid, { col: 10, row: 2 }, 'ArrowLeft')).toEqual({ col: 9, row: 2 });
     expect(moveInGrid(grid, { col: 10, row: 2 }, 'ArrowUp')).toEqual({ col: 10, row: 1 });
@@ -177,7 +177,7 @@ describe('calendar grid', () => {
 });
 
 describe('calendar numbers', () => {
-  const days = [
+  const days = studioCalendarDays([
     day('2026-10-24', 300, 1500),
     day('2026-10-20', 100, 600), // 4 days ago: inside the last 7
     day('2026-10-18', 50, 300), // 6 days ago: inside
@@ -185,7 +185,7 @@ describe('calendar numbers', () => {
     day('2026-10-03', 10, 5), // this month, too little text
     day('2026-09-30', 70, 400), // last month
     day('2026-10-25', 800, 4000), // tomorrow: never counted
-  ];
+  ], 20);
 
   it('sums the last 7 local days, today included', () => {
     expect(wordsInLastDays(days, TODAY, 7)).toBe(450);
@@ -194,7 +194,24 @@ describe('calendar numbers', () => {
   });
 
   it('counts writing days of the current month only', () => {
-    expect(writingDaysInMonth(days, TODAY, 20)).toBe(4); // 24, 20, 18 and 17; the 3rd had too little text
-    expect(writingDaysInMonth(days, '2026-09-30', 20)).toBe(1);
+    expect(writingDaysInMonth(days, TODAY)).toBe(4); // 24, 20, 18 and 17; the 3rd had too little text
+    expect(writingDaysInMonth(days, '2026-09-30')).toBe(1);
+  });
+});
+
+describe('combined calendar (profile)', () => {
+  it('keeps the duel and work breakdown on each cell and trusts the backend on active days', () => {
+    const grid = buildCalendar(
+      [
+        { date: '2026-10-24', words: 540, duelWords: 320, studioWords: 220, active: true },
+        { date: '2026-10-23', words: 3, duelWords: 3, studioWords: 0, active: false },
+      ],
+      TODAY,
+      1,
+    );
+    expect(findCell(grid, '2026-10-24')!.cell).toMatchObject({ words: 540, duelWords: 320, studioWords: 220, active: true, level: 3 });
+    expect(findCell(grid, '2026-10-23')!.cell).toMatchObject({ active: false, level: 0, duelWords: 3 });
+    expect(findCell(grid, '2026-10-22')!.cell).toMatchObject({ words: 0, duelWords: 0, studioWords: 0, active: false });
+    expect(grid.activeDays).toBe(1);
   });
 });

@@ -1,10 +1,9 @@
 import type { Locale } from '@/lib/i18n';
 
-import type { StudioDay } from './models';
-
-// Pure date math of the writing calendar (PRD §9). Days are local calendar
-// dates («YYYY-MM-DD») in the author's own zone, exactly what the backend
-// keys its daily rollups by. Every step goes through integer Y-M-D plus UTC
+// Pure date math of the writing calendar, shared by Studio's «Progreso» (one
+// work) and «Tu escritura» on the profile (duels + works). Days are local
+// calendar dates («YYYY-MM-DD») in the writer's own zone, exactly what the
+// backend keys its daily rollups by. Every step goes through integer Y-M-D plus UTC
 // arithmetic, never through «add 24 hours in milliseconds» on a local Date, so
 // a daylight-saving change can neither skip nor repeat a day.
 
@@ -87,11 +86,33 @@ export function wordsLevel(words: number): Level {
   return 4;
 }
 
+/**
+ * One day as the calendar needs it, whatever its source. [active] is decided
+ * by the source: Studio from the characters added, the profile by the backend.
+ */
+export type CalendarDay = {
+  date: string;
+  words: number;
+  active: boolean;
+  /** Breakdown for the profile calendar (duels + works); absent in Studio. */
+  duelWords?: number;
+  studioWords?: number;
+};
+
+/** A Studio rollup day counts from [minChars] characters added. */
+export function studioCalendarDays(
+  days: readonly { date: string; wordsAdded: number; charsAdded: number }[],
+  minChars: number,
+): CalendarDay[] {
+  return days.map((d) => ({ date: d.date, words: d.wordsAdded, active: d.charsAdded > 0 && d.charsAdded >= minChars }));
+}
+
 export type CalendarCell = {
   date: string;
   words: number;
-  chars: number;
-  /** Written enough to count as a writing day (charsAdded >= the threshold). */
+  duelWords: number;
+  studioWords: number;
+  /** Written enough to count as a writing day. */
   active: boolean;
   /** Always 0 for a day that does not count, however many words it had. */
   level: Level;
@@ -111,13 +132,7 @@ export type Calendar = {
   activeDays: number;
 };
 
-export function buildCalendar(
-  days: readonly Pick<StudioDay, 'date' | 'wordsAdded' | 'charsAdded'>[],
-  today: string,
-  weekStart: WeekStart,
-  minChars: number,
-  weeks: number = CALENDAR_WEEKS,
-): Calendar {
+export function buildCalendar(days: readonly CalendarDay[], today: string, weekStart: WeekStart, weeks: number = CALENDAR_WEEKS): Calendar {
   const { from, to } = calendarRange(today, weekStart, weeks);
   const byDate = new Map(days.map((d) => [d.date, d]));
   const months: CalendarMonth[] = [];
@@ -129,11 +144,18 @@ export function buildCalendar(
       const date = addDays(from, col * 7 + row);
       const future = date > today;
       const day = future ? undefined : byDate.get(date);
-      const words = day?.wordsAdded ?? 0;
-      const chars = day?.charsAdded ?? 0;
-      const active = !future && chars > 0 && chars >= minChars;
+      const words = day?.words ?? 0;
+      const active = !future && day?.active === true;
       if (active) activeDays += 1;
-      column.push({ date, words, chars, active, level: active ? (Math.max(1, wordsLevel(words)) as Level) : 0, future });
+      column.push({
+        date,
+        words,
+        duelWords: day?.duelWords ?? 0,
+        studioWords: day?.studioWords ?? 0,
+        active,
+        level: active ? (Math.max(1, wordsLevel(words)) as Level) : 0,
+        future,
+      });
       if (!future && date.endsWith('-01')) {
         const p = parseYmd(date);
         if (p) months.push({ column: col, month: p.month, year: p.year });
@@ -201,21 +223,21 @@ export function findCell(calendar: Calendar, date: string): (GridPos & { cell: C
 
 // ---- Numbers ----
 
-/** Words added over the last [count] local days up to and including [today]. Imports never count. */
-export function wordsInLastDays(days: readonly Pick<StudioDay, 'date' | 'wordsAdded'>[], today: string, count: number): number {
+/** Words written over the last [count] local days up to and including [today]. */
+export function wordsInLastDays(days: readonly Pick<CalendarDay, 'date' | 'words'>[], today: string, count: number): number {
   const first = addDays(today, -(count - 1));
-  return days.reduce((sum, d) => (d.date >= first && d.date <= today ? sum + d.wordsAdded : sum), 0);
+  return days.reduce((sum, d) => (d.date >= first && d.date <= today ? sum + d.words : sum), 0);
 }
 
-/** Writing days in the month of [today] (a day counts at [minChars] characters added). */
-export function writingDaysInMonth(days: readonly Pick<StudioDay, 'date' | 'charsAdded'>[], today: string, minChars: number): number {
+/** Writing days in the month of [today]. */
+export function writingDaysInMonth(days: readonly Pick<CalendarDay, 'date' | 'active'>[], today: string): number {
   const prefix = today.slice(0, 7);
-  return days.filter((d) => d.date.startsWith(prefix) && d.date <= today && d.charsAdded > 0 && d.charsAdded >= minChars).length;
+  return days.filter((d) => d.date.startsWith(prefix) && d.date <= today && d.active).length;
 }
 
 /** Words written on [date] (0 when the day has no record). */
-export function wordsOn(days: readonly Pick<StudioDay, 'date' | 'wordsAdded'>[], date: string): number {
-  return days.find((d) => d.date === date)?.wordsAdded ?? 0;
+export function wordsOn(days: readonly Pick<CalendarDay, 'date' | 'words'>[], date: string): number {
+  return days.find((d) => d.date === date)?.words ?? 0;
 }
 
 /** The days that count, newest first, for the textual equivalent of the grid. */

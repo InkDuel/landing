@@ -1,5 +1,7 @@
 import type { Locale } from '@/lib/i18n';
 
+import type { CalendarCopy } from '../writing-copy';
+
 import type { SceneStatus } from './models';
 
 // Copy of the «Planificar» and «Progreso» areas of InkDuel Studio. Neutral
@@ -779,23 +781,10 @@ export type ProgressCopy = {
     reached: string;
     todayLoading: string;
   };
-  calendar: {
+  calendar: CalendarCopy & {
     title: string;
-    gridLabel: string;
     summary: Plural;
     empty: string;
-    legend: string;
-    less: string;
-    more: string;
-    levels: [string, string, string, string, string];
-    cell: (label: string, words: number, formatted: string) => string;
-    cellNone: (label: string) => string;
-    viewList: string;
-    hideList: string;
-    listTitle: string;
-    listEmpty: string;
-    colDate: string;
-    colWords: string;
   };
   rules: {
     title: string;
@@ -864,7 +853,7 @@ const progressEs: ProgressCopy = {
     less: 'Menos',
     more: 'Más',
     levels: ['Sin escritura', '1–99 palabras', '100–499 palabras', '500–999 palabras', '1.000 palabras o más'],
-    cell: (label, words, formatted) => `${label}: ${words === 1 ? '1 palabra' : `${formatted} palabras`}`,
+    cell: (label, { words }, f) => `${label}: ${words === 1 ? '1 palabra' : `${f(words)} palabras`}`,
     cellNone: (label) => `${label}: sin escritura`,
     viewList: 'Ver como lista',
     hideList: 'Ocultar la lista',
@@ -938,7 +927,7 @@ const progressEn: ProgressCopy = {
     less: 'Less',
     more: 'More',
     levels: ['No writing', '1–99 words', '100–499 words', '500–999 words', '1,000 words or more'],
-    cell: (label, words, formatted) => `${label}: ${words === 1 ? '1 word' : `${formatted} words`}`,
+    cell: (label, { words }, f) => `${label}: ${words === 1 ? '1 word' : `${f(words)} words`}`,
     cellNone: (label) => `${label}: no writing`,
     viewList: 'View as a list',
     hideList: 'Hide the list',
@@ -1012,7 +1001,7 @@ const progressPt: ProgressCopy = {
     less: 'Menos',
     more: 'Mais',
     levels: ['Sem escrita', '1–99 palavras', '100–499 palavras', '500–999 palavras', '1.000 palavras ou mais'],
-    cell: (label, words, formatted) => `${label}: ${words === 1 ? '1 palavra' : `${formatted} palavras`}`,
+    cell: (label, { words }, f) => `${label}: ${words === 1 ? '1 palavra' : `${f(words)} palavras`}`,
     cellNone: (label) => `${label}: sem escrita`,
     viewList: 'Ver como lista',
     hideList: 'Ocultar a lista',

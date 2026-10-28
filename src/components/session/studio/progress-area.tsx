@@ -10,17 +10,18 @@ import type { StudioProgress } from '@/lib/session/studio/models';
 import {
   buildCalendar,
   calendarRange,
+  studioCalendarDays,
   weekStartFor,
   wordsInLastDays,
   wordsOn,
   writingDaysInMonth,
-} from '@/lib/session/studio/progress-calendar';
+} from '@/lib/session/writing-calendar';
 import { PROGRESS_COPY } from '@/lib/session/studio/studio-plan-copy';
 import { readingMinutes } from '@/lib/session/studio/words';
 
 import { entryWords, useStudio } from './studio-context';
 import { GoalsPanel } from './progress-goals';
-import { WritingCalendar } from './progress-calendar-view';
+import { WritingCalendar } from '../writing-calendar';
 
 // Progreso (PRD §9). A quiet record for the author, not a dashboard: a few
 // numbers written out, the goals they chose, and a calendar of the days they
@@ -72,7 +73,8 @@ export function ProgressArea() {
   const data = load.status === 'ready' ? load.data : null;
   const streakOn = overview.settings.streakEnabled;
 
-  const calendar = useMemo(() => (data ? buildCalendar(data.days, today, weekStart, data.activeDayMinChars) : null), [data, today, weekStart]);
+  const days = useMemo(() => (data ? studioCalendarDays(data.days, data.activeDayMinChars) : []), [data]);
+  const calendar = useMemo(() => (data ? buildCalendar(days, today, weekStart) : null), [data, days, today, weekStart]);
   const empty = data !== null && data.days.length === 0;
   const minutes = readingMinutes(workWords);
 
@@ -95,10 +97,10 @@ export function ProgressArea() {
             </h3>
             <dl className="m-0 divide-y divide-divider rounded-card border-quiet border-divider bg-surface">
               <Row label={copy.numbers.words} value={fmt(workWords)} hint={workWords > 0 ? copy.numbers.reading(duration(minutes)) : copy.numbers.readingNone} />
-              <Row label={copy.numbers.weekWords} value={fmt(wordsInLastDays(load.data.days, today, 7))} hint={copy.numbers.weekHint} />
+              <Row label={copy.numbers.weekWords} value={fmt(wordsInLastDays(days, today, 7))} hint={copy.numbers.weekHint} />
               <Row
                 label={copy.numbers.monthDays}
-                value={fmt(writingDaysInMonth(load.data.days, today, load.data.activeDayMinChars))}
+                value={fmt(writingDaysInMonth(days, today))}
                 hint={copy.numbers.monthDaysHint}
               />
               {streakOn ? (
@@ -116,7 +118,7 @@ export function ProgressArea() {
           </section>
         )}
 
-        <GoalsPanel workWords={workWords} todayWords={data ? wordsOn(data.days, today) : null} />
+        <GoalsPanel workWords={workWords} todayWords={data ? wordsOn(days, today) : null} />
       </div>
 
       {load.status !== 'error' ? (

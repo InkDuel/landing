@@ -15,11 +15,12 @@ import {
   type WeekStart,
   weekdayOfRow,
   writingDaysList,
-} from '@/lib/session/studio/progress-calendar';
-import type { ProgressCopy } from '@/lib/session/studio/studio-plan-copy';
+} from '@/lib/session/writing-calendar';
+import type { CalendarCopy } from '@/lib/session/writing-copy';
 
-// The writing calendar (PRD §9): weeks as columns, days as rows, one square
-// per day tinted by the words saved that day. Colour never stands alone: every
+// The writing calendar (Studio PRD §9, shared with the profile's «Tu
+// escritura»): weeks as columns, days as rows, one square per day tinted by
+// the words written that day. Colour never stands alone: every
 // square has a spoken label («12 de octubre: 340 palabras»), the legend names
 // each step, and «Ver como lista» offers the same days as a plain table.
 
@@ -58,7 +59,7 @@ export function WritingCalendar({
   today: string;
   locale: Locale;
   weekStart: WeekStart;
-  copy: ProgressCopy['calendar'];
+  copy: CalendarCopy;
 }) {
   const intl = INTL_LOCALE[locale];
   const tableRef = useRef<HTMLTableElement>(null);
@@ -72,7 +73,7 @@ export function WritingCalendar({
   const label = useMemo(() => dayLabeler(locale, currentYear), [locale, currentYear]);
   const number = useMemo(() => new Intl.NumberFormat(intl), [intl]);
   const cellText = (cell: Calendar['weeks'][number][number]) =>
-    cell.active ? copy.cell(label(cell.date), cell.words, number.format(cell.words)) : copy.cellNone(label(cell.date));
+    cell.active ? copy.cell(label(cell.date), cell, (n) => number.format(n)) : copy.cellNone(label(cell.date));
 
   const monthName = useMemo(() => new Intl.DateTimeFormat(intl, { month: 'short', timeZone: 'UTC' }), [intl]);
   const weekdayShort = useMemo(() => new Intl.DateTimeFormat(intl, { weekday: 'short', timeZone: 'UTC' }), [intl]);
