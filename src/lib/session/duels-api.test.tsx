@@ -5,6 +5,7 @@ vi.mock('./firebase', () => ({ getFirebaseAuth: () => ({ currentUser: { getIdTok
 const response = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 const fetchMock = vi.fn<typeof fetch>();
+vi.mock('./local-time', () => ({ localTimezone: () => 'America/Argentina/Buenos_Aires', localDate: () => '2026-10-27' }));
 beforeEach(() => {
   vi.stubGlobal('fetch', fetchMock);
   fetchMock.mockReset();
@@ -20,7 +21,16 @@ describe('Existing HTTP contracts', () => {
     expect(options?.method).toBe('POST');
     expect(options?.credentials).toBe('omit');
     expect(options?.headers).toMatchObject({ Authorization: 'Bearer test-user-token', 'Accept-Language': 'es' });
-    expect(JSON.parse(options?.body as string)).toEqual({ story: 'Mi relato' });
+    expect(JSON.parse(options?.body as string)).toEqual({ story: 'Mi relato', timezone: 'America/Argentina/Buenos_Aires' });
+    expect(Object.keys(options?.headers ?? {}).sort()).toEqual(['Accept', 'Accept-Language', 'Authorization', 'Content-Type']);
+  });
+  it('sends the writer time zone in the body of an async draft submission', async () => {
+    fetchMock.mockResolvedValue(response({ submissionId: 'sub-1' }));
+    await duelsApi.submitDraft('draft #1', 'Mi relato', 'pt');
+    const [url, options] = fetchMock.mock.calls[0];
+    expect(url).toBe('https://inkduel-backend-production.up.railway.app/api/ranked-async/drafts/draft%20%231/story');
+    expect(JSON.parse(options?.body as string)).toEqual({ story: 'Mi relato', timezone: 'America/Argentina/Buenos_Aires' });
+    expect(Object.keys(options?.headers ?? {}).sort()).toEqual(['Accept', 'Accept-Language', 'Authorization', 'Content-Type']);
   });
   it('maps only a pending 404 to no game; errors remain errors', async () => {
     fetchMock.mockResolvedValueOnce(response({}, 404)).mockResolvedValueOnce(response({}, 503));

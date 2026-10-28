@@ -4,6 +4,7 @@ import { track } from '@/lib/analytics';
 import type { Locale } from '@/lib/i18n';
 import { ApiError, apiGet, apiPath, apiRequest } from './api';
 import { parseStorySubmission } from './duel-analytics';
+import { localTimezone } from './local-time';
 import type { Page } from './models';
 
 const record = (v: unknown): Record<string, unknown> =>
@@ -233,12 +234,14 @@ export const duelsApi = {
   async forfeit(id: string, locale: Locale) {
     await apiRequest('POST', path(id, 'forfeit'), { locale });
   },
+  // Every story submission carries the writer's IANA zone in the body (never
+  // a header) so the backend can date the writing day. Older backends ignore it.
   async submit(id: string, story: string, locale: Locale) {
-    return parseStorySubmission(await apiRequest('POST', path(id, 'story'), { locale, body: { story } }));
+    return parseStorySubmission(await apiRequest('POST', path(id, 'story'), { locale, body: { story, timezone: localTimezone() } }));
   },
   async submitDraft(id: string, story: string, locale: Locale) {
     const d = record(
-      await apiRequest('POST', apiPath('api', 'ranked-async', 'drafts', id, 'story'), { locale, errorCodes, body: { story } }),
+      await apiRequest('POST', apiPath('api', 'ranked-async', 'drafts', id, 'story'), { locale, errorCodes, body: { story, timezone: localTimezone() } }),
     );
     if (!str(d.submissionId)) throw new ApiError(200, 'parse');
     // The app logs an accepted async draft as ranked_async_draft_queued, not story_submitted.
