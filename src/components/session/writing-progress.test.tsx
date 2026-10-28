@@ -160,6 +160,17 @@ describe('Tu escritura · daily goal', () => {
     expect(save).not.toHaveBeenCalled();
   });
 
+  it('shows the generic save error when the endpoint is gone mid-visit (404: kill switch turned off)', async () => {
+    vi.spyOn(writingApi, 'summary').mockResolvedValue(summary());
+    vi.spyOn(writingApi, 'saveSettings').mockRejectedValue(new ApiError(404, 'http'));
+    render(<WritingProgress locale="es" />);
+    fireEvent.change(await screen.findByRole('spinbutton', { name: 'Meta diaria (palabras)' }), { target: { value: '800' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar meta' }));
+    expect(await screen.findByText('No se pudo guardar la meta. Tu cambio sigue aquí; inténtalo de nuevo.')).toBeTruthy();
+    expect((screen.getByRole('spinbutton', { name: 'Meta diaria (palabras)' }) as HTMLInputElement).value).toBe('800');
+    expect(screen.getByRole('heading', { name: 'Tu escritura' })).toBeTruthy(); // the block stays
+  });
+
   it('on a revision conflict refreshes the block, keeps what was typed and lets you try again', async () => {
     const request = vi
       .spyOn(writingApi, 'summary')

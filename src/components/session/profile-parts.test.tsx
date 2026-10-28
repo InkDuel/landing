@@ -29,19 +29,33 @@ describe('ProfileStats · writing streak', () => {
     expect(screen.queryByText('11')).toBeNull();
   });
 
-  it('treats the fields as 0 when an older backend does not send them', () => {
-    const user = parseProfileUser(payload)!;
-    expect(user.writingStreak).toBe(0);
-    expect(user.bestWritingStreak).toBe(0);
+  it('shows real zeros when the backend sends them', () => {
+    const user = parseProfileUser({ ...payload, writingStreak: 0, bestWritingStreak: 0 })!;
     render(<ProfileStats user={user} locale="en" own={false} />);
     expect(screen.getByText(/Writing streak/).closest('p')!.textContent).toBe('Writer level 4 · Writing streak 0 · Best streak 0');
   });
 
-  it('never trusts a malformed or negative value', () => {
+  it('hides the streak parts when the backend does not send them (kill switch off, older backend)', () => {
+    const user = parseProfileUser(payload)!;
+    expect(user.writingStreak).toBeNull();
+    expect(user.bestWritingStreak).toBeNull();
+    render(<ProfileStats user={user} locale="en" own={false} />);
+    expect(screen.getByText(/Writer level/).closest('p')!.textContent).toBe('Writer level 4');
+    expect(screen.queryByText(/streak/i)).toBeNull();
+  });
+
+  it('renders no line at all on the own profile when both are missing', () => {
+    const { container } = render(<ProfileStats user={parseProfileUser(payload)!} locale="es" own />);
+    expect(container.querySelector('section > p')).toBeNull();
+    expect(screen.queryByText(/Racha/)).toBeNull();
+    expect(screen.getByText('Duelos')).toBeTruthy(); // the stats grid stays
+  });
+
+  it('never trusts a malformed or negative value, and shows only the part that came', () => {
     const user = parseProfileUser({ ...payload, writingStreak: '5', bestWritingStreak: -3 })!;
-    expect(user.writingStreak).toBe(0);
-    expect(user.bestWritingStreak).toBe(0);
-    render(<ProfileStats user={{ ...user, writingStreak: 2, bestWritingStreak: 6 }} locale="pt" own />);
-    expect(screen.getByText(/Sequência de escrita/).closest('p')!.textContent).toBe('Sequência de escrita 2 · Melhor sequência 6');
+    expect(user.writingStreak).toBeNull();
+    expect(user.bestWritingStreak).toBeNull();
+    render(<ProfileStats user={{ ...user, writingStreak: 2 }} locale="pt" own />);
+    expect(screen.getByText(/Sequência de escrita/).closest('p')!.textContent).toBe('Sequência de escrita 2');
   });
 });

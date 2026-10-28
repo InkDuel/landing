@@ -7,6 +7,9 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const str = (value: unknown): string => (typeof value === 'string' ? value : '');
 const num = (value: unknown): number => (typeof value === 'number' && Number.isFinite(value) ? value : 0);
 const nonNegative = (value: unknown): number => Math.max(0, Math.trunc(num(value)));
+/** A count the backend may omit (kill switch off, older backend): null, never a made-up 0. */
+const optCount = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0 ? Math.trunc(value) : null;
 const list = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
 const cursor = (value: unknown): string | null => (typeof value === 'string' && value ? value : null);
 
@@ -26,9 +29,9 @@ export type ProfileUser = {
   /** Win streak: only the ranking shows it. */
   currentStreak: number;
   bestStreak: number;
-  /** Writing streak (days in a row writing); 0 when an older backend omits it. */
-  writingStreak: number;
-  bestWritingStreak: number;
+  /** Writing streak (days in a row writing); null when the backend omits it (hide it, never show 0). */
+  writingStreak: number | null;
+  bestWritingStreak: number | null;
   duelDetailsPrivate: boolean;
   writerLevel: number;
   writerXpInLevel: number;
@@ -51,8 +54,8 @@ export function parseProfileUser(data: unknown): ProfileUser | null {
     losses: nonNegative(data.losses),
     currentStreak: nonNegative(data.currentStreak),
     bestStreak: nonNegative(data.bestStreak),
-    writingStreak: nonNegative(data.writingStreak),
-    bestWritingStreak: nonNegative(data.bestWritingStreak),
+    writingStreak: optCount(data.writingStreak),
+    bestWritingStreak: optCount(data.bestWritingStreak),
     duelDetailsPrivate: data.duelDetailsPrivate === true,
     writerLevel: nonNegative(data.writerLevel),
     writerXpInLevel: nonNegative(data.writerXpInLevel),
