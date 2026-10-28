@@ -38,9 +38,9 @@ const INITIAL: Record<IdentitySize, string> = {
   112: 'text-[40px]',
 };
 
-/** First letter of the name, uppercased; «?» when empty. */
+/** First letter of the name, uppercased; «?» when empty. A leading «@» is skipped. */
 export function initialOf(name: string): string {
-  const first = Array.from(name.trim())[0];
+  const first = Array.from(name.trim().replace(/^@+\s*/, ''))[0];
   return first ? first.toLocaleUpperCase() : '?';
 }
 
