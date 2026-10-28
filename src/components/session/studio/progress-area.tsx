@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 import { InkInlineBanner } from '@/components/ink/ink-inline-banner';
@@ -13,8 +14,6 @@ import {
   studioCalendarDays,
   weekStartFor,
   wordsInLastDays,
-  wordsOn,
-  writingDaysInMonth,
 } from '@/lib/session/writing-calendar';
 import { PROGRESS_COPY } from '@/lib/session/studio/studio-plan-copy';
 import { readingMinutes } from '@/lib/session/studio/words';
@@ -23,11 +22,12 @@ import { entryWords, useStudio } from './studio-context';
 import { GoalsPanel } from './progress-goals';
 import { WritingCalendar } from '../writing-calendar';
 
-// Progreso (PRD §9). A quiet record for the author, not a dashboard: a few
-// numbers written out, the goals they chose, and a calendar of the days they
-// wrote. Only saved writing counts, imports never count as written words, and
-// days follow the author's own time zone. No streak is shown unless the author
-// wants one, and a streak at zero is never a reproach.
+// Progreso (PRD §9, trimmed by «Progreso de escritura» §9). Only what belongs
+// to this work: its words and reading time, the words written in it this
+// week, its calendar, the work goal and the session goal. The streak and the
+// daily goal are personal now (duels + works) and live in the profile's
+// «Tu escritura» (/me#escritura). Only saved writing counts, imports never
+// count as written words, and days follow the author's own time zone.
 
 type Load = { status: 'loading' } | { status: 'error' } | { status: 'ready'; data: StudioProgress };
 
@@ -71,7 +71,6 @@ export function ProgressArea() {
   // chapter. Never both: a draft is the same text, further along.
   const workWords = useMemo(() => overview.manuscript.reduce((sum, entry) => sum + entryWords(entry), 0), [overview.manuscript]);
   const data = load.status === 'ready' ? load.data : null;
-  const streakOn = overview.settings.streakEnabled;
 
   const days = useMemo(() => (data ? studioCalendarDays(data.days, data.activeDayMinChars) : []), [data]);
   const calendar = useMemo(() => (data ? buildCalendar(days, today, weekStart) : null), [data, days, today, weekStart]);
@@ -83,6 +82,12 @@ export function ProgressArea() {
       <header className="flex flex-col gap-1">
         <h2 className="type-title-section text-primary">{copy.heading}</h2>
         <p className="max-w-[62ch] type-body-sm text-secondary">{copy.intro}</p>
+        <p className="max-w-[62ch] type-body-sm text-secondary">
+          {copy.profileLine}{' '}
+          <Link href="/me#escritura" className="ink-focus ink-dim rounded-control type-button-sm text-[14px] text-blue">
+            {copy.profileLink}
+          </Link>
+        </p>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
@@ -98,27 +103,11 @@ export function ProgressArea() {
             <dl className="m-0 divide-y divide-divider rounded-card border-quiet border-divider bg-surface">
               <Row label={copy.numbers.words} value={fmt(workWords)} hint={workWords > 0 ? copy.numbers.reading(duration(minutes)) : copy.numbers.readingNone} />
               <Row label={copy.numbers.weekWords} value={fmt(wordsInLastDays(days, today, 7))} hint={copy.numbers.weekHint} />
-              <Row
-                label={copy.numbers.monthDays}
-                value={fmt(writingDaysInMonth(days, today))}
-                hint={copy.numbers.monthDaysHint}
-              />
-              {streakOn ? (
-                load.data.currentStreak > 0 ? (
-                  <Row
-                    label={copy.numbers.streak}
-                    value={copy.numbers.days(load.data.currentStreak, fmt(load.data.currentStreak))}
-                    hint={copy.numbers.streakHint}
-                  />
-                ) : (
-                  <Row label={copy.numbers.streak} value="" hint={copy.numbers.streakZero} />
-                )
-              ) : null}
             </dl>
           </section>
         )}
 
-        <GoalsPanel workWords={workWords} todayWords={data ? wordsOn(days, today) : null} />
+        <GoalsPanel workWords={workWords} />
       </div>
 
       {load.status !== 'error' ? (

@@ -12,25 +12,26 @@ import { studioAnalytics } from '@/lib/session/studio/studio-analytics';
 import { PROGRESS_COPY } from '@/lib/session/studio/studio-plan-copy';
 
 import { useStudio } from './studio-context';
-import { StudioInput, StudioToggle } from './studio-ui';
+import { StudioInput } from './studio-ui';
 
-// Goals (PRD §9): voluntary, editable, never tied to a reward. They live in
-// the Work's settings (OCC by revision): a save that finds the settings
-// changed elsewhere refreshes them and asks the author to look once more.
+// Goals (PRD §9): voluntary, editable, never tied to a reward. The work goal
+// and the session goal live in the Work's settings (OCC by revision): a save
+// that finds the settings changed elsewhere refreshes them and asks the author
+// to look once more. The daily goal and the streak switch moved to the profile
+// («Progreso de escritura» §9): their fields still exist in these settings and
+// every save resends them exactly as the server gave them, never clobbered.
 
 /** internal/models MaxStudioGoalWords and MaxStudioDailyGoalWords. */
 export const GOAL_MAX = { work: 2_000_000, daily: 100_000, session: 100_000 } as const;
 
-type Fields = { work: string; daily: string; session: string; streak: boolean };
+type Fields = { work: string; session: string };
 
 const toFields = (s: StudioSettings): Fields => ({
   work: String(s.workGoalWords),
-  daily: String(s.dailyGoalWords),
   session: String(s.sessionGoalWords),
-  streak: s.streakEnabled,
 });
 
-const sameFields = (a: Fields, b: Fields) => a.work === b.work && a.daily === b.daily && a.session === b.session && a.streak === b.streak;
+const sameFields = (a: Fields, b: Fields) => a.work === b.work && a.session === b.session;
 
 /** Empty means no goal (0); anything but a whole number in range is invalid (null). */
 export function parseGoal(text: string, max: number): number | null {
@@ -43,7 +44,7 @@ export function parseGoal(text: string, max: number): number | null {
 
 type Notice = { tone: 'saved' | 'conflict' | 'error'; text: string };
 
-export function GoalsPanel({ workWords, todayWords }: { workWords: number; todayWords: number | null }) {
+export function GoalsPanel({ workWords }: { workWords: number }) {
   const { workId, locale, overview, refresh } = useStudio();
   const copy = PROGRESS_COPY[locale].goals;
   const fmt = (n: number) => n.toLocaleString(INTL_LOCALE[locale]);
@@ -67,10 +68,9 @@ export function GoalsPanel({ workWords, todayWords }: { workWords: number; today
 
   const parsed = {
     work: parseGoal(form.work, GOAL_MAX.work),
-    daily: parseGoal(form.daily, GOAL_MAX.daily),
     session: parseGoal(form.session, GOAL_MAX.session),
   };
-  const valid = parsed.work !== null && parsed.daily !== null && parsed.session !== null;
+  const valid = parsed.work !== null && parsed.session !== null;
   const edited = !sameFields(form, toFields(base));
   const canSave = valid && edited && !busy;
   const set = (patch: Partial<Fields>) => {
@@ -79,7 +79,7 @@ export function GoalsPanel({ workWords, todayWords }: { workWords: number; today
   };
 
   async function save() {
-    if (!canSave || parsed.work === null || parsed.daily === null || parsed.session === null) return;
+    if (!canSave || parsed.work === null || parsed.session === null) return;
     const before = base;
     setBusy(true);
     setNotice(null);
@@ -89,9 +89,10 @@ export function GoalsPanel({ workWords, todayWords }: { workWords: number; today
         {
           expectedRevision: before.revision,
           workGoalWords: parsed.work,
-          dailyGoalWords: parsed.daily,
+          // Not edited here any more: resent exactly as the server gave them.
+          dailyGoalWords: before.dailyGoalWords,
           sessionGoalWords: parsed.session,
-          streakEnabled: form.streak,
+          streakEnabled: before.streakEnabled,
           timezone: localTimezone(),
           onboardingDismissed: before.onboardingDismissed,
         },
@@ -102,7 +103,6 @@ export function GoalsPanel({ workWords, todayWords }: { workWords: number; today
       setForm(toFields(saved));
       setNotice({ tone: 'saved', text: copy.saved });
       if (saved.workGoalWords !== before.workGoalWords && saved.workGoalWords > 0) studioAnalytics.goalSet(workId, 'work');
-      if (saved.dailyGoalWords !== before.dailyGoalWords && saved.dailyGoalWords > 0) studioAnalytics.goalSet(workId, 'daily');
       if (saved.sessionGoalWords !== before.sessionGoalWords && saved.sessionGoalWords > 0) studioAnalytics.goalSet(workId, 'session');
       await refresh().catch(() => {});
     } catch (error) {
@@ -134,18 +134,7 @@ export function GoalsPanel({ workWords, todayWords }: { workWords: number; today
         <p className="type-body-sm text-secondary">{copy.intro}</p>
       </div>
 
-      {base.workGoalWords > 0 || base.dailyGoalWords > 0 ? (
-        <div className="flex flex-col gap-3">
-          {base.workGoalWords > 0 ? <GoalBar label={copy.workBar} done={workWords} goal={base.workGoalWords} /> : null}
-          {base.dailyGoalWords > 0 ? (
-            todayWords === null ? (
-              <p className="type-caption text-secondary">{copy.todayLoading}</p>
-            ) : (
-              <GoalBar label={copy.dailyBar} done={todayWords} goal={base.dailyGoalWords} />
-            )
-          ) : null}
-        </div>
-      ) : null}
+      {base.workGoalWords > 0 ? <GoalBar label={copy.workBar} done={workWords} goal={base.workGoalWords} /> : null}
 
       <form
         className="flex flex-col gap-4"
@@ -169,23 +158,12 @@ export function GoalsPanel({ workWords, todayWords }: { workWords: number; today
           type="number"
           inputMode="numeric"
           min={0}
-          label={copy.daily}
-          hint={copy.dailyHint}
-          value={form.daily}
-          error={invalid(parsed.daily, GOAL_MAX.daily)}
-          onChange={(daily) => set({ daily })}
-        />
-        <StudioInput
-          type="number"
-          inputMode="numeric"
-          min={0}
           label={copy.session}
           hint={copy.sessionHint}
           value={form.session}
           error={invalid(parsed.session, GOAL_MAX.session)}
           onChange={(session) => set({ session })}
         />
-        <StudioToggle label={copy.streakToggle} help={copy.streakHelp} checked={form.streak} onChange={(streak) => set({ streak })} />
 
         {notice && notice.tone !== 'saved' ? <InkInlineBanner tone={notice.tone === 'conflict' ? 'notice' : 'error'} title={notice.text} /> : null}
 
