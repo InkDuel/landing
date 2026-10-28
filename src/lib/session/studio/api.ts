@@ -3,6 +3,7 @@
 import type { Locale } from '@/lib/i18n';
 
 import { ApiError, apiDownload, apiPath, apiRequest } from '../api';
+import { localTimezone } from '../local-time';
 import {
   type DraftStatus,
   type Entity,
@@ -40,22 +41,8 @@ function need<T>(value: T | null): T {
   return value;
 }
 
-/** The author's IANA zone, for the writing calendar. */
-export function localTimezone(): string {
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-  } catch {
-    return 'UTC';
-  }
-}
-
-/** The local calendar date (YYYY-MM-DD) of an instant. */
-export function localDate(at: Date = new Date()): string {
-  const y = at.getFullYear();
-  const m = String(at.getMonth() + 1).padStart(2, '0');
-  const d = String(at.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
+// Shared with the profile and the duel submissions; re-exported for Studio callers.
+export { localDate, localTimezone } from '../local-time';
 
 /** Studio switched off for this account (kill switch or rollout). */
 export function isStudioUnavailable(error: unknown): boolean {

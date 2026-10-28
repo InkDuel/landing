@@ -1,6 +1,9 @@
 # InkDuel Studio — Handoff
 
 - **Last agent:** Claude (Opus 5.5), 2026-10-24.
+- **2026-10-27:** branch `web/writing-progress` trims the work «Progreso» tab
+  (P2, D6 update); the streak, daily goal and full calendar live in the
+  profile's «Tu escritura». Not merged or deployed.
 - **Overall state:** P0 implemented end to end (backend + web), reviewed
   independently, QA'd in a real browser against local emulators. PRs open for
   review; nothing merged, deployed or enabled.

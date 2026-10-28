@@ -184,11 +184,15 @@ export function ProfileStats({ user, locale, own }: { user: ProfileUser; locale:
     { value: String(user.losses), label: copy.lost },
     { value: copy.winRateValue(winRate), label: copy.winRate },
   ];
-  const line = [
-    ...(own ? [] : [[copy.writerLevelLabel, user.writerLevel] as const]),
-    [copy.currentStreak, user.currentStreak] as const,
-    [copy.bestStreak, user.bestStreak] as const,
-  ];
+  // The writing streak is the public one; the win streak lives in the ranking.
+  // A backend that does not send it (kill switch off, older build) hides it.
+  const line = (
+    [
+      own ? null : ([copy.writerLevelLabel, user.writerLevel] as const),
+      user.writingStreak === null ? null : ([copy.writingStreak, user.writingStreak] as const),
+      user.bestWritingStreak === null ? null : ([copy.bestWritingStreak, user.bestWritingStreak] as const),
+    ] as const
+  ).filter((part): part is readonly [string, number] => part !== null);
   return (
     <section className="flex flex-col gap-3">
       <dl className="m-0 grid grid-cols-4 gap-2">
@@ -199,14 +203,16 @@ export function ProfileStats({ user, locale, own }: { user: ProfileUser; locale:
           </div>
         ))}
       </dl>
-      <p className="type-body text-[13.5px] text-secondary">
-        {line.map(([label, value], index) => (
-          <span key={label}>
-            {index > 0 ? ' · ' : ''}
-            {label} <span className="font-extrabold text-primary">{value}</span>
-          </span>
-        ))}
-      </p>
+      {line.length > 0 ? (
+        <p className="type-body text-[13.5px] text-secondary">
+          {line.map(([label, value], index) => (
+            <span key={label}>
+              {index > 0 ? ' · ' : ''}
+              {label} <span className="font-extrabold text-primary">{value}</span>
+            </span>
+          ))}
+        </p>
+      ) : null}
     </section>
   );
 }

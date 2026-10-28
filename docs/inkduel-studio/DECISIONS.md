@@ -69,6 +69,15 @@ silently — add `Update YYYY-MM-DD` under it. Product source of truth: `PRD.md`
 - Session = saves < 30 min apart. Active day = ≥ 20 net chars added that day.
   Streak = consecutive active local dates ending today or yesterday (`today`
   param from client). Opt-out via `streakEnabled`.
+- Update 2026-10-27 («Progreso de escritura», vault
+  `wiki/technical/progreso-de-escritura-spec.md`): the streak and the daily
+  goal became personal (duels + works) and moved to the profile's «Tu
+  escritura» (`/me#escritura`, `GET /api/me/writing`). The work's «Progreso»
+  keeps only work words, reading time, words this week in the work, the work
+  calendar and the work/session goals. `dailyGoalWords` and `streakEnabled`
+  stay in the Work settings contract; the web no longer edits them and resends
+  them unchanged on every save. The calendar moved to shared modules
+  (`src/lib/session/writing-calendar.ts`, `src/components/session/writing-calendar.tsx`).
 - Word count = shared algorithm (Go `models.CountWords` ≡ TS `countWords`):
   runs of letters/marks/digits joined by inner `'’-`; each Han/Hiragana/
   Katakana/Hangul-syllable rune counts as one word (CJK approximation,

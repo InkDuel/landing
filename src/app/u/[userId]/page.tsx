@@ -51,7 +51,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
               rankDivision: user.rankDivision,
               wins: user.wins,
               losses: user.losses,
-              bestStreak: user.bestStreak,
+              bestWritingStreak: user.bestWritingStreak,
               writerLevel: user.writerLevel,
             }
           : null

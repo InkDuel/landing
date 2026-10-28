@@ -12,13 +12,15 @@ import { ReceivedMarksPreview } from '@/components/session/received-marks';
 import { RequireSession, SessionPage } from '@/components/session/session-page';
 import { useSessionLocale } from '@/components/session/session-root';
 import { SpaceRow, followingHref, myWorksHref } from '@/components/session/works-parts';
+import { WritingProgress } from '@/components/session/writing-progress';
 import { useSession } from '@/lib/session/auth-context';
 import { SESSION_COPY } from '@/lib/session/copy';
 import { type WorkProfileSummary, followsApi } from '@/lib/session/follows';
 import { WORKS_COPY } from '@/lib/session/works-copy';
 
 // Your profile (11, own): identity → rank card with the pencil → level →
-// stats → Marcas recibidas → «Tu espacio» (Tus obras, Historias que sigo,
+// stats → «Tu escritura» (#escritura; full width at the top of the footer on
+// desktop, so the 53-week calendar has room) → Marcas recibidas → «Tu espacio» (Tus obras, Historias que sigo,
 // with the app's counts; Círculo de tinta comes later).
 // Signing out lives in Ajustes in the app; the web has no
 // Ajustes, so it closes the profile, behind the same simple dialog (18).
@@ -59,7 +61,9 @@ function MeView() {
         stats={<ProfileStats user={user} locale={locale} own />}
         footer={
           <div className="flex flex-col gap-6">
+            {/* An active duel to resume (rare, time-sensitive) stays above everything. */}
             <RankedActiveNotice locale={locale} />
+            <WritingProgress locale={locale} />
             <ReceivedMarksPreview />
             <div className="flex flex-col gap-3">
               <SpaceRow

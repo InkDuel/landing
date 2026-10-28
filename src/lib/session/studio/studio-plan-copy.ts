@@ -1,5 +1,7 @@
 import type { Locale } from '@/lib/i18n';
 
+import type { CalendarCopy } from '../writing-copy';
+
 import type { SceneStatus } from './models';
 
 // Copy of the «Planificar» and «Progreso» areas of InkDuel Studio. Neutral
@@ -735,6 +737,9 @@ export const PLAN_COPY: Record<Locale, PlanCopy> = { es, en, pt };
 export type ProgressCopy = {
   heading: string;
   intro: string;
+  /** Points to the profile, where the streak and the full calendar live now. */
+  profileLine: string;
+  profileLink: string;
   loading: string;
   loadError: string;
   retry: string;
@@ -746,25 +751,15 @@ export type ProgressCopy = {
     readingNone: string;
     weekWords: string;
     weekHint: string;
-    monthDays: string;
-    monthDaysHint: string;
-    days: Plural;
-    streak: string;
-    streakHint: string;
-    streakZero: string;
   };
   goals: {
     title: string;
     intro: string;
     work: string;
     workHint: string;
-    daily: string;
-    dailyHint: string;
     session: string;
     sessionHint: string;
     invalid: (max: string) => string;
-    streakToggle: string;
-    streakHelp: string;
     save: string;
     saving: string;
     saved: string;
@@ -774,28 +769,13 @@ export type ProgressCopy = {
     saveFailedNetwork: string;
     saveFailedInvalid: string;
     workBar: string;
-    dailyBar: string;
     barText: (done: string, goal: string, percent: string) => string;
     reached: string;
-    todayLoading: string;
   };
-  calendar: {
+  calendar: CalendarCopy & {
     title: string;
-    gridLabel: string;
     summary: Plural;
     empty: string;
-    legend: string;
-    less: string;
-    more: string;
-    levels: [string, string, string, string, string];
-    cell: (label: string, words: number, formatted: string) => string;
-    cellNone: (label: string) => string;
-    viewList: string;
-    hideList: string;
-    listTitle: string;
-    listEmpty: string;
-    colDate: string;
-    colWords: string;
   };
   rules: {
     title: string;
@@ -809,8 +789,10 @@ export type ProgressCopy = {
 const percent = (n: string, space: boolean) => (space ? `${n} %` : `${n}%`);
 
 const progressEs: ProgressCopy = {
-  heading: 'Tu escritura',
+  heading: 'Progreso de esta obra',
   intro: 'Un registro para ti, sin comparaciones. Solo cuenta lo que escribes y se guarda.',
+  profileLine: 'Tu racha y tu calendario completo están en tu perfil.',
+  profileLink: 'Ver tu escritura',
   loading: 'Cargando…',
   loadError: 'No pudimos cargar tu progreso.',
   retry: 'Reintentar',
@@ -820,27 +802,17 @@ const progressEs: ProgressCopy = {
     wordsUnit: plural('1 palabra', (n) => `${n} palabras`),
     reading: (duration) => `Lectura estimada: ${duration}`,
     readingNone: 'Aún no hay texto para estimar la lectura.',
-    weekWords: 'Palabras escritas esta semana',
+    weekWords: 'Palabras escritas esta semana en esta obra',
     weekHint: 'Últimos 7 días. Las importaciones no cuentan.',
-    monthDays: 'Días de escritura este mes',
-    monthDaysHint: 'Días en que guardaste texto nuevo.',
-    days: plural('1 día', (n) => `${n} días`),
-    streak: 'Racha actual',
-    streakHint: 'Días seguidos con escritura.',
-    streakZero: 'Puedes volver a escribir cuando quieras.',
   },
   goals: {
     title: 'Metas',
     intro: 'Son voluntarias y solo tuyas. Déjalas en 0 si no las quieres.',
     work: 'Meta de la obra (palabras)',
     workHint: 'Cuántas palabras quieres que tenga la obra.',
-    daily: 'Meta diaria (palabras)',
-    dailyHint: 'Palabras nuevas que te gustaría escribir en un día.',
     session: 'Meta por sesión (palabras)',
     sessionHint: 'Palabras nuevas que te gustaría escribir en una sentada.',
     invalid: (max) => `Escribe un número entero entre 0 y ${max}.`,
-    streakToggle: 'Mostrar mi racha',
-    streakHelp: 'Cuenta los días seguidos con escritura. Puedes ocultarla cuando quieras sin perder tu calendario.',
     save: 'Guardar metas',
     saving: 'Guardando…',
     saved: 'Metas guardadas.',
@@ -850,10 +822,8 @@ const progressEs: ProgressCopy = {
     saveFailedNetwork: 'No se pudieron guardar las metas. Revisa tu conexión; tus cambios siguen aquí.',
     saveFailedInvalid: 'Algún valor no es válido. Revisa los campos e inténtalo de nuevo.',
     workBar: 'Avance de la meta de la obra',
-    dailyBar: 'Avance de la meta de hoy',
     barText: (done, goal, pct) => `${done} de ${goal} palabras (${percent(pct, true)})`,
     reached: 'Meta cumplida.',
-    todayLoading: 'Calculando lo de hoy…',
   },
   calendar: {
     title: 'Calendario de escritura',
@@ -864,7 +834,7 @@ const progressEs: ProgressCopy = {
     less: 'Menos',
     more: 'Más',
     levels: ['Sin escritura', '1–99 palabras', '100–499 palabras', '500–999 palabras', '1.000 palabras o más'],
-    cell: (label, words, formatted) => `${label}: ${words === 1 ? '1 palabra' : `${formatted} palabras`}`,
+    cell: (label, { words }, f) => `${label}: ${words === 1 ? '1 palabra' : `${f(words)} palabras`}`,
     cellNone: (label) => `${label}: sin escritura`,
     viewList: 'Ver como lista',
     hideList: 'Ocultar la lista',
@@ -883,8 +853,10 @@ const progressEs: ProgressCopy = {
 };
 
 const progressEn: ProgressCopy = {
-  heading: 'Your writing',
+  heading: 'Progress on this work',
   intro: 'A record for you, with no comparisons. Only what you write and save counts.',
+  profileLine: 'Your streak and your full calendar are on your profile.',
+  profileLink: 'See your writing',
   loading: 'Loading…',
   loadError: 'We could not load your progress.',
   retry: 'Try again',
@@ -894,27 +866,17 @@ const progressEn: ProgressCopy = {
     wordsUnit: plural('1 word', (n) => `${n} words`),
     reading: (duration) => `Estimated reading time: ${duration}`,
     readingNone: 'There is no text yet to estimate the reading time.',
-    weekWords: 'Words written this week',
+    weekWords: 'Words written this week in this work',
     weekHint: 'Last 7 days. Imports do not count.',
-    monthDays: 'Writing days this month',
-    monthDaysHint: 'Days when you saved new text.',
-    days: plural('1 day', (n) => `${n} days`),
-    streak: 'Current streak',
-    streakHint: 'Days in a row with writing.',
-    streakZero: 'You can come back to writing whenever you like.',
   },
   goals: {
     title: 'Goals',
     intro: 'They are optional and only yours. Leave them at 0 if you do not want them.',
     work: 'Work goal (words)',
     workHint: 'How many words you would like the work to have.',
-    daily: 'Daily goal (words)',
-    dailyHint: 'New words you would like to write in a day.',
     session: 'Session goal (words)',
     sessionHint: 'New words you would like to write in one sitting.',
     invalid: (max) => `Enter a whole number between 0 and ${max}.`,
-    streakToggle: 'Show my streak',
-    streakHelp: 'Counts days in a row with writing. You can hide it any time without losing your calendar.',
     save: 'Save goals',
     saving: 'Saving…',
     saved: 'Goals saved.',
@@ -924,10 +886,8 @@ const progressEn: ProgressCopy = {
     saveFailedNetwork: 'Could not save your goals. Check your connection; your changes are still here.',
     saveFailedInvalid: 'Some value is not valid. Check the fields and try again.',
     workBar: 'Progress toward the work goal',
-    dailyBar: 'Progress toward today’s goal',
     barText: (done, goal, pct) => `${done} of ${goal} words (${percent(pct, false)})`,
     reached: 'Goal reached.',
-    todayLoading: 'Working out today…',
   },
   calendar: {
     title: 'Writing calendar',
@@ -938,7 +898,7 @@ const progressEn: ProgressCopy = {
     less: 'Less',
     more: 'More',
     levels: ['No writing', '1–99 words', '100–499 words', '500–999 words', '1,000 words or more'],
-    cell: (label, words, formatted) => `${label}: ${words === 1 ? '1 word' : `${formatted} words`}`,
+    cell: (label, { words }, f) => `${label}: ${words === 1 ? '1 word' : `${f(words)} words`}`,
     cellNone: (label) => `${label}: no writing`,
     viewList: 'View as a list',
     hideList: 'Hide the list',
@@ -957,8 +917,10 @@ const progressEn: ProgressCopy = {
 };
 
 const progressPt: ProgressCopy = {
-  heading: 'Sua escrita',
+  heading: 'Progresso desta obra',
   intro: 'Um registro para você, sem comparações. Só conta o que você escreve e salva.',
+  profileLine: 'Sua sequência e seu calendário completo estão no seu perfil.',
+  profileLink: 'Ver sua escrita',
   loading: 'Carregando…',
   loadError: 'Não conseguimos carregar seu progresso.',
   retry: 'Tentar de novo',
@@ -968,27 +930,17 @@ const progressPt: ProgressCopy = {
     wordsUnit: plural('1 palavra', (n) => `${n} palavras`),
     reading: (duration) => `Leitura estimada: ${duration}`,
     readingNone: 'Ainda não há texto para estimar a leitura.',
-    weekWords: 'Palavras escritas esta semana',
+    weekWords: 'Palavras escritas esta semana nesta obra',
     weekHint: 'Últimos 7 dias. Importações não contam.',
-    monthDays: 'Dias de escrita neste mês',
-    monthDaysHint: 'Dias em que você salvou texto novo.',
-    days: plural('1 dia', (n) => `${n} dias`),
-    streak: 'Sequência atual',
-    streakHint: 'Dias seguidos com escrita.',
-    streakZero: 'Você pode voltar a escrever quando quiser.',
   },
   goals: {
     title: 'Metas',
     intro: 'São voluntárias e só suas. Deixe em 0 se não quiser.',
     work: 'Meta da obra (palavras)',
     workHint: 'Quantas palavras você quer que a obra tenha.',
-    daily: 'Meta diária (palavras)',
-    dailyHint: 'Palavras novas que você gostaria de escrever em um dia.',
     session: 'Meta por sessão (palavras)',
     sessionHint: 'Palavras novas que você gostaria de escrever de uma vez.',
     invalid: (max) => `Digite um número inteiro entre 0 e ${max}.`,
-    streakToggle: 'Mostrar minha sequência',
-    streakHelp: 'Conta os dias seguidos com escrita. Você pode ocultá-la quando quiser sem perder seu calendário.',
     save: 'Salvar metas',
     saving: 'Salvando…',
     saved: 'Metas salvas.',
@@ -998,10 +950,8 @@ const progressPt: ProgressCopy = {
     saveFailedNetwork: 'Não foi possível salvar as metas. Verifique sua conexão; suas alterações continuam aqui.',
     saveFailedInvalid: 'Algum valor não é válido. Revise os campos e tente de novo.',
     workBar: 'Andamento da meta da obra',
-    dailyBar: 'Andamento da meta de hoje',
     barText: (done, goal, pct) => `${done} de ${goal} palavras (${percent(pct, true)})`,
     reached: 'Meta cumprida.',
-    todayLoading: 'Calculando o de hoje…',
   },
   calendar: {
     title: 'Calendário de escrita',
@@ -1012,7 +962,7 @@ const progressPt: ProgressCopy = {
     less: 'Menos',
     more: 'Mais',
     levels: ['Sem escrita', '1–99 palavras', '100–499 palavras', '500–999 palavras', '1.000 palavras ou mais'],
-    cell: (label, words, formatted) => `${label}: ${words === 1 ? '1 palavra' : `${formatted} palavras`}`,
+    cell: (label, { words }, f) => `${label}: ${words === 1 ? '1 palavra' : `${f(words)} palavras`}`,
     cellNone: (label) => `${label}: sem escrita`,
     viewList: 'Ver como lista',
     hideList: 'Ocultar a lista',

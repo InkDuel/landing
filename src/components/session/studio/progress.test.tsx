@@ -127,10 +127,8 @@ describe('Progress · numbers and calendar', () => {
 
     expect(row('Palabras en tu obra').getByText('200')).toBeTruthy(); // 120 (draft) + 80 (chapter), not both
     expect(screen.getByText('Lectura estimada: 1 min')).toBeTruthy();
-    expect(row('Palabras escritas esta semana').getByText('445')).toBeTruthy(); // 340 + 100 + 5, the last 7 days
+    expect(row('Palabras escritas esta semana en esta obra').getByText('445')).toBeTruthy(); // 340 + 100 + 5, the last 7 days
     expect(screen.getByText('Últimos 7 días. Las importaciones no cuentan.')).toBeTruthy();
-    expect(row('Días de escritura este mes').getByText('4')).toBeTruthy(); // 24, 23, 12 and 1; the 22nd is too short
-    expect(row('Racha actual').getByText('2 días')).toBeTruthy();
     // How it counts, and in whose time zone.
     expect(screen.getByText('Solo cuenta el texto guardado.')).toBeTruthy();
     expect(screen.getByText('Los textos importados no cuentan como palabras escritas.')).toBeTruthy();
@@ -185,19 +183,20 @@ describe('Progress · numbers and calendar', () => {
     expect(screen.queryByRole('grid')).toBeNull();
   });
 
-  it('never shows a streak the author did not want, and a streak of zero is never a reproach', async () => {
-    vi.spyOn(studioApi, 'progress').mockResolvedValue(progress(DAYS, 0));
+  it('keeps only what belongs to the work: no streak, no month days, no daily goal, and points to the profile', async () => {
+    vi.spyOn(studioApi, 'progress').mockResolvedValue(progress(DAYS, 4));
     mountProgress();
     expect(await screen.findByText('Palabras en tu obra')).toBeTruthy();
-    expect(screen.getByText('Puedes volver a escribir cuando quieras.')).toBeTruthy();
-    expect(screen.queryByText(/0 días/)).toBeNull();
-    cleanup();
-
-    vi.spyOn(studioApi, 'progress').mockResolvedValue(progress(DAYS, 4));
-    mountProgress({ streakEnabled: false });
-    expect(await screen.findByText('Palabras en tu obra')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Progreso de esta obra' })).toBeTruthy();
     expect(screen.queryByText('Racha actual')).toBeNull();
+    expect(screen.queryByText(/4 días/)).toBeNull();
     expect(screen.queryByText(/Puedes volver a escribir/)).toBeNull();
+    expect(screen.queryByText('Días de escritura este mes')).toBeNull();
+    expect(screen.queryByLabelText('Meta diaria (palabras)')).toBeNull();
+    expect(screen.queryByLabelText('Mostrar mi racha')).toBeNull();
+    expect(screen.queryByRole('progressbar', { name: 'Avance de la meta de hoy' })).toBeNull();
+    expect(screen.getByText(/Tu racha y tu calendario completo están en tu perfil\./)).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Ver tu escritura' }).getAttribute('href')).toBe('/me#escritura');
   });
 
   it('shows an error with a retry', async () => {
@@ -217,12 +216,10 @@ describe('Progress · goals', () => {
     const work = await screen.findByRole('progressbar', { name: 'Avance de la meta de la obra' });
     expect(work.getAttribute('aria-valuetext')).toBe('200 de 400 palabras (50 %)');
     expect(work.getAttribute('aria-valuenow')).toBe('200');
-    const daily = await screen.findByRole('progressbar', { name: 'Avance de la meta de hoy' });
-    expect(daily.getAttribute('aria-valuetext')).toBe('340 de 500 palabras (68 %)');
     expect(screen.getByText('200 de 400 palabras (50 %)')).toBeTruthy();
   });
 
-  it('saves under the settings revision with the right payload and counts only goals set to a value', async () => {
+  it('saves under the settings revision, resending the daily goal and streak switch untouched', async () => {
     vi.spyOn(studioApi, 'progress').mockResolvedValue(progress(DAYS));
     const save = vi.spyOn(studioApi, 'saveSettings').mockImplementation((async (_w: string, input: Record<string, unknown>) => ({
       ...settings,
@@ -233,14 +230,12 @@ describe('Progress · goals', () => {
       revision: 6,
     })) as never);
     const goalSet = vi.spyOn(studioAnalytics, 'goalSet').mockImplementation(() => {});
-    const { refresh } = mountProgress();
+    const { refresh } = mountProgress({ dailyGoalWords: 777, streakEnabled: false });
 
     const submit = await screen.findByRole('button', { name: 'Guardar metas' });
     expect((submit as HTMLButtonElement).disabled).toBe(true); // unchanged
     fireEvent.change(screen.getByLabelText('Meta de la obra (palabras)'), { target: { value: '50000' } });
-    fireEvent.change(screen.getByLabelText('Meta diaria (palabras)'), { target: { value: '0' } }); // turned off
     fireEvent.change(screen.getByLabelText('Meta por sesión (palabras)'), { target: { value: '300' } });
-    fireEvent.click(screen.getByLabelText('Mostrar mi racha')); // off
     expect((screen.getByRole('button', { name: 'Guardar metas' }) as HTMLButtonElement).disabled).toBe(false);
     fireEvent.click(screen.getByRole('button', { name: 'Guardar metas' }));
 
@@ -250,7 +245,7 @@ describe('Progress · goals', () => {
       {
         expectedRevision: 5,
         workGoalWords: 50000,
-        dailyGoalWords: 0,
+        dailyGoalWords: 777, // exactly as the server gave them, never clobbered
         sessionGoalWords: 300,
         streakEnabled: false,
         timezone: expect.any(String),
@@ -271,7 +266,7 @@ describe('Progress · goals', () => {
     const save = vi.spyOn(studioApi, 'saveSettings');
     mountProgress();
     await screen.findByRole('button', { name: 'Guardar metas' });
-    fireEvent.change(screen.getByLabelText('Meta diaria (palabras)'), { target: { value: '100001' } });
+    fireEvent.change(screen.getByLabelText('Meta por sesión (palabras)'), { target: { value: '100001' } });
     expect(screen.getByText('Escribe un número entero entre 0 y 100.000.')).toBeTruthy();
     expect((screen.getByRole('button', { name: 'Guardar metas' }) as HTMLButtonElement).disabled).toBe(true);
     expect(save).not.toHaveBeenCalled();

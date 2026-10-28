@@ -27,3 +27,4 @@ PRD codes in brackets. Update after every verifiable block.
 | V1 | Integrated QA (local backend + emulator + web), review, PRs | both | all | done |
 | V2 | Pre-merge review: overview cache per account, recovery clear on account change, import/export + network QA, Flutter compatibility replay (RELEASE.md) | both | V1 | done |
 | P1 | «Fondo» in «Aa»: Claro, Sepia, Noche for the whole Studio page (D12) | web | V2 | done |
+| P2 | Progreso trimmed for «Progreso de escritura»: streak + daily goal move to the profile; shared calendar (D6 update) | web | W7 | done |

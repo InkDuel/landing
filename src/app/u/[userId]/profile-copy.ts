@@ -9,7 +9,7 @@ export type ProfileCopy = {
   stats: string;
   wins: string;
   winRate: string;
-  bestStreak: string;
+  bestWritingStreak: string;
   writerLevel: string;
   openInApp: string;
   join: string;
@@ -29,7 +29,7 @@ export const PROFILE_COPY: Record<Locale, ProfileCopy> = {
     stats: 'Estadísticas',
     wins: 'Victorias',
     winRate: '% de victorias',
-    bestStreak: 'Mejor racha',
+    bestWritingStreak: 'Mejor racha de escritura',
     writerLevel: 'Nivel de escritor',
     openInApp: 'Abrir perfil en la app',
     join: 'Unirse a InkDuel',
@@ -47,7 +47,7 @@ export const PROFILE_COPY: Record<Locale, ProfileCopy> = {
     stats: 'Stats',
     wins: 'Wins',
     winRate: 'Win rate',
-    bestStreak: 'Best streak',
+    bestWritingStreak: 'Best writing streak',
     writerLevel: 'Writer level',
     openInApp: 'Open profile in the app',
     join: 'Join InkDuel',
@@ -65,7 +65,7 @@ export const PROFILE_COPY: Record<Locale, ProfileCopy> = {
     stats: 'Estatísticas',
     wins: 'Vitórias',
     winRate: '% de vitórias',
-    bestStreak: 'Melhor sequência',
+    bestWritingStreak: 'Melhor sequência de escrita',
     writerLevel: 'Nível de escritor',
     openInApp: 'Abrir perfil no app',
     join: 'Entrar no InkDuel',

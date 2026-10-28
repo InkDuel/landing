@@ -46,8 +46,8 @@ export type SessionCopy = {
     winRate: string;
     winRateValue: (rate: number) => string;
     writerLevelLabel: string;
-    currentStreak: string;
-    bestStreak: string;
+    writingStreak: string;
+    bestWritingStreak: string;
     writerLevel: (level: number) => string;
     xp: (current: number, total: number) => string;
     works: string;
@@ -145,8 +145,8 @@ export const SESSION_COPY: Record<Locale, SessionCopy> = {
       winRate: 'de victorias',
       winRateValue: (r) => `${r} %`,
       writerLevelLabel: 'Nivel de escritor',
-      currentStreak: 'Racha actual',
-      bestStreak: 'Mejor racha',
+      writingStreak: 'Racha de escritura',
+      bestWritingStreak: 'Mejor racha',
       writerLevel: (l) => `Nivel de escritor ${l}`,
       xp: (c, t) => `${c} / ${t} XP`,
       works: 'Obras',
@@ -239,8 +239,8 @@ export const SESSION_COPY: Record<Locale, SessionCopy> = {
       winRate: 'win rate',
       winRateValue: (r) => `${r}%`,
       writerLevelLabel: 'Writer level',
-      currentStreak: 'Current streak',
-      bestStreak: 'Best streak',
+      writingStreak: 'Writing streak',
+      bestWritingStreak: 'Best streak',
       writerLevel: (l) => `Writer Level ${l}`,
       xp: (c, t) => `${c} / ${t} XP`,
       works: 'Works',
@@ -333,8 +333,8 @@ export const SESSION_COPY: Record<Locale, SessionCopy> = {
       winRate: 'de vitórias',
       winRateValue: (r) => `${r} %`,
       writerLevelLabel: 'Nível de escritor',
-      currentStreak: 'Sequência atual',
-      bestStreak: 'Melhor sequência',
+      writingStreak: 'Sequência de escrita',
+      bestWritingStreak: 'Melhor sequência',
       writerLevel: (l) => `Nível de escritor ${l}`,
       xp: (c, t) => `${c} / ${t} XP`,
       works: 'Obras',
