@@ -16,6 +16,8 @@ export type PublicUser = {
   losses: number;
   currentStreak: number;
   bestStreak: number;
+  /** 0 when an older backend omits it. */
+  bestWritingStreak: number;
   writerLevel: number;
   createdAt: string;
 };
@@ -70,6 +72,7 @@ export async function fetchPublicUser(userId: string): Promise<PublicUser | null
     losses: num(data.losses),
     currentStreak: num(data.currentStreak),
     bestStreak: num(data.bestStreak),
+    bestWritingStreak: Math.max(0, Math.trunc(num(data.bestWritingStreak))),
     writerLevel: num(data.writerLevel),
     createdAt: str(data.createdAt),
   };

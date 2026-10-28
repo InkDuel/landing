@@ -186,8 +186,9 @@ export function ProfileStats({ user, locale, own }: { user: ProfileUser; locale:
   ];
   const line = [
     ...(own ? [] : [[copy.writerLevelLabel, user.writerLevel] as const]),
-    [copy.currentStreak, user.currentStreak] as const,
-    [copy.bestStreak, user.bestStreak] as const,
+    // The writing streak is the public one; the win streak lives in the ranking.
+    [copy.writingStreak, user.writingStreak] as const,
+    [copy.bestWritingStreak, user.bestWritingStreak] as const,
   ];
   return (
     <section className="flex flex-col gap-3">

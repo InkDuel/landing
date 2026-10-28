@@ -18,7 +18,7 @@ export type ProfileViewData = {
   rankDivision: number;
   wins: number;
   losses: number;
-  bestStreak: number;
+  bestWritingStreak: number;
   writerLevel: number;
 };
 
@@ -55,7 +55,7 @@ export function ProfileView({
         const stats = [
           { label: copy.wins, value: String(user.wins) },
           { label: copy.winRate, value: `${winRate}%` },
-          { label: copy.bestStreak, value: String(user.bestStreak) },
+          { label: copy.bestWritingStreak, value: String(user.bestWritingStreak) },
           { label: copy.writerLevel, value: String(user.writerLevel) },
         ];
 

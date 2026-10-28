@@ -23,8 +23,12 @@ export type ProfileUser = {
   rankDivision: number;
   wins: number;
   losses: number;
+  /** Win streak: only the ranking shows it. */
   currentStreak: number;
   bestStreak: number;
+  /** Writing streak (days in a row writing); 0 when an older backend omits it. */
+  writingStreak: number;
+  bestWritingStreak: number;
   duelDetailsPrivate: boolean;
   writerLevel: number;
   writerXpInLevel: number;
@@ -47,6 +51,8 @@ export function parseProfileUser(data: unknown): ProfileUser | null {
     losses: nonNegative(data.losses),
     currentStreak: nonNegative(data.currentStreak),
     bestStreak: nonNegative(data.bestStreak),
+    writingStreak: nonNegative(data.writingStreak),
+    bestWritingStreak: nonNegative(data.bestWritingStreak),
     duelDetailsPrivate: data.duelDetailsPrivate === true,
     writerLevel: nonNegative(data.writerLevel),
     writerXpInLevel: nonNegative(data.writerXpInLevel),
