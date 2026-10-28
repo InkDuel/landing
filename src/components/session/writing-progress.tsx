@@ -54,8 +54,10 @@ export function WritingProgress({ locale }: { locale: Locale }) {
       })
       .catch((error) => {
         if (controller.signal.aborted) return;
-        // A refresh that fails keeps what is already on screen.
-        setLoad((prev) => (prev.status === 'ready' ? prev : { status: isWritingUnavailable(error) ? 'unavailable' : 'error' }));
+        // A 404 (feature turned off) hides the block even over loaded data;
+        // any other failed refresh keeps what is already on screen.
+        if (isWritingUnavailable(error)) setLoad({ status: 'unavailable' });
+        else setLoad((prev) => (prev.status === 'ready' ? prev : { status: 'error' }));
       });
     return () => controller.abort();
   }, [locale, today, weekStart, attempt]);
