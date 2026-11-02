@@ -74,6 +74,8 @@ type Target = {
   passage?: PassageDraft;
   /** Where a root was started, for analytics. */
   source?: PassageSource;
+  /** Text to prefill the composer with (a draft carried over a passage conflict). */
+  initialText?: string;
 };
 
 /** The sheet «Marcas de este párrafo»: always the server's own answer for one key. */
@@ -120,6 +122,12 @@ type State = {
   hiddenKeys: string[];
   /** Create answered 409 passage_changed: the reader must choose the passage again. */
   conflict: boolean;
+  /**
+   * The text of a quoted Marca that hit that 409, kept in memory only so the
+   * reader does not retype it. It is never sent by itself: the next quote the
+   * reader chooses reopens the composer with it, editable.
+   */
+  carriedText: string | null;
 };
 
 const initialState = (focusId: string | null, replyFocusId: string | null = null): State => ({
@@ -147,6 +155,7 @@ const initialState = (focusId: string | null, replyFocusId: string | null = null
   quoteOff: false,
   hiddenKeys: [],
   conflict: false,
+  carriedText: null,
 });
 
 /** The same change on the chapter's roots and on the open paragraph's roots. */
@@ -500,7 +509,16 @@ export function useChapterMarks(
       has_passage: !!target.passage,
       source: target.rootId ? null : (target.source ?? 'end_cta'),
     });
-    setState((s) => ({ ...s, composer: target, createError: null, conflict: false }));
+    // A text carried over a passage conflict goes only to a NEW quote, never
+    // to a reply or to a plain Marca, and it is handed over exactly once.
+    const carried = target.passage ? state.carriedText : null;
+    setState((s) => ({
+      ...s,
+      composer: carried === null ? target : { ...target, initialText: carried },
+      carriedText: carried === null ? s.carriedText : null,
+      createError: null,
+      conflict: false,
+    }));
   }
 
   /** «Dejar una Marca» over a selection (or a paragraph): a root with its quote. */
@@ -592,10 +610,19 @@ export function useChapterMarks(
     } catch (error) {
       if (!live(gen)) return false;
       if (isPassageChanged(error)) {
-        // The text moved under the reader: drop the draft (its quote may no
-        // longer exist), re-read chapter and summary, and ask for a new choice.
+        // The text moved under the reader: the old quote and its paragraph key
+        // are dead (so is the request id: the same id on another passage is a
+        // conflict). Keep only what the reader typed, re-read chapter and
+        // summary, and ask for a new choice of quote.
         identity.clear();
-        setState((s) => ({ ...s, busy: false, composer: null, createError: null, conflict: true }));
+        setState((s) => ({
+          ...s,
+          busy: false,
+          composer: null,
+          createError: null,
+          conflict: true,
+          carriedText: draft ? text : s.carriedText,
+        }));
         void Promise.allSettled([optionsRef.current.reloadChapter?.(), refreshSummary()]);
         return false;
       }
@@ -1063,6 +1090,7 @@ export function ChapterMarksSection({
             <QuoteLine text={quoting.quote} lines={3} />
             <MarkComposer
               hint={copy.hintRoot}
+              initialText={state.composer.initialText}
               sending={state.busy}
               error={state.createError}
               blocked={state.writesOff}

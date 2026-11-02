@@ -210,6 +210,7 @@ export function MarkComposer({
   error,
   blocked = false,
   autoFocus = false,
+  initialText = '',
   onSubmit,
   onCancel,
   locale,
@@ -221,13 +222,15 @@ export function MarkComposer({
   /** Writes are switched off: the text stays, Publish does not. */
   blocked?: boolean;
   autoFocus?: boolean;
+  /** A draft to start from (editable); only read when the composer mounts. */
+  initialText?: string;
   /** Resolves true when the Marca is in; the draft is then cleared. */
   onSubmit: (text: string) => Promise<boolean>;
   onCancel?: () => void;
   locale: Locale;
 }) {
   const copy = MARKS_COPY[locale];
-  const [text, setText] = useState('');
+  const [text, setText] = useState(initialText);
   const id = useId();
   const ref = useRef<HTMLTextAreaElement>(null);
   const length = markLength(text);

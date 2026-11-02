@@ -243,7 +243,7 @@ describe('quoted Marcas', () => {
     expect(created?.[1]).toMatchObject({ has_passage: false, source: 'end_cta' });
   });
 
-  it('409 passage_changed: reloads chapter and summary, drops the draft, says the conflict', async () => {
+  it('409 passage_changed: reloads chapter and summary, keeps only the text in memory, says the conflict', async () => {
     const reloadChapter = vi.fn().mockResolvedValue(undefined);
     const { result } = await openComposer({ reloadChapter });
     api.summary.mockClear();
@@ -258,6 +258,26 @@ describe('quoted Marcas', () => {
     expect(result.current.state.conflict).toBe(true);
     expect(result.current.state.composer).toBeNull();
     expect(result.current.state.busy).toBe(false);
+    expect(result.current.state.carriedText).toBe('Me heló esa frase');
+  });
+
+  it('after a passage conflict only a NEW quote gets the text back, once; cancel discards it', async () => {
+    const { result } = await openComposer();
+    api.create.mockRejectedValue(new ApiError(409, 'http', { code: 'passage_changed' }));
+    await act(async () => {
+      await result.current.create('Me heló esa frase');
+    });
+    // A plain Marca never takes the carried text.
+    act(() => result.current.openComposer({ rootId: null, parentId: null, name: '', source: 'end_cta' }));
+    expect(result.current.state.composer?.initialText).toBeUndefined();
+    expect(result.current.state.carriedText).toBe('Me heló esa frase');
+    act(() => result.current.closeComposer());
+    act(() => result.current.openPassageComposer(selection));
+    expect(result.current.state.composer?.initialText).toBe('Me heló esa frase');
+    expect(result.current.state.carriedText).toBeNull();
+    act(() => result.current.closeComposer());
+    act(() => result.current.openPassageComposer(selection));
+    expect(result.current.state.composer?.initialText).toBeUndefined();
   });
 
   it('any other 409 keeps the old behaviour: no reload, the composer stays with the error', async () => {

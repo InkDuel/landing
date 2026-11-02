@@ -335,4 +335,86 @@ describe('the quote gesture', () => {
     await waitFor(() => expect(chapterCalls()).toBe(before + 1));
     expect(screen.queryByRole('dialog', { name: 'Sobre este fragmento' })).toBeNull();
   });
+
+  it('passage_changed keeps the typed text: a new quote reopens it prefilled and publishes with a new id and the current revision', async () => {
+    serve();
+    render(<ReaderView workId="w1" chapterId="c1" />);
+    await ready();
+    await waitFor(() => expect(lines()).toHaveLength(3));
+    select(textOf(1), 0, 13);
+    fireEvent.click(await screen.findByRole('button', { name: 'Dejar una Marca' }));
+    let dialog = await screen.findByRole('dialog', { name: 'Sobre este fragmento' });
+    fireEvent.change(within(dialog).getByRole('textbox'), { target: { value: 'Me heló esa frase' } });
+    marksApi.create.mockRejectedValueOnce(new ApiError(409, 'http', { code: 'passage_changed' }));
+    // The chapter moved on: new text, new keys, revision 8.
+    serve({ chapter: chapter({ revision: 8, content: 'Primera línea del capítulo.\n\nEra un ritmo lento, de pecho tranquilo.\n\nY cerró la puerta.' }) });
+    marksApi.summary.mockResolvedValue({
+      markCount: 1,
+      rootCount: 1,
+      canMark: true,
+      passages: passages({ paragraphKeys: ['dddddddddddd', 'eeeeeeeeeeee', 'ffffffffffff'], markedKeys: [], chapterRevision: 8 }),
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Dejarla' }));
+    expect(await screen.findByText('El capítulo cambió mientras leías. Vuelve a elegir el fragmento.')).toBeTruthy();
+    expect(screen.queryByRole('dialog', { name: 'Sobre este fragmento' })).toBeNull();
+    // Nothing was re-sent, and nothing was turned into a general Marca.
+    expect(marksApi.create).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(lines()[1]?.textContent).toContain('pecho tranquilo'));
+
+    select(textOf(1), 4, 19);
+    fireEvent.click(await screen.findByRole('button', { name: 'Dejar una Marca' }));
+    dialog = await screen.findByRole('dialog', { name: 'Sobre este fragmento' });
+    expect((within(dialog).getByRole('textbox') as HTMLTextAreaElement).value).toBe('Me heló esa frase');
+    expect(marksApi.create).toHaveBeenCalledTimes(1);
+
+    marksApi.create.mockResolvedValueOnce({
+      created: true,
+      root: root('new', { passage: { paragraphKey: 'eeeeeeeeeeee', located: true, quote: 'un ritmo lento,' } }),
+      reply: null,
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Dejarla' }));
+    await waitFor(() => expect(marksApi.create).toHaveBeenCalledTimes(2));
+    const [first, second] = marksApi.create.mock.calls;
+    expect(second[2]).not.toBe(first[2]);
+    expect(second[3]).toBe('Me heló esa frase');
+    expect(second[6]).toEqual({ paragraphKey: 'eeeeeeeeeeee', quote: 'un ritmo lento,', chapterRevision: 8 });
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Sobre este fragmento' })).toBeNull());
+  });
+
+  it.each([
+    ['a timeout', new ApiError(0, 'timeout'), true],
+    ['a 503', new ApiError(503, 'http'), false],
+  ])('%s keeps the composer and the typed text, with no conflict and no carried draft', async (_name, failure, retryable) => {
+    serve();
+    render(<ReaderView workId="w1" chapterId="c1" />);
+    await ready();
+    await waitFor(() => expect(lines()).toHaveLength(3));
+    select(textOf(1), 0, 13);
+    fireEvent.click(await screen.findByRole('button', { name: 'Dejar una Marca' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Sobre este fragmento' });
+    fireEvent.change(within(dialog).getByRole('textbox'), { target: { value: 'Me heló esa frase' } });
+    marksApi.create.mockRejectedValueOnce(failure);
+    const chapterCalls = () => get.mock.calls.filter(([path]) => String(path).endsWith('/chapters/c1')).length;
+    const before = chapterCalls();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Dejarla' }));
+    await waitFor(() => expect(marksApi.create).toHaveBeenCalledTimes(1));
+    await act(async () => undefined);
+    expect(chapterCalls()).toBe(before);
+    expect(screen.queryByText('El capítulo cambió mientras leías. Vuelve a elegir el fragmento.')).toBeNull();
+    expect(screen.getByRole('dialog', { name: 'Sobre este fragmento' })).toBe(dialog);
+    expect((within(dialog).getByRole('textbox') as HTMLTextAreaElement).value).toBe('Me heló esa frase');
+    if (!retryable) {
+      // A 503 turns writes off: Publish stays disabled, the text stays.
+      expect(within(dialog).getByRole('button', { name: 'Dejarla' })).toHaveProperty('disabled', true);
+      return;
+    }
+    // A timeout may have succeeded: the retry reuses the same request id.
+    marksApi.create.mockResolvedValueOnce({ created: false, root: root('new'), reply: null });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Dejarla' }));
+    await waitFor(() => expect(marksApi.create).toHaveBeenCalledTimes(2));
+    const [first, second] = marksApi.create.mock.calls;
+    expect(second[2]).toBe(first[2]);
+    expect(second[3]).toBe('Me heló esa frase');
+    expect(second[6]).toEqual(first[6]);
+  });
 });
