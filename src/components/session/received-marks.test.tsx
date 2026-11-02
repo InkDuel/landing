@@ -182,3 +182,34 @@ describe('«Marcas recibidas» with replies', () => {
     expect(screen.getByText('1 nueva')).toBeTruthy();
   });
 });
+
+describe('«Marcas recibidas» with quotes (Marca con cita)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    window.localStorage.clear();
+  });
+  afterEach(cleanup);
+
+  it('shows the quote of a Marca and of the root a reply answers, only when the DTO sent one; reply links point at the reply', async () => {
+    const work = { workId: 'o1', workTitle: 'La casa', chapterId: 'ch1', chapterOrderIndex: 1, chapterTitle: '', rootId: 'm1' };
+    const author = { userId: 'u-beto', displayName: 'beto' };
+    vi.mocked(storyCommentsApi.received).mockResolvedValue(page([]));
+    vi.mocked(storyCommentsApi.repliesReceived).mockResolvedValue(page([]));
+    vi.mocked(inkMarksApi.received).mockResolvedValue(
+      page([
+        { source: 'workChapter', id: 'm1', author, content: 'Esa frase', createdAt: '2026-10-16T10:00:00Z', ...work, passage: { located: false, quote: 'pecho dormido' } },
+        { source: 'workChapter', id: 'm2', author, content: 'Sin cita', createdAt: '2026-10-16T09:00:00Z', ...work, rootId: 'm2' },
+      ]),
+    );
+    vi.mocked(inkMarksApi.repliesReceived).mockResolvedValue(
+      page([{ source: 'workChapterReply', id: 'p1', author, content: 'Gracias', createdAt: '2026-10-16T11:00:00Z', ...work, isWorkAuthor: true, passage: { located: true, quote: 'una frase' } }]),
+    );
+    render(<ReceivedMarksPreview />);
+    const rows = await screen.findAllByRole('listitem');
+    expect(rows.map((row) => within(row).queryByText(/pecho dormido|una frase/)?.textContent?.replace('«', ''))).toEqual(['una frase', 'pecho dormido', undefined]);
+    expect(within(rows[0]).getByRole('link', { name: 'Gracias' }).getAttribute('href')).toBe('/work/o1/chapter/ch1?mark=m1&reply=p1');
+    expect(within(rows[1]).getByRole('link', { name: 'Esa frase' }).getAttribute('href')).toBe('/work/o1/chapter/ch1?mark=m1');
+    // The quote is a line, not a second link into the thread.
+    expect(within(rows[1]).getAllByRole('link').filter((link) => link.textContent?.includes('pecho'))).toHaveLength(0);
+  });
+});

@@ -63,6 +63,29 @@ export type MarksCopy = {
     failure: Record<MarkFailure, string>;
   };
 
+  // Marca con cita (web wording of the app's workInkMarksPassage* keys)
+  passage: {
+    /** The one-time strip under the header. */
+    hint: string;
+    /** The soft line in the end-of-chapter card. */
+    endHint: string;
+    /** The floating button over a selection. */
+    menuAction: string;
+    quoteTooLong: string;
+    kicker: string;
+    threadTitle: string;
+    seeAll: string;
+    threadHelp: string;
+    jumpHelp: string;
+    changed: string;
+    empty: string;
+    conflict: string;
+    /** The margin button of a paragraph. */
+    a11yAction: string;
+    /** web: the strip's close button. */
+    hintDismiss: string;
+  };
+
   // Relatos de duelo
   story: {
     count: Plural;
@@ -194,6 +217,22 @@ export const MARKS_COPY: Record<Locale, MarksCopy> = {
         network: 'Revisa tu conexión e inténtalo de nuevo.',
         generic: 'No pudimos cargar las Marcas.',
       },
+    },
+    passage: {
+      hint: 'Selecciona una frase para dejar tu Marca sobre ella.',
+      endHint: 'También puedes seleccionar una frase del texto para dejar tu Marca sobre ella.',
+      menuAction: 'Dejar una Marca',
+      quoteTooLong: 'La cita puede tener hasta 300 caracteres. Achica la selección.',
+      kicker: 'Sobre este fragmento',
+      threadTitle: 'Marcas de este párrafo',
+      seeAll: 'Ver todas las del capítulo',
+      threadHelp: 'Para citar otra frase, selecciónala en el texto.',
+      jumpHelp: 'Toca una cita para ir a ese fragmento.',
+      changed: 'Sobre un fragmento que cambió',
+      empty: 'Todavía no hay Marcas en este párrafo.',
+      conflict: 'El capítulo cambió mientras leías. Vuelve a elegir el fragmento.',
+      a11yAction: 'Dejar una Marca en este párrafo',
+      hintDismiss: 'Cerrar la pista',
     },
     story: {
       count: plural('1 Marca', (n) => `${n} Marcas`),
@@ -332,6 +371,22 @@ export const MARKS_COPY: Record<Locale, MarksCopy> = {
         generic: "We couldn't load the Ink Marks.",
       },
     },
+    passage: {
+      hint: 'Select a phrase to leave your Ink Mark on it.',
+      endHint: 'You can also select a phrase in the text to leave your Ink Mark on it.',
+      menuAction: 'Leave an Ink Mark',
+      quoteTooLong: 'The quote can be up to 300 characters. Make the selection shorter.',
+      kicker: 'On this passage',
+      threadTitle: 'Ink Marks on this paragraph',
+      seeAll: 'See all on the chapter',
+      threadHelp: 'To quote another phrase, select it in the text.',
+      jumpHelp: 'Tap a quote to go to that passage.',
+      changed: 'On a passage that changed',
+      empty: 'There are no Ink Marks on this paragraph yet.',
+      conflict: 'The chapter changed while you were reading. Choose the passage again.',
+      a11yAction: 'Leave an Ink Mark on this paragraph',
+      hintDismiss: 'Close the tip',
+    },
     story: {
       count: plural('1 Mark', (n) => `${n} Marks`),
       title: plural('1 Ink Mark', (n) => `${n} Ink Marks`),
@@ -468,6 +523,22 @@ export const MARKS_COPY: Record<Locale, MarksCopy> = {
         network: 'Verifique sua conexão e tente de novo.',
         generic: 'Não conseguimos carregar as Marcas.',
       },
+    },
+    passage: {
+      hint: 'Selecione uma frase para deixar sua Marca sobre ela.',
+      endHint: 'Você também pode selecionar uma frase do texto para deixar sua Marca sobre ela.',
+      menuAction: 'Deixar uma Marca',
+      quoteTooLong: 'A citação pode ter até 300 caracteres. Reduza a seleção.',
+      kicker: 'Sobre este trecho',
+      threadTitle: 'Marcas deste parágrafo',
+      seeAll: 'Ver todas do capítulo',
+      threadHelp: 'Para citar outra frase, selecione-a no texto.',
+      jumpHelp: 'Toque em uma citação para ir a esse trecho.',
+      changed: 'Sobre um trecho que mudou',
+      empty: 'Ainda não há Marcas neste parágrafo.',
+      conflict: 'O capítulo mudou enquanto você lia. Escolha o trecho de novo.',
+      a11yAction: 'Deixar uma Marca neste parágrafo',
+      hintDismiss: 'Fechar a dica',
     },
     story: {
       count: plural('1 Marca', (n) => `${n} Marcas`),

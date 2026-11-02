@@ -24,8 +24,9 @@ import { newClientId } from '@/lib/session/works';
 export function useRequestIdentity() {
   const last = useRef<{ key: string; id: string } | null>(null);
   return {
-    idFor(content: string, parentId: string | null): string {
-      const key = `${parentId ?? ''}\n${normalizeMarkDraft(content)}`;
+    /** [quote] is part of the attempt: the same text on another quote is another Marca. */
+    idFor(content: string, parentId: string | null, quote = ''): string {
+      const key = `${parentId ?? ''}\n${quote}\n${normalizeMarkDraft(content)}`;
       if (last.current?.key !== key) last.current = { key, id: newClientId() };
       return last.current.id;
     },
@@ -60,6 +61,46 @@ function Badge({ children }: { children: string }) {
   );
 }
 
+/**
+ * The passage a Marca quotes: Literata italic, the « in pink (Historias'
+ * pattern). Plain text always. With [onJump] it is a button that goes to the
+ * passage; without, it is just the line.
+ */
+export function QuoteLine({
+  text,
+  lines = 1,
+  onJump,
+  label,
+}: {
+  text: string;
+  lines?: 1 | 2 | 3;
+  onJump?: () => void;
+  /** Accessible name of the jump button. */
+  label?: string;
+}) {
+  const clamp = lines === 1 ? 'line-clamp-1' : lines === 2 ? 'line-clamp-2' : 'line-clamp-3';
+  const body = (
+    <>
+      <span aria-hidden="true" className="mr-1 font-bold text-pink">
+        «
+      </span>
+      {text}
+    </>
+  );
+  const style = cx('font-literary text-[15px] leading-[1.45] italic break-words text-secondary', clamp);
+  if (!onJump) return <p className={style}>{body}</p>;
+  return (
+    <button
+      type="button"
+      onClick={onJump}
+      aria-label={label ? `${label}: ${text}` : undefined}
+      className={cx('ink-focus ink-dim block w-full rounded-control text-left', style)}
+    >
+      {body}
+    </button>
+  );
+}
+
 /** One Marca: who, when, the text (Literata), and its actions underneath. */
 export function MarkItem({
   authorName,
@@ -70,6 +111,9 @@ export function MarkItem({
   deletedLabel,
   replyingTo,
   highlight = false,
+  id,
+  passage,
+  onJumpQuote,
   actions,
   locale,
 }: {
@@ -82,6 +126,11 @@ export function MarkItem({
   deletedLabel?: string;
   replyingTo?: string;
   highlight?: boolean;
+  id?: string;
+  /** The quote of a root: shown above the text; «changed» label when it has no place. */
+  passage?: { quote: string | null; located: boolean } | null;
+  /** Only for a located quote on a page that drew the text with places. */
+  onJumpQuote?: () => void;
   actions?: ReactNode;
   locale: Locale;
 }) {
@@ -89,7 +138,7 @@ export function MarkItem({
   const name = authorName?.replace(/^@/, '') || copy.anonymous;
   const date = shortMarkDate(createdAt, locale);
   return (
-    <div className={cx('flex flex-col gap-1 rounded-control', highlight && '-mx-2 bg-tint-yellow px-2 py-1')}>
+    <div id={id} className={cx('flex flex-col gap-1 rounded-control', highlight && '-mx-2 bg-tint-yellow px-2 py-1')}>
       {deletedLabel ? (
         <p className="font-literary text-[16px] leading-[1.5] text-tertiary italic">{deletedLabel}</p>
       ) : (
@@ -110,6 +159,10 @@ export function MarkItem({
             {date ? <time dateTime={createdAt}>{date}</time> : null}
           </p>
           {replyingTo ? <p className="type-caption text-[12.5px] text-tertiary">{copy.chapter.replyingTo(replyingTo)}</p> : null}
+          {passage && !passage.located ? <p className="type-caption text-[12.5px] text-tertiary">{copy.passage.changed}</p> : null}
+          {passage?.quote ? (
+            <QuoteLine text={passage.quote} onJump={passage.located ? onJumpQuote : undefined} label={copy.passage.kicker} />
+          ) : null}
           <p className="font-literary text-[16.5px] leading-[1.55] break-words whitespace-pre-wrap text-content">{content}</p>
         </>
       )}
@@ -157,6 +210,7 @@ export function MarkComposer({
   error,
   blocked = false,
   autoFocus = false,
+  initialText = '',
   onSubmit,
   onCancel,
   locale,
@@ -168,13 +222,15 @@ export function MarkComposer({
   /** Writes are switched off: the text stays, Publish does not. */
   blocked?: boolean;
   autoFocus?: boolean;
+  /** A draft to start from (editable); only read when the composer mounts. */
+  initialText?: string;
   /** Resolves true when the Marca is in; the draft is then cleared. */
   onSubmit: (text: string) => Promise<boolean>;
   onCancel?: () => void;
   locale: Locale;
 }) {
   const copy = MARKS_COPY[locale];
-  const [text, setText] = useState('');
+  const [text, setText] = useState(initialText);
   const id = useId();
   const ref = useRef<HTMLTextAreaElement>(null);
   const length = markLength(text);
