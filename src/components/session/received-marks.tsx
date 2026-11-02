@@ -15,6 +15,7 @@ import { type ReceivedMark, inkMarksApi, markFailure, storyCommentsApi } from '@
 import { MARKS_COPY, shortMarkDate } from '@/lib/session/marks-copy';
 import { ReceivedMarksMerge, markKey, markSeen, readSeen } from '@/lib/session/received-marks';
 
+import { QuoteLine } from './marks-parts';
 import { useSessionLocale } from './session-root';
 
 // «Marcas recibidas» (17 - Social): what readers left on your relatos and
@@ -29,7 +30,9 @@ export const receivedMarksHref = () => '/me/marks';
 
 export function receivedMarkHref(mark: ReceivedMark, locale: Locale): string {
   if (mark.source === 'workChapter' || mark.source === 'workChapterReply') {
-    return `/work/${encodeURIComponent(mark.workId)}/chapter/${encodeURIComponent(mark.chapterId)}?mark=${encodeURIComponent(mark.rootId)}`;
+    const chapter = `/work/${encodeURIComponent(mark.workId)}/chapter/${encodeURIComponent(mark.chapterId)}?mark=${encodeURIComponent(mark.rootId)}`;
+    // A reply opens its root's thread AND points at itself.
+    return mark.source === 'workChapterReply' ? `${chapter}&reply=${encodeURIComponent(mark.id)}` : chapter;
   }
   if (mark.source === 'duelStoryReply') {
     // Someone else's relato: the duel result, with that relato's thread open.
@@ -211,6 +214,9 @@ export function ReceivedMarkRow({ row, preview = false, locale }: { row: Row; pr
         <span aria-hidden="true">·</span>
         <time dateTime={mark.createdAt}>{shortMarkDate(mark.createdAt, locale)}</time>
       </p>
+      {(mark.source === 'workChapter' || mark.source === 'workChapterReply') && mark.passage?.quote ? (
+        <QuoteLine text={mark.passage.quote} />
+      ) : null}
       <Link
         href={receivedMarkHref(mark, locale)}
         className={cx(

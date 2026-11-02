@@ -108,8 +108,11 @@ export async function apiRequest(method: Method, path: string, options: RequestO
       try {
         data = await response.json();
         if (response.status !== 409) {
-          const code = typeof data === 'object' && data && 'error' in data ? String(data.error) : '';
-          data = options.errorCodes?.includes(code) ? { error: code } : undefined;
+          const body = typeof data === 'object' && data ? (data as Record<string, unknown>) : {};
+          const error = 'error' in body ? String(body.error) : '';
+          // Newer feature errors carry a separate machine `code` next to the message.
+          const code = typeof body.code === 'string' ? body.code : '';
+          data = options.errorCodes?.includes(error) ? { error } : options.errorCodes?.includes(code) ? { code } : undefined;
         }
       } catch {
         data = undefined;

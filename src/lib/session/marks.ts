@@ -75,6 +75,20 @@ export function markFailure(error: unknown): MarkFailure {
   }
 }
 
+/** 409 `passage_changed`: the paragraph or the chapter text moved under the reader. */
+export function isPassageChanged(error: unknown): boolean {
+  if (!(error instanceof ApiError) || error.status !== 409) return false;
+  const data = error.data as { code?: unknown } | undefined;
+  return !!data && data.code === 'passage_changed';
+}
+
+/** 503 `passages_unavailable`: the quote switch went off; plain Marcas keep working. */
+export function isPassagesUnavailable(error: unknown): boolean {
+  if (!(error instanceof ApiError) || error.status !== 503) return false;
+  const data = error.data as { code?: unknown } | undefined;
+  return !!data && data.code === 'passages_unavailable';
+}
+
 // ---- parsing ----
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -158,7 +172,27 @@ function requireStoryComment(data: unknown): StoryComment {
 
 // Capítulos
 
-export type ChapterMarksSummary = { markCount: number; rootCount: number; canMark: boolean };
+export type MarkCounters = { markCount: number; rootCount: number; canMark: boolean };
+
+/** summary.passages (Marca con cita): present only when the feature is on for this viewer. */
+export type ChapterPassages = {
+  /** Every paragraph of the published text, in order, repeats included. */
+  paragraphKeys: string[];
+  /** Keys with a visible thread that appear exactly once. */
+  markedKeys: string[];
+  maxQuoteRunes: number;
+  chapterRevision: number;
+};
+
+export type ChapterMarksSummary = MarkCounters & { passages: ChapterPassages | null };
+
+/** A root's quote. `quote` travels only while it still appears in the text. */
+export type InkMarkPassage = { paragraphKey: string; located: boolean; quote: string | null };
+
+/** What an inbox row knows of a quote: no key, it never opens a paragraph. */
+export type InkMarkPassageView = { located: boolean; quote: string | null };
+
+export type PassageDraft = { paragraphKey: string; quote: string; chapterRevision: number };
 
 export type InkMarkRoot = {
   id: string;
@@ -170,6 +204,8 @@ export type InkMarkRoot = {
   isDeleted: boolean;
   replyCount: number;
   canDelete: boolean;
+  /** Absent on a general Marca and on a tombstone. */
+  passage: InkMarkPassage | null;
 };
 
 export type InkMarkReply = {
@@ -183,11 +219,43 @@ export type InkMarkReply = {
   canDelete: boolean;
 };
 
-export type InkMarkRootsPage = Page<InkMarkRoot> & ChapterMarksSummary;
+export type InkMarkRootsPage = Page<InkMarkRoot> & MarkCounters;
 export type InkMarkRepliesPage = Page<InkMarkReply> & { replyCount: number };
 
-function parseSummary(data: Record<string, unknown>): ChapterMarksSummary {
+function parseCounters(data: Record<string, unknown>): MarkCounters {
   return { markCount: count(data.markCount), rootCount: count(data.rootCount), canMark: bool(data.canMark) };
+}
+
+const keyList = (value: unknown): string[] => list(value).filter((item): item is string => typeof item === 'string' && item !== '');
+
+/** A malformed block is no block: the chapter reads as it always did. */
+function parsePassages(data: unknown): ChapterPassages | null {
+  if (!isRecord(data) || !Array.isArray(data.paragraphKeys)) return null;
+  if (typeof data.chapterRevision !== 'number' || !Number.isSafeInteger(data.chapterRevision)) return null;
+  const paragraphKeys = keyList(data.paragraphKeys);
+  // A key dropped as malformed would shift every position after it.
+  if (paragraphKeys.length !== data.paragraphKeys.length) return null;
+  const max = count(data.maxQuoteRunes);
+  return {
+    paragraphKeys,
+    markedKeys: keyList(data.markedKeys),
+    maxQuoteRunes: max > 0 ? max : 300,
+    chapterRevision: data.chapterRevision,
+  };
+}
+
+function parseSummary(data: Record<string, unknown>): ChapterMarksSummary {
+  return { ...parseCounters(data), passages: parsePassages(data.passages) };
+}
+
+function parsePassageView(data: unknown): InkMarkPassageView | null {
+  if (!isRecord(data)) return null;
+  return { located: bool(data.located), quote: str(data.quote) || null };
+}
+
+function parsePassage(data: unknown): InkMarkPassage | null {
+  if (!isRecord(data) || !str(data.paragraphKey)) return null;
+  return { paragraphKey: str(data.paragraphKey), located: bool(data.located), quote: str(data.quote) || null };
 }
 
 function parseRoot(data: unknown): InkMarkRoot | null {
@@ -202,6 +270,7 @@ function parseRoot(data: unknown): InkMarkRoot | null {
     isDeleted,
     replyCount: count(data.replyCount),
     canDelete: !isDeleted && bool(data.canDelete),
+    passage: isDeleted ? null : parsePassage(data.passage),
   };
 }
 
@@ -264,6 +333,8 @@ export type ReceivedMark =
       chapterOrderIndex: number;
       chapterTitle: string;
       rootId: string;
+      /** The quote of the Marca, when it has one that is still in the text. */
+      passage?: InkMarkPassageView;
     }
   | {
       /** A reply to a Marca (or a reply) you left on someone else's relato. */
@@ -295,6 +366,8 @@ export type ReceivedMark =
       rootId: string;
       /** The reply comes from the Work's author. */
       isWorkAuthor: boolean;
+      /** The quote of the root being answered (rootPassage). */
+      passage?: InkMarkPassageView;
     };
 
 function parseReceivedStoryComments(data: unknown): Page<ReceivedMark> {
@@ -331,6 +404,7 @@ function parseReceivedWorkMarks(data: unknown): Page<ReceivedMark> {
     const workId = str(row.work.id);
     const chapterId = str(row.chapter.id);
     if (!id || !createdAt || !workId || !chapterId) continue;
+    const passage = parsePassageView(row.passage);
     items.push({
       source: 'workChapter',
       id,
@@ -343,6 +417,7 @@ function parseReceivedWorkMarks(data: unknown): Page<ReceivedMark> {
       chapterOrderIndex: count(row.chapter.orderIndex),
       chapterTitle: str(row.chapter.title),
       rootId: str(row.rootId) || id,
+      ...(passage ? { passage } : {}),
     });
   }
   return { items, nextCursor: cursor(data.nextCursor) };
@@ -391,6 +466,7 @@ export function parseWorkRepliesReceived(data: unknown): Page<ReceivedMark> {
     const workId = str(row.work.id);
     const chapterId = str(row.chapter.id);
     if (!id || !createdAt || !rootId || !workId || !chapterId) continue;
+    const passage = parsePassageView(row.rootPassage);
     items.push({
       source: 'workChapterReply',
       id,
@@ -404,6 +480,7 @@ export function parseWorkRepliesReceived(data: unknown): Page<ReceivedMark> {
       chapterTitle: str(row.chapter.title),
       rootId,
       isWorkAuthor: bool(row.isWorkAuthor),
+      ...(passage ? { passage } : {}),
     });
   }
   return { items, nextCursor: cursor(data.nextCursor) };
@@ -548,22 +625,34 @@ export const storyRepliesApi = {
   },
 };
 
+const PASSAGE_ERROR_CODES = ['passages_unavailable'] as const;
+
 export const inkMarksApi = {
   /** One cheap read behind the chip; zeros for a chapter with no Marcas. */
   async summary(workId: string, chapterId: string, { locale, signal }: Ctx): Promise<ChapterMarksSummary> {
     const data = await apiRequest('GET', chapterPath(workId, chapterId, 'summary'), { locale, signal });
-    return isRecord(data) ? parseSummary(data) : { markCount: 0, rootCount: 0, canMark: false };
+    return isRecord(data) ? parseSummary(data) : { markCount: 0, rootCount: 0, canMark: false, passages: null };
   },
 
-  /** Roots, newest first, each with its replyCount and never its replies. */
-  async roots(workId: string, chapterId: string, pageCursor: string | null, { locale, signal }: Ctx): Promise<InkMarkRootsPage> {
+  /**
+   * Roots, newest first, each with its replyCount and never its replies. With
+   * [passage] (a paragraph key) it is the server's own query for that
+   * paragraph: the panel of a paragraph is never a filter over a page in memory.
+   */
+  async roots(
+    workId: string,
+    chapterId: string,
+    pageCursor: string | null,
+    { locale, signal, passage }: Ctx & { passage?: string },
+  ): Promise<InkMarkRootsPage> {
     const data = await apiRequest('GET', chapterPath(workId, chapterId), {
       locale,
       signal,
-      query: { cursor: pageCursor ?? undefined },
+      query: { cursor: pageCursor ?? undefined, passage },
+      errorCodes: passage ? PASSAGE_ERROR_CODES : undefined,
     });
     if (!isRecord(data)) return { items: [], nextCursor: null, markCount: 0, rootCount: 0, canMark: false };
-    return { items: list(data.items).map(parseRoot).filter(present), nextCursor: cursor(data.nextCursor), ...parseSummary(data) };
+    return { items: list(data.items).map(parseRoot).filter(present), nextCursor: cursor(data.nextCursor), ...parseCounters(data) };
   },
 
   /** Replies of one root, oldest first. [limit] 1 is the cheap way to read replyCount. */
@@ -583,11 +672,28 @@ export const inkMarksApi = {
     return { items: list(data.items).map(parseReply).filter(present), nextCursor: cursor(data.nextCursor), replyCount: count(data.replyCount) };
   },
 
-  /** A root, or a reply when [parentId] is set. 201 new, 200 idempotent replay. */
-  async create(workId: string, chapterId: string, clientRequestId: string, content: string, parentId: string | null, { locale }: Ctx) {
-    const body: Record<string, string> = { clientRequestId, content };
+  /**
+   * A root, or a reply when [parentId] is set. 201 new, 200 idempotent replay.
+   * [passage] (roots only) quotes part of a paragraph; the server answers 409
+   * `passage_changed` when the text moved since the keys were read.
+   */
+  async create(
+    workId: string,
+    chapterId: string,
+    clientRequestId: string,
+    content: string,
+    parentId: string | null,
+    { locale }: Ctx,
+    passage?: PassageDraft,
+  ) {
+    const body: Record<string, unknown> = { clientRequestId, content };
     if (parentId) body.parentId = parentId;
-    const data = await apiRequest('POST', chapterPath(workId, chapterId), { locale, body });
+    if (passage && !parentId) body.passage = passage;
+    const data = await apiRequest('POST', chapterPath(workId, chapterId), {
+      locale,
+      body,
+      errorCodes: passage ? PASSAGE_ERROR_CODES : undefined,
+    });
     if (!isRecord(data)) throw new ApiError(200, 'parse');
     const root = data.root === undefined ? null : parseRoot(data.root);
     const reply = data.reply === undefined ? null : parseReply(data.reply);

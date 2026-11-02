@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { cx } from '@/components/ink/cx';
 import { ChevronLeftIcon } from '@/components/ink/icons';
@@ -23,9 +23,12 @@ import {
 } from '@/lib/session/models';
 
 import { useSession } from '@/lib/session/auth-context';
+import { MARKS_COPY } from '@/lib/session/marks-copy';
+import { buildPassageLayout } from '@/lib/session/passages';
 
 import { ChapterMarksChip, ChapterMarksSection, useChapterMarks } from './chapter-marks';
 import { ByLine } from './historias';
+import { PassageHintStrip, PassageStoryText, usePassageFlash, usePassageHints } from './passage-reader';
 import { FollowCompact, FollowEndRow, FollowError, useWorkFollow } from './work-follow';
 import { useSessionLocale } from './session-root';
 
@@ -90,6 +93,19 @@ function useReader(workId: string, chapterId: string | null, locale: Locale, att
     return () => controller.abort();
   }, [workId, chapterId, locale, attempt]);
 
+  /**
+   * Re-reads the chapter text in place (no skeleton, no scroll reset): after a
+   * passage conflict the keys and the text must be the server's again.
+   */
+  const reloadChapter = useCallback(async () => {
+    try {
+      const fresh = parsePublicChapter(await apiGet(apiPath('api', 'gallery', 'works', workId, 'chapters', chapterId ?? ''), { locale }));
+      if (fresh) setLoad((current) => (current.status === 'ready' && current.chapter.id === fresh.id ? { ...current, chapter: fresh } : current));
+    } catch {
+      // The reader keeps what it had; the summary then decides if places still hold.
+    }
+  }, [workId, chapterId, locale]);
+
   // The chapter list drives previous/next and the index.
   useEffect(() => {
     const controller = new AbortController();
@@ -115,7 +131,7 @@ function useReader(workId: string, chapterId: string | null, locale: Locale, att
     return () => controller.abort();
   }, [workId, locale]);
 
-  return { load, summaries };
+  return { load, summaries, reloadChapter };
 }
 
 function useScrollProgress(target: React.RefObject<HTMLElement | null>) {
@@ -234,7 +250,7 @@ export function ReaderView({ workId, chapterId }: { workId: string; chapterId: s
   const copy = SESSION_COPY[locale];
   const [attempt, setAttempt] = useState(0);
   const [indexOpen, setIndexOpen] = useState(false);
-  const { load, summaries } = useReader(workId, chapterId, locale, attempt);
+  const { load, summaries, reloadChapter } = useReader(workId, chapterId, locale, attempt);
   const article = useRef<HTMLElement>(null);
   const progress = useScrollProgress(article);
 
@@ -289,6 +305,7 @@ export function ReaderView({ workId, chapterId }: { workId: string; chapterId: s
       article={article}
       indexOpen={indexOpen}
       onCloseIndex={() => setIndexOpen(false)}
+      reloadChapter={reloadChapter}
     />
   );
 }
@@ -303,6 +320,7 @@ export function ReaderReady({
   article,
   indexOpen,
   onCloseIndex,
+  reloadChapter,
 }: {
   work: WorkDetail;
   chapter: Chapter;
@@ -311,6 +329,8 @@ export function ReaderReady({
   article?: React.RefObject<HTMLElement | null>;
   indexOpen: boolean;
   onCloseIndex: () => void;
+  /** Re-reads this chapter's text without leaving the page. */
+  reloadChapter?: () => Promise<void>;
 }) {
   const { locale } = useSessionLocale();
   const copy = SESSION_COPY[locale];
@@ -324,8 +344,35 @@ export function ReaderReady({
   const kicker = `${copy.reader.chapter(chapter.orderIndex)} · ${copy.reader.readTime(Math.max(1, Math.ceil(words / 200)))}`;
   const total = work.publishedChapterCount || summaries.length;
   const { user } = useSession();
-  const marks = useChapterMarks(work.id, chapter.id, chapter.orderIndex, locale);
+  const passageHints = usePassageHints(user?.id ?? '');
+  const marks = useChapterMarks(work.id, chapter.id, chapter.orderIndex, locale, {
+    reloadChapter,
+    onQuoted: passageHints.markQuoted,
+  });
   const follow = useWorkFollow(work.id, locale);
+  const isWorkAuthor = !!user && user.id === work.authorId;
+
+  // Marca con cita: on only when the summary brought `passages`, the paragraph
+  // count matches and the text on screen is the revision the keys belong to.
+  // Anything else draws exactly the StoryText of before.
+  const layout = useMemo(
+    () => buildPassageLayout(chapter.content, chapter.revision, marks.state.summary?.passages ?? null),
+    [chapter.content, chapter.revision, marks.state.summary?.passages],
+  );
+  const flash = usePassageFlash(layout);
+  // Drops are for everyone who reads; the gesture, the strip and the end line
+  // only for who can leave a root (never the author, never canMark=false).
+  const canQuote = !!layout && marks.canCreateRoot && !isWorkAuthor && !marks.state.quoteOff;
+  const passageCopy = MARKS_COPY[locale].passage;
+  // The text moved under a quote being left: said where the reader is looking.
+  const conflictBanner = marks.state.conflict ? (
+    <InkInlineBanner
+      className="mb-5"
+      tone="info"
+      title={passageCopy.conflict}
+      action={<InkTextAction onClick={marks.clearConflict}>{copy.reader.close}</InkTextAction>}
+    />
+  ) : null;
 
   return (
     <>
@@ -350,7 +397,31 @@ export function ReaderReady({
             <ChapterMarksChip marks={marks} locale={locale} />
           </div>
         </header>
-        <StoryText text={chapter.content} />
+        {layout ? (
+          <>
+            {canQuote && !passageHints.hints.dismissed && !passageHints.hints.quoted ? (
+              <PassageHintStrip onDismiss={passageHints.dismiss} locale={locale} />
+            ) : null}
+            {conflictBanner}
+            <PassageStoryText
+              layout={layout}
+              canQuote={canQuote}
+              hiddenKeys={marks.state.hiddenKeys}
+              flash={flash.flash}
+              onOpenPassage={(key) => {
+                flash.flashParagraph(key);
+                marks.openPassage(key);
+              }}
+              onQuote={marks.openPassageComposer}
+              locale={locale}
+            />
+          </>
+        ) : (
+          <>
+            {conflictBanner}
+            <StoryText text={chapter.content} />
+          </>
+        )}
       </article>
 
       <footer className="mt-10 flex flex-col gap-5">
@@ -399,7 +470,18 @@ export function ReaderReady({
         </div>
       </footer>
 
-      <ChapterMarksSection marks={marks} isWorkAuthor={!!user && user.id === work.authorId} locale={locale} />
+      <ChapterMarksSection
+        marks={marks}
+        isWorkAuthor={isWorkAuthor}
+        locale={locale}
+        endHint={canQuote && !passageHints.hints.quoted}
+        onJumpQuote={layout ? flash.jumpTo : undefined}
+      />
+      {layout && marks.notice ? (
+        <p aria-hidden="true" className="fixed inset-x-5 bottom-5 z-30 mx-auto w-fit max-w-full rounded-control border-quiet border-outline bg-elevated px-4 py-2 type-caption text-[13px] text-primary ink-shadow-lift">
+          {marks.notice}
+        </p>
+      ) : null}
 
       <ChapterIndex
         open={indexOpen}

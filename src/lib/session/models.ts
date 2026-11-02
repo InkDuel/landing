@@ -160,12 +160,26 @@ export function parseGalleryWorks(data: unknown): Page<GalleryWork> {
   return { items, nextCursor: cursor(data.nextCursor) };
 }
 
-export type Chapter = { id: string; orderIndex: number; title: string; content: string };
-export type ChapterSummary = Omit<Chapter, 'content'>;
+export type Chapter = {
+  id: string;
+  orderIndex: number;
+  title: string;
+  content: string;
+  /** The published text's revision (ChapterPublicDTO.revision); null on a backend that does not send it. */
+  revision: number | null;
+};
+export type ChapterSummary = Omit<Chapter, 'content' | 'revision'>;
 
 function parseChapter(data: unknown): Chapter | null {
   if (!isRecord(data) || !str(data.id)) return null;
-  return { id: str(data.id), orderIndex: nonNegative(data.orderIndex), title: str(data.title), content: str(data.content) };
+  const revision = typeof data.revision === 'number' && Number.isSafeInteger(data.revision) ? data.revision : null;
+  return {
+    id: str(data.id),
+    orderIndex: nonNegative(data.orderIndex),
+    title: str(data.title),
+    content: str(data.content),
+    revision,
+  };
 }
 
 /** ChapterSummaryPublicDTO: id, title and orderIndex, never the text. */
