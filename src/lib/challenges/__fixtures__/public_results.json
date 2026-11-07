@@ -1,0 +1,76 @@
+{
+  "slug": "consigna-t1-e3",
+  "title": "Consigna · Edición 3",
+  "season": {
+    "id": "t1",
+    "edition": 3,
+    "editionsInSeason": 12
+  },
+  "publishedAt": "2026-11-15T21:00:00Z",
+  "jury": {
+    "status": "awarded",
+    "entry": {
+      "entryId": "3f9c2a7e1b4d4c0e8a6f5b2d9e1c7a40",
+      "duelId": "d_123",
+      "storyId": "s_123",
+      "firstLine": "La llave pesaba más de lo que parecía.",
+      "author": {
+        "userId": "u_win",
+        "displayName": "Marina",
+        "avatar": "avatar_5",
+        "viewerFollow": false
+      }
+    },
+    "inheritedLine": "La llave pesaba más de lo que parecía."
+  },
+  "favorites": {
+    "status": "awarded",
+    "entries": [
+      {
+        "entryId": "3f9c2a7e1b4d4c0e8a6f5b2d9e1c7a40",
+        "duelId": "d_123",
+        "storyId": "s_123",
+        "firstLine": "La llave pesaba más de lo que parecía.",
+        "author": {
+          "userId": "u_win",
+          "displayName": "Marina",
+          "avatar": "avatar_5",
+          "viewerFollow": false
+        }
+      }
+    ]
+  },
+  "plumaGuia": {
+    "status": "awarded",
+    "user": {
+      "userId": "u_win",
+      "displayName": "Marina",
+      "avatar": "avatar_5",
+      "viewerFollow": false
+    }
+  },
+  "mentions": [
+    {
+      "entryId": "3f9c2a7e1b4d4c0e8a6f5b2d9e1c7a40",
+      "duelId": "d_123",
+      "storyId": "s_123",
+      "firstLine": "La llave pesaba más de lo que parecía.",
+      "author": {
+        "userId": "u_win",
+        "displayName": "Marina",
+        "avatar": "avatar_5",
+        "viewerFollow": false
+      }
+    }
+  ],
+  "next": {
+    "slug": "consigna-t1-e4",
+    "opensAt": "2026-11-16T12:00:00Z",
+    "openingLine": {
+      "text": "La llave pesaba más de lo que parecía.",
+      "kind": "inherited",
+      "authorUserId": "u_win",
+      "authorDisplayName": "Marina"
+    }
+  }
+}
