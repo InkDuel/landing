@@ -109,8 +109,8 @@ describe('ResultsView', () => {
       next: { ...fixture.next, openingLine: { text: 'Nadie sabía quién había dejado la luz.', kind: 'house' } },
     }) as PublicResults;
     const { container } = view({ kind: 'ok', results });
-    expect(screen.getByText('Esta semana el jurado no entregó su premio.')).toBeTruthy();
-    expect(screen.getByText('Esta semana ningún relato fue elegido por todos sus lectores.')).toBeTruthy();
+    expect(screen.getByText('Esta semana el jurado no entregó su premio')).toBeTruthy();
+    expect(screen.getByText('Esta semana ningún relato fue elegido por todos sus lectores')).toBeTruthy();
     expect(screen.getByText(/Frase de la casa/)).toBeTruthy();
     expect(container.textContent).not.toContain('Pluma Guía');
     expect(container.textContent).not.toContain('Menciones literarias');
