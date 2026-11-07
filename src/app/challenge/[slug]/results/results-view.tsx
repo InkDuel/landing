@@ -77,8 +77,7 @@ function ResultsBody({ results, locale, copy }: { results: PublicResults; locale
     <article className="mx-auto w-full max-w-[720px] pt-6">
       <header className="flex flex-col gap-3">
         <Kicker>
-          {copy.kicker}
-          {results.season ? ` · ${copy.seasonLine(results.season.edition, results.season.editionsInSeason)}` : ''}
+          {`${copy.kicker}${results.season ? ` · ${copy.seasonLine(results.season.edition, results.season.editionsInSeason)}` : ''}`}
         </Kicker>
         <InkHeadline text={results.title} size="title-page-lg" />
         {published ? <p className="type-caption text-secondary">{copy.publishedOn(published)}</p> : null}

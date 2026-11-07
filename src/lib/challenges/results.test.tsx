@@ -77,13 +77,14 @@ describe('ResultsView', () => {
   it('shows the waiting page with no author or story', () => {
     const { container } = view({ kind: 'not_published' });
     expect(screen.getByText(/domingo a las 18:00/)).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Los resultados aún no están listos.');
     expect(container.textContent).not.toContain('Marina');
     expect(container.querySelector('a[href^="/u/"]')).toBeNull();
   });
 
   it('shows not found with no author', () => {
     const { container } = view({ kind: 'not_found' });
-    expect(screen.getByText('Resultados no encontrados')).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Resultados no encontrados');
     expect(container.textContent).not.toContain('Marina');
   });
 
