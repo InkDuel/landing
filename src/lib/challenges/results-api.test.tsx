@@ -1,7 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('server-only', () => ({}));
-
 import fixture from './__fixtures__/public_results.json';
 import { fetchPublicChallengeResults, publicResultsUrl } from './results-api';
 
