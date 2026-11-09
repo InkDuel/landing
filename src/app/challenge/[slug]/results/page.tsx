@@ -14,7 +14,8 @@ type Props = {
 // Metadata never names an author, before or after publication.
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const [{ slug }, { lang }] = await Promise.all([params, searchParams]);
-  const [outcome, { locale }] = await Promise.all([fetchPublicChallengeResults(slug), resolveRequestLocale(lang)]);
+  const { locale } = await resolveRequestLocale(lang);
+  const outcome = await fetchPublicChallengeResults(slug, locale);
   const copy = RESULTS_COPY[locale];
   if (outcome.kind === 'not_found') return { title: copy.metaNotFound, robots: { index: false } };
   if (outcome.kind === 'not_published') return { title: copy.metaWaitingTitle, robots: { index: false } };
@@ -33,9 +34,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
 export default async function ChallengeResultsPage({ params, searchParams }: Props) {
   const [{ slug }, { lang }] = await Promise.all([params, searchParams]);
-  const [outcome, { locale, explicit }] = await Promise.all([
-    fetchPublicChallengeResults(slug),
-    resolveRequestLocale(lang),
-  ]);
+  const { locale, explicit } = await resolveRequestLocale(lang);
+  const outcome = await fetchPublicChallengeResults(slug, locale);
   return <ResultsView state={outcome} initialLocale={locale} resolveOnClient={!explicit} />;
 }
