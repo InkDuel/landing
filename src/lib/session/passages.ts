@@ -88,8 +88,12 @@ export type PassageLine = {
 export type PassageLayout = {
   lines: PassageLine[];
   maxQuoteRunes: number;
-  chapterRevision: number;
+  /** null for layouts of texts that have no chapter revision (duel stories). */
+  chapterRevision: number | null;
 };
+
+/** What a text layout needs from the backend, with or without a chapter. */
+export type TextPassages = { paragraphKeys: string[]; markedKeys: string[]; maxQuoteRunes: number };
 
 /**
  * The feature is on for a chapter only when the summary brought `passages`,
@@ -103,6 +107,12 @@ export function buildPassageLayout(
   passages: ChapterPassages | null,
 ): PassageLayout | null {
   if (!passages || revision === null || revision !== passages.chapterRevision) return null;
+  const layout = buildTextPassageLayout(content, passages);
+  return layout && { ...layout, chapterRevision: passages.chapterRevision };
+}
+
+/** Same layout rules with no revision check: the caller vouches the keys belong to this text. */
+export function buildTextPassageLayout(content: string, passages: TextPassages): PassageLayout | null {
   const raw = splitLines(content);
   // A trailing newline is not a line of its own (pre-line draws none either).
   if (raw.length > 1 && raw[raw.length - 1] === '') raw.pop();
@@ -117,12 +127,12 @@ export function buildPassageLayout(
   const lines = raw.map<PassageLine>((text, index) => {
     if (goTrim(text) === '') return { index, text, paragraph: null, key: null, markable: false, marked: false };
     const key = passages.paragraphKeys[paragraph];
-    const unique = occurrences.get(key) === 1;
+    const unique = key !== '' && occurrences.get(key) === 1;
     const line = { index, text, paragraph, key, markable: unique, marked: unique && marked.has(key) };
     paragraph += 1;
     return line;
   });
-  return { lines, maxQuoteRunes: passages.maxQuoteRunes, chapterRevision: passages.chapterRevision };
+  return { lines, maxQuoteRunes: passages.maxQuoteRunes, chapterRevision: null };
 }
 
 export const lineOfKey = (layout: PassageLayout, key: string): PassageLine | null =>
