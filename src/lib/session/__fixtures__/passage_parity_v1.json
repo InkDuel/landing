@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "crlf",
+      "text": "Uno.\r\n\r\n  Dos.  \r\nTres.\r\n",
+      "paragraphs": [
+        "Uno.",
+        "Dos.",
+        "Tres."
+      ],
+      "keys": []
+    },
+    {
+      "name": "nbsp_edges",
+      "text": " Hola \n  \nAdiós",
+      "paragraphs": [
+        "Hola",
+        "Adiós"
+      ],
+      "keys": []
+    },
+    {
+      "name": "bom_not_trimmed",
+      "text": "﻿Hola\nMundo",
+      "paragraphs": [
+        "﻿Hola",
+        "Mundo"
+      ],
+      "keys": []
+    }
+  ],
+  "quotes": [
+    {
+      "name": "ascii",
+      "quote": "Hola",
+      "runes": 4
+    },
+    {
+      "name": "emoji",
+      "quote": "🙂🙂",
+      "runes": 2
+    },
+    {
+      "name": "accents",
+      "quote": "Adiós",
+      "runes": 5
+    }
+  ]
+}

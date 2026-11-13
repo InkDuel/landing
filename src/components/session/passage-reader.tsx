@@ -25,6 +25,7 @@ import {
 
 const FLASH_MS = 2200;
 const LINE_HEIGHT = 30;
+const DEFAULT_TYPOGRAPHY = 'type-literary-body';
 
 // ---- the brief highlight ----
 
@@ -150,6 +151,8 @@ export function PassageStoryText({
   onOpenPassage,
   onQuote,
   locale,
+  typographyClass = DEFAULT_TYPOGRAPHY,
+  lineHeight = LINE_HEIGHT,
 }: {
   layout: PassageLayout;
   canQuote: boolean;
@@ -158,6 +161,10 @@ export function PassageStoryText({
   onOpenPassage: (key: string) => void;
   onQuote: (selection: { key: string; quote: string; source: PassageSource }) => void;
   locale: Locale;
+  /** Text typography of the story (default: the chapter's literary body). */
+  typographyClass?: string;
+  /** Height of one line in px: spacer and margin buttons follow it. */
+  lineHeight?: number;
 }) {
   const copy = MARKS_COPY[locale].passage;
   const root = useRef<HTMLDivElement>(null);
@@ -232,9 +239,9 @@ export function PassageStoryText({
 
   return (
     <>
-      <div ref={root} className="type-literary-body text-content whitespace-pre-line break-words">
+      <div ref={root} className={`${typographyClass} text-content whitespace-pre-line break-words`}>
         {layout.lines.map((line) => {
-          if (line.key === null) return <div key={line.index} aria-hidden="true" style={{ minHeight: LINE_HEIGHT }} />;
+          if (line.key === null) return <div key={line.index} aria-hidden="true" style={{ minHeight: lineHeight }} />;
           const flashed = flash?.line === line.index && !quoteRange(line.text, flash.quote);
           return (
             <div key={line.index} className="group relative">
@@ -251,7 +258,7 @@ export function PassageStoryText({
                   aria-label={copy.threadTitle}
                   onClick={() => onOpenPassage(line.key as string)}
                   className="ink-focus ink-dim absolute top-0 -right-5 flex w-5 items-center justify-center rounded-control text-reader-muted select-none"
-                  style={{ height: LINE_HEIGHT }}
+                  style={{ height: lineHeight }}
                 >
                   <DropIcon />
                 </button>
@@ -266,7 +273,7 @@ export function PassageStoryText({
                     'opacity-0 focus-visible:opacity-100 group-hover:opacity-70 hover:opacity-100',
                     '[@media(hover:none)]:pointer-events-none [@media(hover:none)]:focus-visible:pointer-events-auto',
                   )}
-                  style={{ height: LINE_HEIGHT }}
+                  style={{ height: lineHeight }}
                 >
                   <span aria-hidden="true">✎</span>
                 </button>

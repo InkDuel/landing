@@ -4,6 +4,7 @@ import type { ChapterPassages } from './marks';
 import {
   LINE_ATTRIBUTE,
   buildPassageLayout,
+  buildTextPassageLayout,
   dismissPassageHint,
   goTrim,
   markPassageQuoted,
@@ -221,5 +222,33 @@ describe('selection: one markable paragraph only', () => {
     const emojis = '🙂'.repeat(300);
     const { root, layout, line } = mount(emojis);
     expect(resolveSelection(rangeOf(line(0), 0, line(0), 600), root, layout)).toMatchObject({ kind: 'ok', tooLong: false });
+  });
+});
+
+describe('buildTextPassageLayout: no revision check', () => {
+  const passages = (keys: string[], marked: string[] = []) => ({ paragraphKeys: keys, markedKeys: marked, maxQuoteRunes: 300 });
+
+  it('returns null when the paragraph count differs from the keys', () => {
+    expect(buildTextPassageLayout('Uno.\nDos.', passages(['a']))).toBeNull();
+    expect(buildTextPassageLayout('Uno.', passages(['a', 'b']))).toBeNull();
+  });
+
+  it('lines paragraphs up with keys, skipping blank lines, with no chapter revision', () => {
+    const layout = buildTextPassageLayout('Uno.\n\nDos.\n', passages(['a', 'b']));
+    expect(layout?.chapterRevision).toBeNull();
+    expect(layout?.maxQuoteRunes).toBe(300);
+    expect(layout?.lines.map((line) => line.key)).toEqual(['a', null, 'b']);
+    expect(layout?.lines.every((line) => line.paragraph === null || line.markable)).toBe(true);
+  });
+
+  it('does not make repeated or empty keys markable', () => {
+    const layout = buildTextPassageLayout('Uno.\nDos.\nTres.\nCuatro.', passages(['a', 'a', '', 'b'], ['a', 'b']));
+    expect(layout?.lines.map((line) => line.markable)).toEqual([false, false, false, true]);
+    expect(layout?.lines.map((line) => line.marked)).toEqual([false, false, false, true]);
+  });
+
+  it('flags the marked keys', () => {
+    const layout = buildTextPassageLayout('Uno.\nDos.', passages(['a', 'b'], ['b']));
+    expect(layout?.lines.map((line) => line.marked)).toEqual([false, true]);
   });
 });
