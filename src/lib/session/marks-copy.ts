@@ -119,6 +119,16 @@ export type MarksCopy = {
     threadUnavailable: string;
   };
 
+  // Marca con cita en relatos (se suma a `passage`, que es el copy compartido con Obras)
+  storyPassage: {
+    /** Footer of a paragraph's panel: back to the whole conversation. */
+    seeAll: string;
+    /** The explicit offer when the server refused the quote. */
+    offerTitle: string;
+    offerBody: string;
+    offerWithout: string;
+  };
+
   // Bandeja
   inbox: {
     title: string;
@@ -275,6 +285,12 @@ export const MARKS_COPY: Record<Locale, MarksCopy> = {
       replyDeleteBody: 'Desaparece del hilo al instante.',
       threadUnavailable: 'Este hilo ya no está disponible.',
     },
+    storyPassage: {
+      seeAll: 'Ver todas las del relato',
+      offerTitle: 'No pudimos citar este fragmento',
+      offerBody: 'Puedes dejar tu Marca sobre el relato completo, sin cita. Tu texto se conserva.',
+      offerWithout: 'Dejarla sin cita',
+    },
     inbox: {
       title: 'Marcas recibidas',
       headline: 'Marcas recibidas.',
@@ -428,6 +444,12 @@ export const MARKS_COPY: Record<Locale, MarksCopy> = {
       replyDeleteBody: 'It disappears from the thread right away.',
       threadUnavailable: 'This thread is no longer available.',
     },
+    storyPassage: {
+      seeAll: 'See all on the story',
+      offerTitle: "We couldn't quote this passage",
+      offerBody: 'You can leave your Mark on the whole story, with no quote. Your text is kept.',
+      offerWithout: 'Leave it without a quote',
+    },
     inbox: {
       title: 'Received marks',
       headline: 'Marks received.',
@@ -580,6 +602,12 @@ export const MARKS_COPY: Record<Locale, MarksCopy> = {
       replyDeleteTitle: 'Apagar esta resposta?',
       replyDeleteBody: 'Ela some da conversa na hora.',
       threadUnavailable: 'Esta conversa não está mais disponível.',
+    },
+    storyPassage: {
+      seeAll: 'Ver todas do relato',
+      offerTitle: 'Não conseguimos citar este trecho',
+      offerBody: 'Você pode deixar sua Marca sobre o relato inteiro, sem citação. Seu texto foi mantido.',
+      offerWithout: 'Deixar sem citação',
     },
     inbox: {
       title: 'Marcas recebidas',

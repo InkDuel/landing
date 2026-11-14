@@ -9,6 +9,10 @@ import {
   type ReportReason,
   type StoryComment,
   type StoryCommentReply,
+  type StoryPassageDraft,
+  isBareBadRequest,
+  isPassageInvalid,
+  isPassagesUnavailable,
   markFailure,
   mergeReplies,
   normalizeMarkDraft,
@@ -71,6 +75,50 @@ export type State = {
   replyTarget: ReplyTarget | null;
   replyBusy: boolean;
   replyError: string | null;
+  /**
+   * A quoted Marca the server refused with one of the two quote codes: the
+   * reader is offered «Dejarla sin cita». The text is kept; nothing is sent
+   * without the reader's yes.
+   */
+  quoteOffer: { text: string; passage: StoryPassageDraft } | null;
+};
+
+/**
+ * What a surface hangs on the instance. All optional: the plain conversation
+ * (StoryComments on its own) passes none of them.
+ */
+export type StoryMarksOptions = {
+  duelId: string;
+  storyId: string;
+  isOwnStory: boolean;
+  initialCount: number;
+  /** ?comment=: the received comment to bring into view. */
+  focusId?: string | null;
+  /** Open without waiting to be reached (the received-comment page). */
+  autoOpen?: boolean;
+  locale: Locale;
+  /**
+   * The instance of one paragraph's panel: it lists `?passage=` and handles
+   * replies, delete and report, but can NOT create roots.
+   */
+  passageKey?: string | null;
+  /** Marca con cita: how the text hears what happens to quoted roots. */
+  quotes?: {
+    /** A quoted root is on its way: mark the paragraph at once. */
+    onPending?: (key: string) => void;
+    /** It did not make it: undo what onPending did. */
+    onFailed?: (key: string) => void;
+    /** A Marca went in: the key of its quote, or null for a general one. */
+    onCreated?: (key: string | null) => void;
+    /** A quoted root was deleted: the summary must be re-read. */
+    onRemoved?: () => void;
+    /** 503 passages_unavailable: stop offering quotes. */
+    onUnavailable?: () => void;
+    /** After a bare 400 on a quoted create: does the summary still carry `passages`? */
+    stillAvailable?: () => Promise<boolean>;
+  };
+  /** A reply or a delete went through (the panel reloads the general list on close). */
+  onMutated?: () => void;
 };
 
 export function useStoryMarks({
@@ -81,17 +129,10 @@ export function useStoryMarks({
   focusId = null,
   autoOpen = false,
   locale,
-}: {
-  duelId: string;
-  storyId: string;
-  isOwnStory: boolean;
-  initialCount: number;
-  /** ?comment=: the received comment to bring into view. */
-  focusId?: string | null;
-  /** Open without waiting to be reached (the received-comment page). */
-  autoOpen?: boolean;
-  locale: Locale;
-}) {
+  passageKey = null,
+  quotes,
+  onMutated,
+}: StoryMarksOptions) {
   const all = MARKS_COPY[locale];
   const copy = all.story;
   const [state, setState] = useState<State>({
@@ -116,6 +157,12 @@ export function useStoryMarks({
     replyTarget: null,
     replyBusy: false,
     replyError: null,
+    quoteOffer: null,
+  });
+  // The latest callbacks, read from async code without making it re-run.
+  const hooks = useRef({ quotes, onMutated });
+  useEffect(() => {
+    hooks.current = { quotes, onMutated };
   });
   const alive = useRef(true);
   const section = useRef<HTMLElement>(null);
@@ -150,7 +197,7 @@ export function useStoryMarks({
     async (cursor: string | null) => {
       setState((s) => (cursor ? { ...s, loadingMore: true, moreFailed: false } : { ...s, status: 'loading', failure: null }));
       try {
-        const page = await storyCommentsApi.list(duelId, storyId, cursor, { locale });
+        const page = await storyCommentsApi.list(duelId, storyId, cursor, passageKey ? { locale, passage: passageKey } : { locale });
         if (!alive.current) return;
         setState((s) => {
           const seen = new Set(s.items.map((item) => item.id));
@@ -177,7 +224,7 @@ export function useStoryMarks({
         );
       }
     },
-    [duelId, storyId, locale],
+    [duelId, storyId, locale, passageKey],
   );
 
   useEffect(() => {
@@ -232,7 +279,8 @@ export function useStoryMarks({
     if (state.nextCursor && !state.moreFailed && state.pagesScanned < FOCUS_PAGE_BUDGET) void load(state.nextCursor);
   }, [focusId, state.status, state.loadingMore, state.items, state.nextCursor, state.moreFailed, state.pagesScanned, load, loadReplies]);
 
-  const canWrite = !isOwnStory && state.canComment && !state.writesOff;
+  // The panel of a paragraph never starts a root.
+  const canWrite = !passageKey && !isOwnStory && state.canComment && !state.writesOff;
   /** The backend decides who may answer (the relato's author included). */
   const canStartReply = state.canReply && !state.repliesOff && !state.replyTarget && !state.replyBusy;
 
@@ -305,6 +353,7 @@ export function useStoryMarks({
       // A reply in a thread never opened: bring in the replies before it.
       if (neverOpened) void loadReplies(rootId, null);
       setNotice(copy.replyCreated);
+      hooks.current.onMutated?.();
       return true;
     } catch (error) {
       if (!alive.current) return false;
@@ -348,6 +397,7 @@ export function useStoryMarks({
       if (!alive.current) return;
       setState((s) => ({ ...s, replyBusy: false, items: withCount(s.items, result.replyCount) }));
       setNotice(copy.replyDeleted);
+      hooks.current.onMutated?.();
     } catch (error) {
       if (!alive.current) return;
       setState((s) => {
@@ -363,9 +413,14 @@ export function useStoryMarks({
     }
   }
 
-  async function create(text: string): Promise<boolean> {
+  /**
+   * A general Marca, or a root quoting one paragraph when [passage] is given
+   * (the instance of a paragraph's panel can do neither). The quote is part of
+   * the attempt's identity: the same text on another quote is another Marca.
+   */
+  async function create(text: string, passage?: StoryPassageDraft): Promise<boolean> {
     if (!canWrite || state.busy) return false;
-    const requestId = identity.idFor(text, null);
+    const requestId = identity.idFor(text, null, passage ? `${passage.paragraphKey}\n${passage.quote}` : '');
     const pending: Pending = {
       id: PENDING_ID,
       author: { userId: '', displayName: user?.username ?? '' },
@@ -374,24 +429,63 @@ export function useStoryMarks({
       canDelete: false,
       replyCount: 0,
       pending: true,
+      ...(passage ? { passage: { paragraphKey: passage.paragraphKey, located: true, quote: passage.quote } } : {}),
     };
-    setState((s) => ({ ...s, busy: true, createError: null, items: [pending, ...s.items.filter((item) => item.id !== PENDING_ID)] }));
+    setState((s) => ({
+      ...s,
+      busy: true,
+      createError: null,
+      quoteOffer: null,
+      items: [pending, ...s.items.filter((item) => item.id !== PENDING_ID)],
+    }));
+    if (passage) hooks.current.quotes?.onPending?.(passage.paragraphKey);
     try {
-      const result = await storyCommentsApi.create(duelId, storyId, requestId, text, ctx);
+      const result = passage
+        ? await storyCommentsApi.create(duelId, storyId, requestId, text, ctx, passage)
+        : await storyCommentsApi.create(duelId, storyId, requestId, text, ctx);
       if (!alive.current) return false;
       identity.clear();
       setState((s) => ({
         ...s,
         busy: false,
         count: result.commentsCount,
+        // A quoted Marca may land before the conversation was ever read: let it load.
+        requested: s.requested || !!passage,
         items: [result.comment, ...s.items.filter((item) => item.id !== PENDING_ID && item.id !== result.comment.id)],
       }));
+      hooks.current.quotes?.onCreated?.(passage ? passage.paragraphKey : null);
       setNotice(copy.created);
       return true;
     } catch (error) {
       if (!alive.current) return false;
       const failure = markFailure(error);
       if (failure === 'conflict') identity.clear();
+      if (passage) hooks.current.quotes?.onFailed?.(passage.paragraphKey);
+
+      // Only the two quote codes (or a bare 400 once the summary has lost
+      // `passages`) end in the explicit offer: never a silent plain Marca.
+      let offer = false;
+      if (passage) {
+        const unavailable = isPassagesUnavailable(error);
+        if (unavailable) hooks.current.quotes?.onUnavailable?.();
+        if (unavailable || isPassageInvalid(error)) offer = true;
+        else if (isBareBadRequest(error)) {
+          const still = await (hooks.current.quotes?.stillAvailable?.() ?? Promise.resolve(true)).catch(() => true);
+          if (!alive.current) return false;
+          offer = !still;
+        }
+      }
+      if (offer && passage) {
+        // The old id is dead: the plain attempt gets a new one.
+        identity.clear();
+        setState((s) => ({
+          ...s,
+          busy: false,
+          items: s.items.filter((item) => item.id !== PENDING_ID),
+          quoteOffer: { text, passage },
+        }));
+        return false;
+      }
       setState((s) => ({
         ...s,
         busy: false,
@@ -401,6 +495,39 @@ export function useStoryMarks({
       }));
       return false;
     }
+  }
+
+  /** «Dejarla sin cita»: the same text as a general Marca, on a new request id. */
+  async function leaveWithoutQuote(): Promise<boolean> {
+    const offer = state.quoteOffer;
+    if (!offer || state.busy) return false;
+    identity.clear();
+    return create(offer.text);
+  }
+
+  /** «Cancelar»: the offer goes away; the text stays where the reader typed it. */
+  function dismissQuoteOffer() {
+    setState((s) => (s.quoteOffer ? { ...s, quoteOffer: null } : s));
+  }
+
+  /** Counters and permissions from the summary, before the list is read. */
+  function applySummary(summary: { commentsCount: number; canComment: boolean; canReply: boolean }) {
+    setState((s) => ({
+      ...s,
+      count: summary.commentsCount,
+      canComment: summary.canComment,
+      canReply: summary.canReply,
+    }));
+  }
+
+  /** Opens the conversation (what reaching it does). */
+  function request() {
+    setState((s) => (s.requested ? s : { ...s, requested: true }));
+  }
+
+  /** Reads the first page again, after a change made elsewhere (the paragraph panel). */
+  function reload() {
+    if (state.requested) void load(null);
   }
 
   async function remove(commentId: string) {
@@ -420,6 +547,8 @@ export function useStoryMarks({
         return { ...s, busy: false, count: result.commentsCount, threads };
       });
       setNotice(copy.deletedNotice);
+      hooks.current.onMutated?.();
+      if (removed.passage) hooks.current.quotes?.onRemoved?.();
     } catch (error) {
       if (!alive.current) return;
       setState((s) => {
@@ -472,7 +601,15 @@ export function useStoryMarks({
     createReply,
     removeReply,
     create,
+    leaveWithoutQuote,
+    dismissQuoteOffer,
+    applySummary,
+    request,
+    reload,
     remove,
     report,
   };
 }
+
+/** What a surface gets from the hook: the state and every action. */
+export type StoryMarksApi = ReturnType<typeof useStoryMarks>;

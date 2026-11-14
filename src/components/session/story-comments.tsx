@@ -1,10 +1,11 @@
 'use client';
 
+import { useContext } from 'react';
+
 import { InkButton } from '@/components/ink/ink-button';
 import { InkInlineBanner } from '@/components/ink/ink-inline-banner';
 import { InkSkeleton, InkTextAction } from '@/components/ink/ink-states';
 import type { Locale } from '@/lib/i18n';
-import type { ReportReason } from '@/lib/session/marks';
 
 import {
   DeleteMarkDialog,
@@ -14,7 +15,8 @@ import {
   MarkNotice,
   ReportMarkDialog,
 } from './marks-parts';
-import { type Confirm, type Pending, type ReplyTarget, useStoryMarks } from './use-story-marks';
+import { StoryMarksContext } from './story-marks-context';
+import { type Confirm, type Pending, type ReplyTarget, type StoryMarksApi, useStoryMarks } from './use-story-marks';
 
 // Marcas of a duel story (17 - Social), ported from gallery_comments_cubit.dart:
 // Marcas plus one level of replies; on your own relato there is no field for a
@@ -22,55 +24,33 @@ import { type Confirm, type Pending, type ReplyTarget, useStoryMarks } from './u
 // list is fetched when the reader reaches it, a thread only on «Ver N
 // respuestas». Create and delete are optimistic with rollback; a report hides
 // nothing. Deleting a Marca takes its thread with it (no tombstones).
-
+//
+// Two ways to mount it: on its own (it owns a useStoryMarks instance, as ever)
+// or inside a StoryPassagesProvider (Marca con cita), which owns the instance
+// so the text and the conversation share it.
 
 /** The Marcas section of a relato, for «Deja tu Marca» to scroll to. */
 export function storyCommentsSectionId(duelId: string, storyId: string): string {
   return `marcas-${duelId}-${storyId}`;
 }
 
-export function StoryComments({
-  duelId,
-  storyId,
-  isOwnStory,
-  initialCount,
-  focusId = null,
-  autoOpen = false,
+/**
+ * The Marcas of a list (the conversation, or one paragraph's panel): each
+ * with its thread, plus the delete and report decisions. A located quote is a
+ * button when [onJumpQuote] is given.
+ */
+export function StoryMarkItems({
+  marks,
   locale,
+  focusId = null,
+  onJumpQuote,
 }: {
-  duelId: string;
-  storyId: string;
-  isOwnStory: boolean;
-  initialCount: number;
-  /** ?comment=: the received comment to bring into view. */
-  focusId?: string | null;
-  /** Open without waiting to be reached (the received-comment page). */
-  autoOpen?: boolean;
+  marks: StoryMarksApi;
   locale: Locale;
+  focusId?: string | null;
+  onJumpQuote?: ((paragraphKey: string, quote: string | null) => void) | null;
 }) {
-  const {
-    all,
-    copy,
-    state,
-    section,
-    notice,
-    deleting,
-    setDeleting,
-    reportingTarget,
-    setReportingTarget,
-    canWrite,
-    canStartReply,
-    loadReplies,
-    toggleThread,
-    startReply,
-    cancelReply,
-    createReply,
-    removeReply,
-    create,
-    remove,
-    report,
-    load,
-  } = useStoryMarks({ duelId, storyId, isOwnStory, initialCount, focusId, autoOpen, locale });
+  const { all, copy, state, deleting, setDeleting, reportingTarget, setReportingTarget, canStartReply, loadReplies, toggleThread, startReply, cancelReply, createReply, removeReply, remove, report } = marks;
 
   /** Borrar for your own, Reportar (once) for anyone else's. */
   const ownOrReport = (target: Confirm, canDelete: boolean, disabled: boolean) => {
@@ -180,50 +160,7 @@ export function StoryComments({
   }
 
   return (
-    <section
-      ref={section}
-      id={storyCommentsSectionId(duelId, storyId)}
-      aria-labelledby={`comments-${storyId}`}
-      className="mt-12 flex scroll-mt-16 flex-col gap-4"
-    >
-      <div className="border-y border-divider py-3.5">
-        <h2 id={`comments-${storyId}`} className="type-title-section text-[22px] text-primary">
-          {state.count > 0 ? copy.title(state.count) : copy.titleEmpty}
-        </h2>
-      </div>
-
-      {isOwnStory ? <p className="type-caption text-[13px] text-secondary">{copy.selfComment}</p> : null}
-      {canWrite || (state.createError && !isOwnStory) ? (
-        <MarkComposer
-          hint={copy.hint}
-          sending={state.busy}
-          error={state.createError}
-          blocked={!canWrite}
-          onSubmit={create}
-          locale={locale}
-        />
-      ) : null}
-      <MarkNotice text={notice} />
-
-      {state.status === 'loading' || (state.requested && state.status === 'idle') ? (
-        <InkSkeleton lines={3} height="h-14" label={all.story.titleEmpty} />
-      ) : null}
-
-      {state.status === 'error' && state.failure ? (
-        <InkInlineBanner
-          tone={state.failure === 'unavailable' ? 'info' : 'error'}
-          title={state.failure === 'unavailable' ? copy.failure.unavailable : all.chapter.failure[state.failure === 'notFound' ? 'generic' : state.failure]}
-          action={state.failure === 'unavailable' ? undefined : <InkTextAction onClick={() => void load(null)}>{all.retry}</InkTextAction>}
-        />
-      ) : null}
-
-      {state.status === 'ready' && state.items.length === 0 ? (
-        <div className="flex flex-col gap-1 py-2">
-          <p className="type-title-section text-[18px] text-primary">{copy.emptyTitle}</p>
-          {canWrite ? <p className="type-body text-secondary">{copy.emptyBody}</p> : null}
-        </div>
-      ) : null}
-
+    <>
       {state.items.length > 0 ? (
         <ol className="m-0 flex list-none flex-col p-0">
           {state.items.map((item) => (
@@ -235,6 +172,12 @@ export function StoryComments({
                 createdAt={item.createdAt}
                 content={item.content}
                 highlight={focusId === item.id}
+                passage={item.passage}
+                onJumpQuote={
+                  onJumpQuote && item.passage?.located && item.passage.quote
+                    ? () => onJumpQuote(item.passage!.paragraphKey, item.passage!.quote)
+                    : undefined
+                }
                 locale={locale}
                 actions={
                   item.pending ? (
@@ -255,14 +198,6 @@ export function StoryComments({
             </li>
           ))}
         </ol>
-      ) : null}
-
-      {state.nextCursor && state.status === 'ready' ? (
-        <div>
-          <InkButton variant="secondary" fullWidth={false} busy={state.loadingMore} onClick={() => void load(state.nextCursor)}>
-            {state.moreFailed ? all.retry : copy.loadMore}
-          </InkButton>
-        </div>
       ) : null}
 
       <DeleteMarkDialog
@@ -289,6 +224,101 @@ export function StoryComments({
         onReport={(reason) => reportingTarget && void report(reportingTarget, reason)}
         locale={locale}
       />
+    </>
+  );
+}
+
+type Props = {
+  duelId: string;
+  storyId: string;
+  isOwnStory: boolean;
+  initialCount: number;
+  /** ?comment=: the received comment to bring into view. */
+  focusId?: string | null;
+  /** Open without waiting to be reached (the received-comment page). */
+  autoOpen?: boolean;
+  locale: Locale;
+};
+
+export function StoryComments(props: Props) {
+  const scope = useContext(StoryMarksContext);
+  if (scope) return <StoryCommentsView {...props} marks={scope.marks} scope={scope} />;
+  return <OwnStoryComments {...props} />;
+}
+
+function OwnStoryComments(props: Props) {
+  const marks = useStoryMarks(props);
+  return <StoryCommentsView {...props} marks={marks} scope={null} />;
+}
+
+function StoryCommentsView({
+  isOwnStory,
+  focusId = null,
+  locale,
+  duelId,
+  storyId,
+  marks,
+  scope,
+}: Props & { marks: StoryMarksApi; scope: React.ContextType<typeof StoryMarksContext> }) {
+  const { all, copy, state, section, notice, canWrite, load, create } = marks;
+  const onJumpQuote = scope?.onJumpQuote ?? null;
+
+  return (
+    <section
+      ref={section}
+      id={storyCommentsSectionId(duelId, storyId)}
+      aria-labelledby={`comments-${storyId}`}
+      className="mt-12 flex scroll-mt-16 flex-col gap-4"
+    >
+      <div className="border-y border-divider py-3.5">
+        <h2 id={`comments-${storyId}`} className="type-title-section text-[22px] text-primary">
+          {state.count > 0 ? copy.title(state.count) : copy.titleEmpty}
+        </h2>
+      </div>
+
+      {isOwnStory ? <p className="type-caption text-[13px] text-secondary">{copy.selfComment}</p> : null}
+      {canWrite || (state.createError && !isOwnStory) ? (
+        <div onFocusCapture={scope?.composerFocused}>
+        <MarkComposer
+          hint={copy.hint}
+          sending={state.busy}
+          error={state.createError}
+          blocked={!canWrite}
+          onSubmit={(text) => create(text)}
+          locale={locale}
+        />
+        </div>
+      ) : null}
+      <MarkNotice text={notice} />
+
+      {state.status === 'loading' || (state.requested && state.status === 'idle') ? (
+        <InkSkeleton lines={3} height="h-14" label={all.story.titleEmpty} />
+      ) : null}
+
+      {state.status === 'error' && state.failure ? (
+        <InkInlineBanner
+          tone={state.failure === 'unavailable' ? 'info' : 'error'}
+          title={state.failure === 'unavailable' ? copy.failure.unavailable : all.chapter.failure[state.failure === 'notFound' ? 'generic' : state.failure]}
+          action={state.failure === 'unavailable' ? undefined : <InkTextAction onClick={() => void load(null)}>{all.retry}</InkTextAction>}
+        />
+      ) : null}
+
+      {state.status === 'ready' && state.items.length === 0 ? (
+        <div className="flex flex-col gap-1 py-2">
+          <p className="type-title-section text-[18px] text-primary">{copy.emptyTitle}</p>
+          {canWrite ? <p className="type-body text-secondary">{copy.emptyBody}</p> : null}
+        </div>
+      ) : null}
+
+      <StoryMarkItems marks={marks} locale={locale} focusId={focusId} onJumpQuote={onJumpQuote} />
+
+      {state.nextCursor && state.status === 'ready' ? (
+        <div>
+          <InkButton variant="secondary" fullWidth={false} busy={state.loadingMore} onClick={() => void load(state.nextCursor)}>
+            {state.moreFailed ? all.retry : copy.loadMore}
+          </InkButton>
+        </div>
+      ) : null}
     </section>
   );
 }

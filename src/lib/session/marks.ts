@@ -5,6 +5,7 @@ import type { Locale } from '@/lib/i18n';
 
 import { ApiError, apiPath, apiRequest } from './api';
 import type { Page } from './models';
+import type { TextPassages } from './passages';
 
 // Marcas (phase 3): the reader side of two existing contracts.
 // - Relatos de duelo: inkduel-backend/internal/controllers/gallery_comment_controller.go
@@ -89,6 +90,18 @@ export function isPassagesUnavailable(error: unknown): boolean {
   return !!data && data.code === 'passages_unavailable';
 }
 
+/** 400 `passage_invalid`: the quote or its key was rejected (malformed, too long, not in that paragraph). */
+export function isPassageInvalid(error: unknown): boolean {
+  if (!(error instanceof ApiError) || error.status !== 400) return false;
+  const data = error.data as { code?: unknown } | undefined;
+  return !!data && data.code === 'passage_invalid';
+}
+
+/** A 400 with no machine code: an older backend that does not know `passage`, or a plain rejection. */
+export function isBareBadRequest(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 400 && !isPassageInvalid(error);
+}
+
 // ---- parsing ----
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -122,6 +135,19 @@ export type StoryComment = {
   canDelete: boolean;
   /** Visible replies in this Marca's thread. */
   replyCount: number;
+  /** The quote of a root left on a paragraph; absent on a general Marca. */
+  passage?: InkMarkPassage | null;
+};
+
+/** The quote of a Marca on a relato: the key anchors it to a paragraph of the text. */
+export type StoryPassageDraft = { paragraphKey: string; quote: string };
+
+/** GET …/comments/summary of a relato. `passages` only when the feature is on for this viewer. */
+export type StoryCommentsSummary = {
+  commentsCount: number;
+  canComment: boolean;
+  canReply: boolean;
+  passages: TextPassages | null;
 };
 
 export type StoryCommentsPage = Page<StoryComment> & { commentsCount: number; canComment: boolean; canReply: boolean };
@@ -141,6 +167,7 @@ export type StoryCommentRepliesPage = Page<StoryCommentReply> & { replyCount: nu
 
 function parseStoryComment(data: unknown): StoryComment | null {
   if (!isRecord(data) || !str(data.id)) return null;
+  const passage = parsePassage(data.passage);
   return {
     id: str(data.id),
     author: parseAuthor(data.author),
@@ -148,6 +175,7 @@ function parseStoryComment(data: unknown): StoryComment | null {
     createdAt: timestamp(data.createdAt),
     canDelete: bool(data.canDelete),
     replyCount: count(data.replyCount),
+    ...(passage ? { passage } : {}),
   };
 }
 
@@ -244,6 +272,15 @@ function parsePassages(data: unknown): ChapterPassages | null {
   };
 }
 
+/** summary.passages of a relato: the same block without a revision. Malformed: no block. */
+function parseTextPassages(data: unknown): TextPassages | null {
+  if (!isRecord(data) || !Array.isArray(data.paragraphKeys)) return null;
+  const paragraphKeys = keyList(data.paragraphKeys);
+  if (paragraphKeys.length !== data.paragraphKeys.length) return null;
+  const max = count(data.maxQuoteRunes);
+  return { paragraphKeys, markedKeys: keyList(data.markedKeys), maxQuoteRunes: max > 0 ? max : 300 };
+}
+
 function parseSummary(data: Record<string, unknown>): ChapterMarksSummary {
   return { ...parseCounters(data), passages: parsePassages(data.passages) };
 }
@@ -320,6 +357,8 @@ export type ReceivedMark =
       duelId: string;
       storyId: string;
       prompt: string;
+      /** The quote of the Marca, when it has one that is still in the text. */
+      passage?: InkMarkPassageView;
     }
   | {
       source: 'workChapter';
@@ -350,6 +389,8 @@ export type ReceivedMark =
       rootCommentId: string;
       /** The reply comes from the relato's author. */
       isStoryAuthor: boolean;
+      /** The quote of the root being answered (rootPassage). */
+      passage?: InkMarkPassageView;
     }
   | {
       /** A reply to a Marca (or a reply) you left on someone else's chapter. */
@@ -380,6 +421,7 @@ function parseReceivedStoryComments(data: unknown): Page<ReceivedMark> {
     const storyId = str(row.story.storyId);
     // A row without a timestamp cannot be placed in a time-ordered merge.
     if (!comment || !comment.createdAt || !duelId || !storyId) continue;
+    const passage = isRecord(row.comment) ? parsePassageView(row.comment.passage) : null;
     items.push({
       source: 'duelStory',
       id: comment.id,
@@ -389,6 +431,7 @@ function parseReceivedStoryComments(data: unknown): Page<ReceivedMark> {
       duelId,
       storyId,
       prompt: str(row.story.prompt),
+      ...(passage ? { passage } : {}),
     });
   }
   return { items, nextCursor: cursor(data.nextCursor) };
@@ -438,6 +481,7 @@ export function parseStoryRepliesReceived(data: unknown): Page<ReceivedMark> {
     const duelId = str(row.story.duelId);
     const storyId = str(row.story.storyId);
     if (!id || !createdAt || !rootCommentId || !duelId || !storyId) continue;
+    const passage = parsePassageView(row.rootPassage);
     items.push({
       source: 'duelStoryReply',
       id,
@@ -449,6 +493,7 @@ export function parseStoryRepliesReceived(data: unknown): Page<ReceivedMark> {
       prompt: str(row.story.prompt),
       rootCommentId,
       isStoryAuthor: bool(row.isStoryAuthor),
+      ...(passage ? { passage } : {}),
     });
   }
   return { items, nextCursor: cursor(data.nextCursor) };
@@ -495,12 +540,33 @@ const storyPath = (duelId: string, storyId: string, ...rest: string[]) =>
 const chapterPath = (workId: string, chapterId: string, ...rest: string[]) =>
   apiPath('api', 'gallery', 'works', workId, 'chapters', chapterId, 'ink-marks', ...rest);
 
+const STORY_PASSAGE_ERROR_CODES = ['passages_unavailable', 'passage_invalid'] as const;
+
 export const storyCommentsApi = {
-  async list(duelId: string, storyId: string, pageCursor: string | null, { locale, signal }: Ctx): Promise<StoryCommentsPage> {
+  /** One cheap read: counters, permissions and, when the feature is on, the paragraph keys. */
+  async summary(duelId: string, storyId: string, { locale, signal }: Ctx): Promise<StoryCommentsSummary> {
+    const data = await apiRequest('GET', storyPath(duelId, storyId, 'summary'), { locale, signal });
+    if (!isRecord(data)) return { commentsCount: 0, canComment: false, canReply: false, passages: null };
+    return {
+      commentsCount: count(data.commentsCount),
+      canComment: bool(data.canComment),
+      canReply: bool(data.canReply),
+      passages: parseTextPassages(data.passages),
+    };
+  },
+
+  /** With [passage] (a paragraph key) it is the server's own query for that paragraph. */
+  async list(
+    duelId: string,
+    storyId: string,
+    pageCursor: string | null,
+    { locale, signal, passage }: Ctx & { passage?: string },
+  ): Promise<StoryCommentsPage> {
     const data = await apiRequest('GET', storyPath(duelId, storyId), {
       locale,
       signal,
-      query: { cursor: pageCursor ?? undefined },
+      query: { cursor: pageCursor ?? undefined, passage },
+      errorCodes: passage ? STORY_PASSAGE_ERROR_CODES : undefined,
     });
     if (!isRecord(data)) return { items: [], nextCursor: null, commentsCount: 0, canComment: false, canReply: false };
     return {
@@ -513,12 +579,16 @@ export const storyCommentsApi = {
   },
 
   /** Idempotent for the same clientRequestId and content (201 new, 200 replay). */
-  async create(duelId: string, storyId: string, clientRequestId: string, content: string, { locale }: Ctx) {
+  async create(duelId: string, storyId: string, clientRequestId: string, content: string, { locale }: Ctx, passage?: StoryPassageDraft) {
     let status = 0;
+    const body: Record<string, unknown> = { clientRequestId, content };
+    // Roots only: the quote is part of the idempotency key on the server.
+    if (passage) body.passage = { paragraphKey: passage.paragraphKey, quote: passage.quote };
     const data = await apiRequest('POST', storyPath(duelId, storyId), {
       locale,
-      body: { clientRequestId, content },
+      body,
       onStatus: (value) => (status = value),
+      errorCodes: passage ? STORY_PASSAGE_ERROR_CODES : undefined,
     });
     if (!isRecord(data)) throw new ApiError(200, 'parse');
     const result = { comment: requireStoryComment(data.comment), commentsCount: count(data.commentsCount) };

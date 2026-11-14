@@ -8,7 +8,6 @@ import { cx } from '@/components/ink/cx';
 import { ArrowRightIcon, BoltIcon, ChevronLeftIcon, DropIcon, HookIcon } from '@/components/ink/icons';
 import { InkButton } from '@/components/ink/ink-button';
 import { InkSkeleton } from '@/components/ink/ink-states';
-import { StoryText } from '@/components/reading/story-parts';
 import type { Locale } from '@/lib/i18n';
 import { SESSION_COPY } from '@/lib/session/copy';
 import { GALLERY_REACTIONS, type GalleryReaction, type GalleryStory } from '@/lib/session/models';
@@ -20,6 +19,7 @@ import { GrowStoryCta } from './grow-story';
 import { ByLine, winReason } from './historias';
 import { useNotice } from './marks-parts';
 import { StoryComments, storyCommentsSectionId } from './story-comments';
+import { StoryPassageText, StoryPassagesProvider } from './story-passages';
 
 // A relato read in Historias (09), built on the Works reader's ending, as in
 // the app's gallery_story_detail_page.dart: the text, «Fin del relato», «¿Qué
@@ -243,12 +243,15 @@ export function StoryReaderArticle({
   options,
   locale,
   backHref,
+  hidden = false,
 }: {
   /** Read once: remount (key) to read another relato from scratch. */
   options: StoryReaderOptions;
   locale: Locale;
   /** «‹ Historias» above the relato (opened from the list). */
   backHref?: string;
+  /** Kept mounted but not shown (Historias keeps reading mode alive): the text stops listening to selections. */
+  hidden?: boolean;
 }) {
   const [reader] = useState(() => new StoryReader(options));
   useEffect(() => {
@@ -292,8 +295,8 @@ export function StoryReaderArticle({
         section?.querySelector('textarea')?.focus({ preventScroll: true });
       };
 
-  return (
-    <article className="mx-auto flex w-full max-w-[680px] flex-col gap-4 pt-2">
+  const body = (
+    <>
       {backHref ? (
         <Link
           href={backHref}
@@ -311,7 +314,7 @@ export function StoryReaderArticle({
         </p>
       ) : null}
       <div className="mt-4">
-        <StoryText text={story.storyText || story.storyPreview} />
+        <StoryPassageText text={story.storyText || story.storyPreview} />
       </div>
       {readingFlow ? (
         <>
@@ -341,6 +344,31 @@ export function StoryReaderArticle({
           <NextSection state={state} reader={reader} locale={locale} />
         </div>
       ) : null}
+    </>
+  );
+
+  return (
+    <article className="mx-auto flex w-full max-w-[680px] flex-col gap-4 pt-2">
+      {reader.passagesEnabled ? (
+        // One provider per relato: «Siguiente relato» swaps the key and every
+        // selection, panel and draft starts from scratch. Only the FULL text
+        // may draw places, never the preview.
+        <StoryPassagesProvider
+          key={story.key}
+          duelId={story.duelId}
+          storyId={story.storyId}
+          isOwnStory={isOwnStory}
+          initialCount={story.commentsCount}
+          text={story.storyText || null}
+          surface="historias"
+          active={!hidden}
+          locale={locale}
+        >
+          {body}
+        </StoryPassagesProvider>
+      ) : (
+        body
+      )}
     </article>
   );
 }

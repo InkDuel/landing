@@ -62,6 +62,7 @@ export function ReadingMode({
   listStatus,
   listError,
   onShowList,
+  hidden = false,
   locale,
 }: {
   links: ReaderLinks;
@@ -69,6 +70,8 @@ export function ReadingMode({
   /** Shown when the queue had nothing and the list failed too. */
   listError: ReactNode;
   onShowList: () => void;
+  /** Mounted but not shown (reading mode lives on under the Obras tab). */
+  hidden?: boolean;
   locale: Locale;
 }) {
   const copy = READING_COPY[locale];
@@ -108,11 +111,13 @@ export function ReadingMode({
       <StoryReaderArticle
         key={story.key}
         locale={locale}
+        hidden={hidden}
         options={{
           story,
           api: readingApi,
           queueEnabled: links.flags.queue,
           reactionsEnabled: links.flags.reactions,
+          passagesEnabled: links.flags.passages === true,
           viewerId: links.viewerId,
           locale,
           feed: links.feed,

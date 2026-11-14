@@ -164,6 +164,7 @@ function StoriesView() {
           api: readingApi,
           queueEnabled: flags.queue,
           reactionsEnabled: flags.reactions,
+          passagesEnabled: flags.passages === true,
           viewerId,
           locale,
           feed: items,
@@ -200,6 +201,7 @@ function StoriesView() {
                 />
               }
               onShowList={() => selectMode('list')}
+              hidden={!reading}
               locale={locale}
             />
           </div>

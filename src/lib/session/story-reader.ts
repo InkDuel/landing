@@ -31,6 +31,8 @@ export type StoryReaderOptions = {
   api: ReadingApi;
   queueEnabled: boolean;
   reactionsEnabled: boolean;
+  /** Marca con cita on this relato (the web's Remote Config switch). */
+  passagesEnabled?: boolean;
   viewerId: string | null;
   locale: Locale;
   /** The list the reader came from: the fallback when the queue is off. */
@@ -53,6 +55,7 @@ const QUEUE_BATCH = 3;
 export class StoryReader {
   readonly queueEnabled: boolean;
   readonly reactionsEnabled: boolean;
+  readonly passagesEnabled: boolean;
   private state: StoryReaderState;
   private readonly listeners = new Set<() => void>();
   /** Refs shown in this visit, newest last, sent as `exclude`. */
@@ -65,6 +68,7 @@ export class StoryReader {
   constructor(private readonly options: StoryReaderOptions) {
     this.queueEnabled = options.queueEnabled;
     this.reactionsEnabled = options.reactionsEnabled;
+    this.passagesEnabled = options.passagesEnabled ?? false;
     const upcoming = options.queueEnabled ? [...(options.initialUpcoming ?? [])] : [];
     this.state = {
       story: options.story,

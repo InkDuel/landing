@@ -92,15 +92,20 @@ export function transitionCounts(
 
 // ---- switches ----
 
-export type ReadingFlags = { queue: boolean; reactions: boolean };
+export type ReadingFlags = {
+  queue: boolean;
+  reactions: boolean;
+  /** gallery_comment_passages_web_enabled: Marca con cita on relatos (web only; fail-closed). */
+  passages?: boolean;
+};
 
-const OFF: ReadingFlags = { queue: false, reactions: false };
+const OFF: ReadingFlags = { queue: false, reactions: false, passages: false };
 /** A first visit waits this long for Remote Config, then reads as before. */
 const FIRST_FETCH_BUDGET_MS = 3000;
 
 /**
  * The app's Remote Config keys and defaults (gallery_reading_queue_enabled,
- * gallery_reactions_enabled). A config already fetched answers at once and
+ * gallery_reactions_enabled) plus the web-only gallery_comment_passages_web_enabled. A config already fetched answers at once and
  * refreshes in the background; the first ever fetch gets a short budget.
  * Anything that fails reads as off: Historias as it was.
  */
@@ -110,13 +115,19 @@ export async function readingFlags(): Promise<ReadingFlags> {
     const { getRemoteConfig, ensureInitialized, fetchAndActivate, getBoolean, isSupported } = await import('@firebase/remote-config');
     if (!(await isSupported())) return OFF;
     const config = getRemoteConfig(getApp());
-    config.defaultConfig = { ...config.defaultConfig, gallery_reading_queue_enabled: false, gallery_reactions_enabled: false };
+    config.defaultConfig = {
+      ...config.defaultConfig,
+      gallery_reading_queue_enabled: false,
+      gallery_reactions_enabled: false,
+      gallery_comment_passages_web_enabled: false,
+    };
     // The same settings as ranked-flags.ts: the instance is shared.
     config.settings = { fetchTimeoutMillis: 20_000, minimumFetchIntervalMillis: 15 * 60_000 };
     await ensureInitialized(config);
     const read = (): ReadingFlags => ({
       queue: getBoolean(config, 'gallery_reading_queue_enabled'),
       reactions: getBoolean(config, 'gallery_reactions_enabled'),
+      passages: getBoolean(config, 'gallery_comment_passages_web_enabled'),
     });
     const fetching = fetchAndActivate(config).catch(() => false);
     if (config.fetchTimeMillis > 0) return read();
@@ -125,6 +136,11 @@ export async function readingFlags(): Promise<ReadingFlags> {
   } catch {
     return OFF;
   }
+}
+
+/** Only the quote switch, for surfaces that do not read the rest (the received-comment page). */
+export async function passagesWebEnabled(): Promise<boolean> {
+  return (await readingFlags()).passages === true;
 }
 
 // ---- «Leer de corrido» / «Ver lista» ----

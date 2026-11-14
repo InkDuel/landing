@@ -153,6 +153,7 @@ export function PassageStoryText({
   locale,
   typographyClass = DEFAULT_TYPOGRAPHY,
   lineHeight = LINE_HEIGHT,
+  active = true,
 }: {
   layout: PassageLayout;
   canQuote: boolean;
@@ -165,6 +166,8 @@ export function PassageStoryText({
   typographyClass?: string;
   /** Height of one line in px: spacer and margin buttons follow it. */
   lineHeight?: number;
+  /** False while the reader is kept mounted but hidden: no selection listeners, no bar. */
+  active?: boolean;
 }) {
   const copy = MARKS_COPY[locale].passage;
   const root = useRef<HTMLDivElement>(null);
@@ -176,7 +179,7 @@ export function PassageStoryText({
   const holdUntil = useRef(0);
 
   useEffect(() => {
-    if (!canQuote) return;
+    if (!canQuote || !active) return;
     let frame = 0;
     const update = () => {
       frame = 0;
@@ -207,7 +210,7 @@ export function PassageStoryText({
       window.removeEventListener('scroll', schedule);
       window.removeEventListener('resize', schedule);
     };
-  }, [canQuote, layout]);
+  }, [canQuote, active, layout]);
 
   /** The margin button: the whole paragraph, ready to narrow with the mouse. */
   function selectParagraph(line: PassageLine, event: React.MouseEvent) {
@@ -233,7 +236,7 @@ export function PassageStoryText({
     setLimitShown(false);
   }
 
-  const picked = canQuote ? pickedState : null;
+  const picked = canQuote && active ? pickedState : null;
   const showLimit = !!picked?.tooLong && (limitShown || picked.source !== 'selection');
   const hidden = new Set(hiddenKeys);
 
@@ -282,7 +285,7 @@ export function PassageStoryText({
           );
         })}
       </div>
-      {canQuote && picked ? <SelectionBar
+      {canQuote && active && picked ? <SelectionBar
           picked={picked}
           showLimit={showLimit}
           onLeave={leaveMark}

@@ -214,9 +214,7 @@ export function ReceivedMarkRow({ row, preview = false, locale }: { row: Row; pr
         <span aria-hidden="true">·</span>
         <time dateTime={mark.createdAt}>{shortMarkDate(mark.createdAt, locale)}</time>
       </p>
-      {(mark.source === 'workChapter' || mark.source === 'workChapterReply') && mark.passage?.quote ? (
-        <QuoteLine text={mark.passage.quote} />
-      ) : null}
+      {mark.passage?.quote ? <QuoteLine text={mark.passage.quote} /> : null}
       <Link
         href={receivedMarkHref(mark, locale)}
         className={cx(
