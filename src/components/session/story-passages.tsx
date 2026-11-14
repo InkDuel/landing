@@ -30,7 +30,7 @@ import { useStoryMarks } from './use-story-marks';
 // the layout exists only when the summary brought `passages`, the text is the
 // full one and the paragraph count matches. Anything else: today's StoryText.
 
-export type StoryMarksSurface = 'historias' | 'received_story';
+export type StoryMarksSurface = 'historias' | 'received_story' | 'duel_result_rival' | 'duel_result_own';
 
 /** Once per relato and page session: the quote action became available. */
 const shownQuoteAction = new Set<string>();
@@ -419,13 +419,34 @@ function PassagePanelBody({
  * paragraph with the gotas and the quote gesture. In every other case it is
  * exactly the StoryText of before.
  */
-export function StoryPassageText({ text }: { text: string }) {
+export function StoryPassageText({
+  text,
+  plain,
+  typographyClass,
+  lineHeight,
+  whiteSpaceClass,
+  placesClassName,
+}: {
+  text: string;
+  /** What draws the text without places, when the surface has its own markup (default: StoryText). */
+  plain?: (text: string) => ReactNode;
+  /** With places the lines keep the surface's typography: class and the px height of one line. */
+  typographyClass?: string;
+  lineHeight?: number;
+  whiteSpaceClass?: string;
+  /** Margin and gutter of the text box, only while it is drawn with places. */
+  placesClassName?: string;
+}) {
   const view = useContext(TextViewContext);
-  if (!view || !view.layout) return <StoryText text={text} />;
+  if (!view || !view.layout) return plain ? <>{plain(text)}</> : <StoryText text={text} />;
   return (
     <>
       {view.showHint ? <PassageHintStrip onDismiss={view.dismissHint} locale={view.locale} /> : null}
       <PassageStoryText
+        typographyClass={typographyClass}
+        lineHeight={lineHeight}
+        whiteSpaceClass={whiteSpaceClass}
+        className={placesClassName}
         layout={view.layout}
         canQuote={view.canQuote}
         hiddenKeys={view.hiddenKeys}
