@@ -579,6 +579,32 @@ describe('the received-comment page', () => {
     expect(await screen.findByRole('button', { name: 'Sobre este fragmento: pecho dormido' })).toBeTruthy();
   });
 
+  it('never waits for Remote Config: the text and the conversation render at once, with no summary', async () => {
+    vi.mocked(passagesWebEnabled).mockReturnValue(new Promise(() => undefined));
+    vi.mocked(apiGet).mockResolvedValue(served);
+    serve({ general: [marca('g1')] });
+    render(<ReceivedStoryView duelId="d9" storyId="s9" commentId={null} />);
+    await screen.findByText(/Era un ritmo lento/);
+    await screen.findByText('Marca g1');
+    expect(lines()).toHaveLength(0);
+    expect(api.summary).not.toHaveBeenCalled();
+  });
+
+  it('when the switch resolves late the plain text turns into places without remounting the conversation', async () => {
+    let resolve!: (value: boolean) => void;
+    vi.mocked(passagesWebEnabled).mockReturnValue(new Promise((res) => (resolve = res)));
+    vi.mocked(apiGet).mockResolvedValue(served);
+    serve({ summary: summaryOf({}, [KEYS[1]]), general: [marca('g1')] });
+    render(<ReceivedStoryView duelId="d9" storyId="s9" commentId={null} />);
+    await screen.findByText('Marca g1');
+    expect(lines()).toHaveLength(0);
+    const listCalls = api.list.mock.calls.length;
+    await act(async () => resolve(true));
+    await drawn();
+    expect(api.list.mock.calls.length).toBe(listCalls);
+    expect(screen.getByText('Marca g1')).toBeTruthy();
+  });
+
   it('with the switch off it is the page of before and no summary is requested', async () => {
     vi.mocked(passagesWebEnabled).mockResolvedValue(false);
     vi.mocked(apiGet).mockResolvedValue(served);

@@ -33,7 +33,7 @@ export function ReceivedStoryView({ duelId, storyId, commentId }: { duelId: stri
   const copy = MARKS_COPY[locale].inbox;
   const [story, setStory] = useState<Story | 'loading' | 'error'>('loading');
   const uid = user?.id ?? '';
-  // Marca con cita: the web's switch. null until known, so the page never flips shape.
+  // Marca con cita: the web's switch. Unknown or off reads as before.
   const [passages, setPassages] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -97,26 +97,22 @@ export function ReceivedStoryView({ duelId, storyId, commentId }: { duelId: stri
     <article className="mx-auto flex w-full max-w-[680px] flex-col gap-4 pt-2">
       <BackLink href={receivedMarksHref()} label={copy.backToInbox} />
       <p className="type-label text-secondary">{copy.yourStory}</p>
-      {passages === null ? (
-        <InkSkeleton lines={4} height="h-6" label={copy.yourStory} />
-      ) : passages ? (
-        <StoryPassagesProvider
-          key={`${duelId}:${storyId}`}
-          duelId={duelId}
-          storyId={storyId}
-          isOwnStory={isOwnStory}
-          initialCount={0}
-          focusId={commentId}
-          autoOpen
-          text={typeof story === 'object' ? story.text || null : null}
-          surface="received_story"
-          locale={locale}
-        >
-          {content}
-        </StoryPassagesProvider>
-      ) : (
-        content
-      )}
+      {/* Never waits for Remote Config: the page renders as before at once and
+          the provider only wakes up (summary, places) if the switch turns on. */}
+      <StoryPassagesProvider
+        duelId={duelId}
+        storyId={storyId}
+        isOwnStory={isOwnStory}
+        initialCount={0}
+        focusId={commentId}
+        autoOpen
+        enabled={passages === true}
+        text={typeof story === 'object' ? story.text || null : null}
+        surface="received_story"
+        locale={locale}
+      >
+        {content}
+      </StoryPassagesProvider>
     </article>
   );
 }

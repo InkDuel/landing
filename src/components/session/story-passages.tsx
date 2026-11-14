@@ -65,6 +65,7 @@ export function StoryPassagesProvider({
   text,
   surface,
   active = true,
+  enabled = true,
   locale,
   children,
 }: {
@@ -79,6 +80,12 @@ export function StoryPassagesProvider({
   surface: StoryMarksSurface;
   /** False while the reader is kept mounted but hidden. */
   active?: boolean;
+  /**
+   * The switch (Remote Config). Off or still unknown: the provider is inert —
+   * no summary request, no layout — and the page reads exactly as before. It
+   * may flip on later without remounting the conversation.
+   */
+  enabled?: boolean;
   locale: Locale;
   children: ReactNode;
 }) {
@@ -123,6 +130,7 @@ export function StoryPassagesProvider({
 
   // The summary decides the feature and brings the first counters: once per relato.
   useEffect(() => {
+    if (!enabled) return;
     const controller = new AbortController();
     storyCommentsApi
       .summary(duelId, storyId, { locale, signal: controller.signal })
@@ -136,7 +144,7 @@ export function StoryPassagesProvider({
     return () => controller.abort();
     // Language changes do not re-read the keys: they are language-free.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [duelId, storyId]);
+  }, [duelId, storyId, enabled]);
 
   const marks = useStoryMarks({
     duelId,
