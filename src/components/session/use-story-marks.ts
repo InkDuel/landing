@@ -337,6 +337,9 @@ export function useStoryMarks({
     });
     try {
       const result = await storyRepliesApi.create(duelId, storyId, rootId, requestId, text, parentReplyId, ctx);
+      // It happened on the server even if this instance is gone (a panel closed
+      // mid-flight): the owner must hear it. The callback lives in a ref.
+      hooks.current.onMutated?.();
       if (!alive.current) return false;
       replyIdentity.clear();
       setState((s) => {
@@ -353,7 +356,6 @@ export function useStoryMarks({
       // A reply in a thread never opened: bring in the replies before it.
       if (neverOpened) void loadReplies(rootId, null);
       setNotice(copy.replyCreated);
-      hooks.current.onMutated?.();
       return true;
     } catch (error) {
       if (!alive.current) return false;
@@ -394,10 +396,10 @@ export function useStoryMarks({
     });
     try {
       const result = await storyRepliesApi.remove(duelId, storyId, rootId, replyId, ctx);
+      hooks.current.onMutated?.();
       if (!alive.current) return;
       setState((s) => ({ ...s, replyBusy: false, items: withCount(s.items, result.replyCount) }));
       setNotice(copy.replyDeleted);
-      hooks.current.onMutated?.();
     } catch (error) {
       if (!alive.current) return;
       setState((s) => {
@@ -539,6 +541,7 @@ export function useStoryMarks({
     setState((s) => ({ ...s, busy: true, count: Math.max(0, s.count - 1), items: s.items.filter((item) => item.id !== commentId) }));
     try {
       const result = await storyCommentsApi.remove(duelId, storyId, commentId, ctx);
+      hooks.current.onMutated?.();
       if (!alive.current) return;
       setState((s) => {
         // The thread goes with its Marca.
@@ -547,7 +550,6 @@ export function useStoryMarks({
         return { ...s, busy: false, count: result.commentsCount, threads };
       });
       setNotice(copy.deletedNotice);
-      hooks.current.onMutated?.();
       if (removed.passage) hooks.current.quotes?.onRemoved?.();
     } catch (error) {
       if (!alive.current) return;

@@ -43,7 +43,11 @@ export function PassageSheet({
     <dialog
       ref={ref}
       aria-labelledby={titleId}
-      onClose={onClose}
+      // A dialog nested in the sheet (delete / report confirmation) closes with its
+      // own close event, which React bubbles up the tree: only ours counts.
+      onClose={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
       onClick={(event) => {
         if (event.target === ref.current) onClose();
       }}

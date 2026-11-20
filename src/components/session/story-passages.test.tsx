@@ -461,6 +461,94 @@ describe('the paragraph panel', () => {
     await waitFor(() => expect(api.summary).toHaveBeenCalledTimes(summaryBefore + 1));
   });
 
+  describe('closing the panel while a change is in flight', () => {
+    const generalLoads = () => api.list.mock.calls.filter((call) => !call[3].passage).length;
+
+    async function openWithRoot(over: Partial<StoryComment> = {}) {
+      serve({ summary: summaryOf({}, [KEYS[1]]), general: [quoted('q1', 'pecho dormido', over)], panel: [quoted('q1', 'pecho dormido', over)] });
+      render(<Harness />);
+      await drawn();
+      await screen.findByText(/Marca q1/, { selector: 'p' });
+      const dialog = await openPanel();
+      await within(dialog).findByText(/Marca q1/);
+      return dialog;
+    }
+    async function close(dialog: HTMLElement) {
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Cerrar' }));
+      await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Marcas de este párrafo' })).toBeNull());
+    }
+
+    it('a reply that lands after the panel closed still reloads the conversation and the summary, once', async () => {
+      const dialog = await openWithRoot();
+      let resolve!: (value: Awaited<ReturnType<typeof storyRepliesApi.create>>) => void;
+      replies.create.mockReturnValue(new Promise((res) => (resolve = res)));
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Responder' }));
+      const field = await within(dialog).findByPlaceholderText('Escribe tu respuesta…');
+      fireEvent.change(field, { target: { value: 'Gracias' } });
+      fireEvent.submit(field.closest('form') as HTMLFormElement);
+      await waitFor(() => expect(replies.create).toHaveBeenCalledTimes(1));
+      await close(dialog);
+      const loads = generalLoads();
+      const summaries = api.summary.mock.calls.length;
+      // Closed with nothing landed yet: nothing is re-read.
+      await act(async () => undefined);
+      expect(generalLoads()).toBe(loads);
+      await act(async () =>
+        resolve({ reply: { id: 'r1', author: author('yo'), content: 'Gracias', createdAt: '2026-11-01T12:00:00Z', canDelete: true, parentReplyId: '', replyingTo: '' }, replyCount: 1 }),
+      );
+      await waitFor(() => expect(generalLoads()).toBe(loads + 1));
+      await waitFor(() => expect(api.summary).toHaveBeenCalledTimes(summaries + 1));
+      await act(async () => undefined);
+      expect(generalLoads()).toBe(loads + 1);
+      expect(api.summary).toHaveBeenCalledTimes(summaries + 1);
+    });
+
+    it('a delete that lands after the panel closed does the same', async () => {
+      const dialog = await openWithRoot({ canDelete: true });
+      let resolve!: (value: { commentsCount: number }) => void;
+      api.remove.mockReturnValue(new Promise((res) => (resolve = res)));
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Borrar Marca' }));
+      fireEvent.click(await screen.findByRole('button', { name: 'Borrar' }));
+      await waitFor(() => expect(api.remove).toHaveBeenCalledTimes(1));
+      await close(dialog);
+      const loads = generalLoads();
+      const summaries = api.summary.mock.calls.length;
+      await act(async () => resolve({ commentsCount: 0 }));
+      await waitFor(() => expect(generalLoads()).toBe(loads + 1));
+      await waitFor(() => expect(api.summary).toHaveBeenCalledTimes(summaries + 1));
+    });
+
+    it('confirming a delete inside the panel does not close the panel', async () => {
+      const dialog = await openWithRoot({ canDelete: true });
+      api.remove.mockResolvedValue({ commentsCount: 0 });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Borrar Marca' }));
+      fireEvent.click(await screen.findByRole('button', { name: 'Borrar' }));
+      await waitFor(() => expect(api.remove).toHaveBeenCalledTimes(1));
+      await act(async () => undefined);
+      expect(screen.getByRole('dialog', { name: 'Marcas de este párrafo' })).toBeTruthy();
+    });
+
+    it('with the panel still open nothing is re-read until it closes', async () => {
+      const dialog = await openWithRoot();
+      replies.create.mockResolvedValue({
+        reply: { id: 'r1', author: author('yo'), content: 'Gracias', createdAt: '2026-11-01T12:00:00Z', canDelete: true, parentReplyId: '', replyingTo: '' },
+        replyCount: 1,
+      });
+      const loads = generalLoads();
+      const summaries = api.summary.mock.calls.length;
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Responder' }));
+      const field = await within(dialog).findByPlaceholderText('Escribe tu respuesta…');
+      fireEvent.change(field, { target: { value: 'Gracias' } });
+      fireEvent.submit(field.closest('form') as HTMLFormElement);
+      await within(dialog).findByText('Gracias');
+      expect(generalLoads()).toBe(loads);
+      expect(api.summary).toHaveBeenCalledTimes(summaries);
+      await close(dialog);
+      await waitFor(() => expect(generalLoads()).toBe(loads + 1));
+      await waitFor(() => expect(api.summary).toHaveBeenCalledTimes(summaries + 1));
+    });
+  });
+
   it('an empty answer for a marked paragraph hides its drop for the session', async () => {
     serve({ summary: summaryOf({}, [KEYS[1]]), panel: [] });
     render(<Harness />);
