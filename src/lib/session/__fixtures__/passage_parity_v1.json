@@ -1,0 +1,195 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "name": "plain",
+      "text": "Uno.\nDos.\n\nTres.",
+      "paragraphs": [
+        "Uno.",
+        "Dos.",
+        "Tres."
+      ],
+      "keys": [
+        "0673a9e3bcbe",
+        "1d8355504c7f",
+        "65166cd0b97b"
+      ]
+    },
+    {
+      "name": "crlf",
+      "text": "Uno.\r\nDos.\r\n",
+      "paragraphs": [
+        "Uno.",
+        "Dos."
+      ],
+      "keys": [
+        "0673a9e3bcbe",
+        "1d8355504c7f"
+      ]
+    },
+    {
+      "name": "lone_cr",
+      "text": "Uno.\rDos.",
+      "paragraphs": [
+        "Uno.\rDos."
+      ],
+      "keys": [
+        "b8aca725f2c9"
+      ]
+    },
+    {
+      "name": "whitespace_only_lines",
+      "text": " \t \n  Hola  \n \n",
+      "paragraphs": [
+        "Hola"
+      ],
+      "keys": [
+        "e633f4fc79ba"
+      ]
+    },
+    {
+      "name": "nbsp_edges",
+      "text": " Hola ",
+      "paragraphs": [
+        "Hola"
+      ],
+      "keys": [
+        "e633f4fc79ba"
+      ]
+    },
+    {
+      "name": "nel",
+      "text": "Hola",
+      "paragraphs": [
+        "Hola"
+      ],
+      "keys": [
+        "e633f4fc79ba"
+      ]
+    },
+    {
+      "name": "bom",
+      "text": "﻿Hola",
+      "paragraphs": [
+        "﻿Hola"
+      ],
+      "keys": [
+        "6a0c903cd00b"
+      ]
+    },
+    {
+      "name": "line_paragraph_separators",
+      "text": "Uno\u2028Dos\n\u2029\n\u2028",
+      "paragraphs": [
+        "Uno\u2028Dos"
+      ],
+      "keys": [
+        "56cdf181c4ed"
+      ]
+    },
+    {
+      "name": "ideographic_space",
+      "text": "　Hola　",
+      "paragraphs": [
+        "Hola"
+      ],
+      "keys": [
+        "e633f4fc79ba"
+      ]
+    },
+    {
+      "name": "emoji",
+      "text": "👩‍👩‍👧 familia\n🇦🇷 bandera",
+      "paragraphs": [
+        "👩‍👩‍👧 familia",
+        "🇦🇷 bandera"
+      ],
+      "keys": [
+        "eefad46b31b0",
+        "465601681418"
+      ]
+    },
+    {
+      "name": "combining_vs_precomposed",
+      "text": "Café\nCafé",
+      "paragraphs": [
+        "Café",
+        "Café"
+      ],
+      "keys": [
+        "c42cc7a1ca08",
+        "73473dcc12b7"
+      ]
+    },
+    {
+      "name": "repeated",
+      "text": "—Sí.\nOtra.\n—Sí.",
+      "paragraphs": [
+        "—Sí.",
+        "Otra.",
+        "—Sí."
+      ],
+      "keys": [
+        "bba8749ce47e",
+        "5e5286d0e966",
+        "bba8749ce47e"
+      ]
+    },
+    {
+      "name": "tab_vt_ff",
+      "text": "\tHola\u000b\n\fChau",
+      "paragraphs": [
+        "Hola",
+        "Chau"
+      ],
+      "keys": [
+        "e633f4fc79ba",
+        "82bb674decdc"
+      ]
+    },
+    {
+      "name": "empty",
+      "text": "",
+      "paragraphs": [],
+      "keys": []
+    },
+    {
+      "name": "only_newlines",
+      "text": "\n\n",
+      "paragraphs": [],
+      "keys": []
+    }
+  ],
+  "quotes": [
+    {
+      "name": "ascii",
+      "quote": "Hola",
+      "runes": 4
+    },
+    {
+      "name": "family_emoji",
+      "quote": "👩‍👩‍👧",
+      "runes": 5
+    },
+    {
+      "name": "flag",
+      "quote": "🇦🇷",
+      "runes": 2
+    },
+    {
+      "name": "cafe",
+      "quote": "Café",
+      "runes": 4
+    },
+    {
+      "name": "300_a",
+      "quote": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "runes": 300
+    },
+    {
+      "name": "nandu_emoji",
+      "quote": "ñandú 🦤",
+      "runes": 7
+    }
+  ]
+}
