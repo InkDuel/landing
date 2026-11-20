@@ -154,6 +154,8 @@ export function PassageStoryText({
   typographyClass = DEFAULT_TYPOGRAPHY,
   lineHeight = LINE_HEIGHT,
   active = true,
+  whiteSpaceClass = 'whitespace-pre-line',
+  className,
 }: {
   layout: PassageLayout;
   canQuote: boolean;
@@ -168,6 +170,10 @@ export function PassageStoryText({
   lineHeight?: number;
   /** False while the reader is kept mounted but hidden: no selection listeners, no bar. */
   active?: boolean;
+  /** How the lines keep the author's spaces (default pre-line, as the reader's StoryText). */
+  whiteSpaceClass?: string;
+  /** Extra classes of the text box (a margin or a gutter). */
+  className?: string;
 }) {
   const copy = MARKS_COPY[locale].passage;
   const root = useRef<HTMLDivElement>(null);
@@ -242,7 +248,7 @@ export function PassageStoryText({
 
   return (
     <>
-      <div ref={root} className={`${typographyClass} text-content whitespace-pre-line break-words`}>
+      <div ref={root} className={`${typographyClass} text-content ${whiteSpaceClass} break-words${className ? ` ${className}` : ''}`}>
         {layout.lines.map((line) => {
           if (line.key === null) return <div key={line.index} aria-hidden="true" style={{ minHeight: lineHeight }} />;
           const flashed = flash?.line === line.index && !quoteRange(line.text, flash.quote);

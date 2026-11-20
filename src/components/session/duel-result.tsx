@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { Consigna } from '@/components/ink/consigna';
 import { InkButton } from '@/components/ink/ink-button';
 import { InkCard } from '@/components/ink/ink-card';
@@ -13,11 +13,25 @@ import { ApiError } from '@/lib/session/api';
 import { DUELS_COPY } from '@/lib/session/duels-copy';
 import { useSession } from '@/lib/session/auth-context';
 import { type DuelDetail, duelsApi } from '@/lib/session/duels';
+import { passagesWebEnabled } from '@/lib/session/reading';
 import { useRanked } from './ranked-runtime';
 import { useSessionLocale } from './session-root';
 import { StoryComments } from './story-comments';
+import { StoryPassageText, StoryPassagesProvider } from './story-passages';
 
 /** ?story=&comment=: the relato whose Marcas open, and the thread to bring into view. */
+/**
+ * The result card's story: type-literary-small, whose line-height the card
+ * overrides with leading-relaxed (1.625 × 16px = 26px, checked in the built
+ * CSS). The places use the same numbers, so on and off render alike.
+ */
+const RESULT_TYPOGRAPHY = 'type-literary-small leading-relaxed';
+const RESULT_LINE_HEIGHT = 26;
+
+const plainStory = (text: string): ReactNode => (
+  <p className="mt-5 whitespace-pre-wrap break-words type-literary-small leading-relaxed text-content">{text}</p>
+);
+
 export type DuelResultFocus = { storyId: string; commentId: string | null };
 
 export function DuelResultView({
@@ -34,6 +48,16 @@ export function DuelResultView({
   const copy = DUELS_COPY[locale];
   const winner = duel.userA.id === duel.winnerId ? duel.userA : duel.userB?.id === duel.winnerId ? duel.userB : null;
   const { user } = useSession();
+  // Marca con cita: the web's switch. Never awaited: the result renders as
+  // before at once and the places only appear if it turns on.
+  const [passages, setPassages] = useState(false);
+  useEffect(() => {
+    let active = true;
+    void passagesWebEnabled().then((value) => active && setPassages(value));
+    return () => {
+      active = false;
+    };
+  }, []);
   const stories = [
     { player: duel.userA, text: duel.storyA, score: duel.scoreA, marcas: duel.marcasA },
     ...(duel.userB ? [{ player: duel.userB, text: duel.storyB, score: duel.scoreB, marcas: duel.marcasB }] : []),
@@ -73,8 +97,9 @@ export function DuelResultView({
         {stories.map(({ player, text, score, marcas }) => {
           const isOwnStory = !!user && user.id === player.id;
           const focused = !!focus && !!marcas && marcas.storyId === focus.storyId;
-          return (
-            <div key={player.id} className="flex min-w-0 flex-col">
+          const showComments = !!marcas && !!text && (focused || !(isOwnStory && marcas.commentsCount === 0));
+          const column = (
+            <div key={`${duel.id}:${player.id}`} className="flex min-w-0 flex-col">
               <InkCard className="min-w-0">
                 <div className="flex items-center justify-between gap-3">
                   <InkButton href={withLang(`/profile/${encodeURIComponent(player.id)}`, locale)} variant="link" fullWidth={false}>
@@ -89,11 +114,22 @@ export function DuelResultView({
                     </span>
                   ) : null}
                 </div>
-                {text ? <p className="mt-5 whitespace-pre-wrap break-words type-literary-small leading-relaxed text-content">{text}</p> : null}
+                {text ? (
+                  <StoryPassageText
+                    text={text}
+                    plain={plainStory}
+                    typographyClass={RESULT_TYPOGRAPHY}
+                    lineHeight={RESULT_LINE_HEIGHT}
+                    whiteSpaceClass="whitespace-pre-wrap"
+                    // The gotas and the margin action hang 20px outside the text:
+                    // the gutter exists only while the places are drawn.
+                    placesClassName="mt-5 px-5"
+                  />
+                ) : null}
               </InkCard>
               {/* Marcas under each relato, as the app's result. Your own relato
                   with none yet has nothing to show (duel_result_comments_bar.dart). */}
-              {marcas && text && (focused || !(isOwnStory && marcas.commentsCount === 0)) ? (
+              {showComments && marcas ? (
                 <StoryComments
                   duelId={duel.id}
                   storyId={marcas.storyId}
@@ -105,6 +141,29 @@ export function DuelResultView({
                 />
               ) : null}
             </div>
+          );
+          // One provider per relato: two stories on the page never share state.
+          // Only the full text (the duel's own) draws places, never a preview.
+          return showComments && marcas ? (
+            // Keyed by the relato, not the player: another duel between the same
+            // two players must never inherit this conversation's state.
+            <StoryPassagesProvider
+              key={`${duel.id}:${marcas.storyId}`}
+              duelId={duel.id}
+              storyId={marcas.storyId}
+              isOwnStory={isOwnStory}
+              initialCount={marcas.commentsCount}
+              focusId={focused ? focus.commentId : null}
+              autoOpen={focused}
+              enabled={passages}
+              text={text || null}
+              surface={isOwnStory ? 'duel_result_own' : 'duel_result_rival'}
+              locale={locale}
+            >
+              {column}
+            </StoryPassagesProvider>
+          ) : (
+            column
           );
         })}
       </div>
