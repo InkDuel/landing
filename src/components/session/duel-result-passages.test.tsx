@@ -226,3 +226,34 @@ describe('flags on', () => {
     expect(track).toHaveBeenCalledWith('ink_mark_passage_thread_opened', { surface: 'duel_story', context: 'duel_result_own', has_passage: true, source: 'gota' });
   });
 });
+
+describe('another duel with the same players, without unmounting', () => {
+  const second = () =>
+    parseDuelDetail({
+      id: 'd2',
+      prompt: 'Otra puerta',
+      userA: { id: 'me', username: 'Autor' },
+      userB: { id: 'rival', username: 'Rival' },
+      storyA: { id: 'sa2', text: OWN, commentable: true, commentsCount: 1 },
+      storyB: { id: 'sb2', text: RIVAL, commentable: true, commentsCount: 1 },
+    });
+
+  for (const flag of [true, false]) {
+    it(`keeps nothing from the previous duel (flag ${flag ? 'on' : 'off'})`, async () => {
+      vi.mocked(passagesWebEnabled).mockResolvedValue(flag);
+      const view = render(<DuelResultView duel={duel()} locale="es" />);
+      await screen.findByText('Marca g-sb');
+      await act(async () => undefined);
+
+      view.rerender(<DuelResultView duel={second()} locale="es" />);
+      // The new duel's conversation is requested and shown; the old one is gone.
+      await screen.findByText('Marca g-sb2');
+      await act(async () => undefined);
+      expect(screen.queryByText('Marca g-sb')).toBeNull();
+      expect(screen.queryByText('Marca g-sa')).toBeNull();
+      expect(api.list.mock.calls.some((call) => call[0] === 'd2' && call[1] === 'sb2')).toBe(true);
+      if (flag) expect(api.summary.mock.calls.some((call) => call[0] === 'd2' && call[1] === 'sb2')).toBe(true);
+      else expect(api.summary).not.toHaveBeenCalled();
+    });
+  }
+});

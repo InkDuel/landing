@@ -99,7 +99,7 @@ export function DuelResultView({
           const focused = !!focus && !!marcas && marcas.storyId === focus.storyId;
           const showComments = !!marcas && !!text && (focused || !(isOwnStory && marcas.commentsCount === 0));
           const column = (
-            <div key={player.id} className="flex min-w-0 flex-col">
+            <div key={`${duel.id}:${player.id}`} className="flex min-w-0 flex-col">
               <InkCard className="min-w-0">
                 <div className="flex items-center justify-between gap-3">
                   <InkButton href={withLang(`/profile/${encodeURIComponent(player.id)}`, locale)} variant="link" fullWidth={false}>
@@ -145,8 +145,10 @@ export function DuelResultView({
           // One provider per relato: two stories on the page never share state.
           // Only the full text (the duel's own) draws places, never a preview.
           return showComments && marcas ? (
+            // Keyed by the relato, not the player: another duel between the same
+            // two players must never inherit this conversation's state.
             <StoryPassagesProvider
-              key={player.id}
+              key={`${duel.id}:${marcas.storyId}`}
               duelId={duel.id}
               storyId={marcas.storyId}
               isOwnStory={isOwnStory}
