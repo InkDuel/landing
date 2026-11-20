@@ -100,6 +100,7 @@ export function ReceivedStoryView({ duelId, storyId, commentId }: { duelId: stri
       {/* Never waits for Remote Config: the page renders as before at once and
           the provider only wakes up (summary, places) if the switch turns on. */}
       <StoryPassagesProvider
+        key={`${duelId}:${storyId}`}
         duelId={duelId}
         storyId={storyId}
         isOwnStory={isOwnStory}
