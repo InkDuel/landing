@@ -101,6 +101,7 @@ export function StoryPassagesProvider({
   const [composer, setComposer] = useState<Quote | null>(null);
   const alive = useRef(true);
   const panelMutated = useRef(false);
+  const panelOpen = useRef(false);
   const composerRef = useRef<Quote | null>(null);
   const composerTracked = useRef(false);
   const generalRef = useRef<{ reload: () => void; applySummary: (value: StoryCommentsSummary) => void } | null>(null);
@@ -198,6 +199,7 @@ export function StoryPassagesProvider({
     (key: string) => {
       flash.flashParagraph(key);
       panelMutated.current = false;
+      panelOpen.current = true;
       setPanelKey(key);
       track('ink_mark_passage_thread_opened', { surface: 'duel_story', context: surface, has_passage: true, source: 'gota' });
     },
@@ -205,6 +207,7 @@ export function StoryPassagesProvider({
   );
 
   const closePanel = useCallback(() => {
+    panelOpen.current = false;
     setPanelKey(null);
     // A reply or a delete changed what the conversation and the drops say.
     if (panelMutated.current) {
@@ -256,6 +259,19 @@ export function StoryPassagesProvider({
     track('ink_mark_composer_opened', { surface: 'duel_story', context: surface, has_passage: false, source: 'composer' });
   }, [surface]);
 
+  /**
+   * The panel's reply or delete reached the server. Panel still open: it is
+   * synced once, on close. Already closed (the request was in flight): sync now.
+   */
+  const onPanelMutated = () => {
+    if (panelOpen.current) {
+      panelMutated.current = true;
+      return;
+    }
+    generalRef.current?.reload();
+    void refreshSummary().catch(() => undefined);
+  };
+
   const view: TextView = {
     layout,
     canQuote,
@@ -288,9 +304,7 @@ export function StoryPassagesProvider({
               isOwnStory={isOwnStory}
               locale={locale}
               canQuote={canQuote}
-              onMutated={() => {
-                panelMutated.current = true;
-              }}
+              onMutated={onPanelMutated}
               onEmpty={(key) => setHiddenKeys((keys) => (keys.includes(key) ? keys : [...keys, key]))}
               onJump={jump}
               onSeeAll={seeAll}
