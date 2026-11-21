@@ -38,7 +38,7 @@ export type StudioLimits = {
 /** Mirrors internal/models/studio.go; used until the overview answers. */
 export const DEFAULT_LIMITS: StudioLimits = {
   draftBody: 40000,
-  publishBody: 5000,
+  publishBody: 10000,
   title: 120,
   synopsis: 1000,
   maxChapters: 100,
