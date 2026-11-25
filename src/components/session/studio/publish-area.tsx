@@ -28,8 +28,9 @@ import { StudioSheet } from './studio-ui';
 // «Publicar»: the only place where a private draft becomes what readers see.
 // Each publish pins the exact draft revision that was previewed and the public
 // revision it replaces; the server refuses anything else (409) instead of
-// guessing. Publication stays within 5,000 characters (what installed app
-// builds can edit), longer drafts are refused, never truncated.
+// guessing. Publication stays within limits.publishBody from the server
+// (MaxChapterContent: the same limit every app build can edit), longer drafts
+// are refused, never truncated.
 
 function Check({ ok, label, hint, soft = false, status }: { ok: boolean; label: string; hint?: string; soft?: boolean; status: { met: string; missing: string } }) {
   return (

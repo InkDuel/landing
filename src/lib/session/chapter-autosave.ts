@@ -10,7 +10,7 @@
 //   every retry, so an ambiguous response never becomes an id conflict);
 // - a 409 keeps the local text and surfaces the server snapshot;
 // - transient errors back off; other errors wait for an explicit retry;
-// - invalid text (empty, over 5,000) is never sent.
+// - invalid text (empty, over 10,000) is never sent.
 //
 // InkDuel Studio reuses this same engine for its private drafts with other
 // limits (40,000 characters, an empty body allowed): see AutosaveLimits.
@@ -53,10 +53,10 @@ export type AutosaveTiming = { debounceMs: number; minGapMs: number; backoffBase
 
 export const WEB_TIMING: AutosaveTiming = { debounceMs: 2_000, minGapMs: 20_000, backoffBaseMs: 1_000, backoffMaxMs: 30_000 };
 
-/** What the server accepts. A chapter (5,000, never empty) by default. */
+/** What the server accepts. A chapter (10,000, never empty) by default: WORK_LIMITS.chapterContent. */
 export type AutosaveLimits = { maxContent: number; maxTitle: number; allowEmpty: boolean };
 
-export const CHAPTER_LIMITS: AutosaveLimits = { maxContent: 5000, maxTitle: 120, allowEmpty: false };
+export const CHAPTER_LIMITS: AutosaveLimits = { maxContent: 10000, maxTitle: 120, allowEmpty: false };
 
 const runes = (value: string) => Array.from(value).length;
 

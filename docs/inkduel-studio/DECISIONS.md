@@ -39,6 +39,16 @@ silently — add `Update YYYY-MM-DD` under it. Product source of truth: `PRD.md`
 - Caps per work (soft, aggregation count): drafts 200, characters 300, places
   300, notes 500, scenes 500, relations 1000. Snapshots per draft: auto 30
   (≤ 90 days), backup 30, publish 50, manual 50 (409 when full).
+- Update 2026-11-21: the founder raised the chapter limit to **10,000 runes**
+  for saving and publishing (`MaxChapterContent`; vault
+  `wiki/technical/editor-de-capitulos-app-spec.md` §12). Drafts stay at
+  40,000 and chapters per work at 100. The invariant that kept publication at
+  5,000 still holds at the new value: publish and the legacy PATCH share one
+  constant, so anything Studio publishes stays editable by every installed app
+  build (they have no local limit). Studio reads `limits.publishBody` from the
+  overview, so it follows the backend deploy with no web change; the classic
+  editor (`WORK_LIMITS`, `CHAPTER_LIMITS`) moves with this PR. One-way: never
+  lower it again once a chapter over 5,000 exists.
 
 ## D4 · Concurrency
 - Content OCC: `revision` (title+body) with `expectedRevision`; metadata OCC:

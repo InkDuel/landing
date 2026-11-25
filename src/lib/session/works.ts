@@ -14,7 +14,8 @@ import type { Page } from './models';
 export const WORK_LIMITS = {
   workTitle: 120,
   chapterTitle: 120,
-  chapterContent: 5000,
+  /** Raised from 5,000 on 2026-11-21. Same value as CHAPTER_LIMITS and Studio's publishBody. */
+  chapterContent: 10000,
   /** MaxChaptersPerWork: AddWorkChapter answers 409 at this count. */
   maxChapters: 100,
 } as const;
