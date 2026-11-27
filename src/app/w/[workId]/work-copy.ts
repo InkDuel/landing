@@ -5,6 +5,9 @@ export type WorkCopy = {
   notFoundTitle: string;
   notFoundBody: string;
   goHome: string;
+  errorTitle: string;
+  errorBody: string;
+  retry: string;
   chapters: (n: number) => string;
   genres: Record<string, string>;
   status: Record<string, string>;
@@ -37,6 +40,9 @@ export const WORK_COPY: Record<Locale, WorkCopy> = {
     notFoundTitle: 'Obra no encontrada',
     notFoundBody: 'Esta obra no existe o ya no está publicada.',
     goHome: 'Ir a InkDuel',
+    errorTitle: 'No pudimos cargar la obra',
+    errorBody: 'Algo falló de nuestro lado. Prueba de nuevo en unos minutos.',
+    retry: 'Reintentar',
     chapters: (n) => (n === 1 ? '1 capítulo' : `${n} capítulos`),
     genres: genres.es,
     status: { ongoing: 'En curso', complete: 'Completa' },
@@ -61,6 +67,9 @@ export const WORK_COPY: Record<Locale, WorkCopy> = {
     notFoundTitle: 'Work not found',
     notFoundBody: 'This work doesn’t exist or is no longer published.',
     goHome: 'Go to InkDuel',
+    errorTitle: 'We couldn’t load this work',
+    errorBody: 'Something went wrong on our side. Try again in a few minutes.',
+    retry: 'Try again',
     chapters: (n) => (n === 1 ? '1 chapter' : `${n} chapters`),
     genres: genres.en,
     status: { ongoing: 'Ongoing', complete: 'Complete' },
@@ -85,6 +94,9 @@ export const WORK_COPY: Record<Locale, WorkCopy> = {
     notFoundTitle: 'Obra não encontrada',
     notFoundBody: 'Esta obra não existe ou não está mais publicada.',
     goHome: 'Ir para o InkDuel',
+    errorTitle: 'Não conseguimos carregar a obra',
+    errorBody: 'Algo falhou do nosso lado. Tente novamente em alguns minutos.',
+    retry: 'Tentar de novo',
     chapters: (n) => (n === 1 ? '1 capítulo' : `${n} capítulos`),
     genres: genres.pt,
     status: { ongoing: 'Em andamento', complete: 'Completa' },

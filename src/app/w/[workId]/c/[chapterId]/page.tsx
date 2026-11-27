@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
-import { fetchPublicWork, fetchPublicWorkChapter } from '@/lib/public-api';
+import { fetchPublicWork, fetchPublicWorkChapter, PublicApiUnavailableError } from '@/lib/public-api';
 import { resolveRequestLocale } from '@/lib/request-locale';
 
 import { WORK_COPY } from '../../work-copy';
@@ -16,7 +16,13 @@ type Props = {
 // it is never indexed. The free chapter lives on the ficha itself.
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const [{ workId }, { lang }] = await Promise.all([params, searchParams]);
-  const [work, { locale }] = await Promise.all([fetchPublicWork(workId), resolveRequestLocale(lang)]);
+  const [work, { locale }] = await Promise.all([
+    fetchPublicWork(workId).catch((error: unknown) => {
+      if (error instanceof PublicApiUnavailableError) return null;
+      throw error;
+    }),
+    resolveRequestLocale(lang),
+  ]);
   const copy = WORK_COPY[locale];
   return {
     title: work ? `${work.title} — InkDuel` : copy.metaNotFound,
@@ -32,7 +38,9 @@ export default async function WorkChapterPage({ params, searchParams }: Props) {
     fetchPublicWorkChapter(workId, chapterId),
     resolveRequestLocale(lang),
   ]);
-  if (work && chapter && !chapter.locked) {
+  // Missing work or chapter: a real 404. Backend unavailable: the fetches throw and Next serves error.tsx with a 500.
+  if (!work || !chapter) notFound();
+  if (!chapter.locked) {
     redirect(`/w/${encodeURIComponent(workId)}#capitulo-1`);
   }
   return <LockedChapterView work={work} chapter={chapter} initialLocale={locale} resolveOnClient={!explicit} />;

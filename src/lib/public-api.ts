@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { coverImageUrl } from './covers';
+import { publicCoverUrl } from './covers';
 
 // Public, unauthenticated backend endpoints used by the share pages. Called
 // from the server only; the browser never talks to the backend in phase 0.
@@ -50,6 +50,46 @@ async function getJson(path: string): Promise<unknown | null> {
     return await res.json();
   } catch {
     return null;
+  }
+}
+
+/** The backend answered something other than "this exists" or "this does not exist": 5xx, 503 kill switch, network or bad body. Never a 404. */
+export class PublicApiUnavailableError extends Error {
+  constructor(path: string, detail: string) {
+    super(`public API unavailable (${detail}): ${path}`);
+    this.name = 'PublicApiUnavailableError';
+  }
+}
+
+// Next's fetch cache only stores 200s and, on a stale entry, serves the old
+// 200 while a background refetch runs. A 404 (work hidden or deleted) is never
+// stored, so a plain `revalidate` would keep serving the old work for as long
+// as the entry lives. The time bucket is part of the cache key instead: every
+// bucket starts from an empty cache, so a hidden work answers 404 (and a
+// failing backend raises an error) at most one bucket later, never stale forever.
+// The backend ignores the unknown `cb` query parameter.
+export const WORK_CACHE_SECONDS = 300;
+export const SITEMAP_CACHE_SECONDS = 600;
+export const bucketed = (path: string, seconds: number, now = Date.now()) =>
+  `${path}${path.includes('?') ? '&' : '?'}cb=${Math.floor(now / 1000 / seconds)}`;
+
+/**
+ * Like getJson but tells "missing" (null, the backend said 404/410) from
+ * "unavailable" (throws PublicApiUnavailableError). Failures are never cached.
+ */
+async function getJsonOrThrow(path: string, seconds = WORK_CACHE_SECONDS): Promise<unknown | null> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${bucketed(path, seconds)}`, { next: { revalidate: seconds } });
+  } catch (error) {
+    throw new PublicApiUnavailableError(path, error instanceof Error ? error.message : 'network');
+  }
+  if (res.status === 404 || res.status === 410) return null;
+  if (!res.ok) throw new PublicApiUnavailableError(path, `status ${res.status}`);
+  try {
+    return await res.json();
+  } catch {
+    throw new PublicApiUnavailableError(path, 'invalid body');
   }
 }
 
@@ -145,9 +185,11 @@ export type PublicWorkChapter = {
 const strList = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
 
+/** null = the work does not exist (or is hidden). Throws PublicApiUnavailableError when the backend cannot answer. */
 export async function fetchPublicWork(workId: string): Promise<PublicWork | null> {
-  const data = await getJson(`/public/works/${segment(workId)}`);
-  if (!isRecord(data) || !str(data.id)) return null;
+  const data = await getJsonOrThrow(`/public/works/${segment(workId)}`);
+  if (data === null) return null;
+  if (!isRecord(data) || !str(data.id)) throw new PublicApiUnavailableError('work', 'unexpected body');
   const chapters = (Array.isArray(data.chapters) ? data.chapters : [])
     .filter(isRecord)
     .map((c) => ({ id: str(c.id), title: str(c.title), orderIndex: num(c.orderIndex) }))
@@ -165,14 +207,16 @@ export async function fetchPublicWork(workId: string): Promise<PublicWork | null
     lastActivityAt: str(data.lastActivityAt),
     freeChapterId: str(data.freeChapterId),
     chapters,
-    coverUrl: coverImageUrl(data.coverUrl),
-    coverThumbUrl: coverImageUrl(data.coverThumbUrl),
+    coverUrl: publicCoverUrl(data.coverUrl),
+    coverThumbUrl: publicCoverUrl(data.coverThumbUrl),
   };
 }
 
+/** null = no such published chapter. Throws PublicApiUnavailableError when the backend cannot answer. */
 export async function fetchPublicWorkChapter(workId: string, chapterId: string): Promise<PublicWorkChapter | null> {
-  const data = await getJson(`/public/works/${segment(workId)}/chapters/${segment(chapterId)}`);
-  if (!isRecord(data) || !str(data.id)) return null;
+  const data = await getJsonOrThrow(`/public/works/${segment(workId)}/chapters/${segment(chapterId)}`);
+  if (data === null) return null;
+  if (!isRecord(data) || !str(data.id)) throw new PublicApiUnavailableError('work', 'unexpected body');
   return {
     id: str(data.id),
     title: str(data.title),
@@ -188,7 +232,7 @@ export async function fetchPublicWorkIds(): Promise<{ id: string; lastActivityAt
   const out: { id: string; lastActivityAt: string }[] = [];
   let cursor = '';
   for (let page = 0; page < 20; page += 1) {
-    const data = await getJson(`/public/works-sitemap${cursor ? `?cursor=${segment(cursor)}` : ''}`);
+    const data = await getJsonOrThrow(`/public/works-sitemap${cursor ? `?cursor=${segment(cursor)}` : ''}`, SITEMAP_CACHE_SECONDS).catch(() => null);
     if (!isRecord(data)) break;
     for (const item of Array.isArray(data.items) ? data.items : []) {
       if (isRecord(item) && str(item.id)) out.push({ id: str(item.id), lastActivityAt: str(item.lastActivityAt) });

@@ -1,7 +1,7 @@
 'use client';
 
 import type { Locale } from '@/lib/i18n';
-import { coverImageUrl } from '@/lib/covers';
+import { signedCoverUrl } from '@/lib/covers';
 
 import { apiPath, apiRequest } from './api';
 
@@ -41,7 +41,7 @@ export function parseCoverQueue(data: unknown): CoverQueueItem[] {
         workId: str(item.workId),
         workTitle: str(item.workTitle),
         authorName: str(item.authorName),
-        imageUrl: coverImageUrl(item.imageUrl),
+        imageUrl: signedCoverUrl(item.imageUrl),
         submittedAt: str(item.submittedAt),
         moderation,
         moderationNote: str(item.moderationNote),

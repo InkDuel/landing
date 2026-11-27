@@ -2,7 +2,7 @@ import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { coverImageUrl } from '@/lib/covers';
+import { signedCoverUrl } from '@/lib/covers';
 import { ApiError } from '@/lib/session/api';
 import { parseCoverQueue } from '@/lib/session/covers-ops';
 
@@ -20,7 +20,7 @@ const item = {
   workId: 'w1',
   workTitle: 'La casa',
   authorName: '@ana',
-  imageUrl: 'https://storage.googleapis.com/b/covers/pending/w1/r1_thumb.jpg?X-Goog-Signature=abc',
+  imageUrl: 'https://storage.googleapis.com/inkduel-4540e.firebasestorage.app/covers/pending/w1/r1_thumb.jpg?X-Goog-Signature=abc',
   submittedAt: '2026-11-26T12:00:00Z',
   moderation: { racy: 'POSSIBLE', adult: 'VERY_UNLIKELY' },
   moderationNote: 'possible racy',
@@ -32,8 +32,9 @@ afterEach(cleanup);
 
 describe('cover queue payload', () => {
   it('draws only bucket images and drops items without an id', () => {
-    expect(coverImageUrl('https://evil.example/x.jpg')).toBe('');
-    expect(coverImageUrl('https://storage.googleapis.com.evil.example/x.jpg')).toBe('');
+    expect(signedCoverUrl('https://evil.example/x.jpg')).toBe('');
+    expect(signedCoverUrl('https://storage.googleapis.com.evil.example/x.jpg')).toBe('');
+    expect(signedCoverUrl('https://storage.googleapis.com/other-bucket/covers/pending/w1/r1.jpg?X-Goog-Signature=abc')).toBe('');
     const items = parseCoverQueue({ items: [item, { reviewId: '' }, { ...item, reviewId: 'r2', imageUrl: 'javascript:alert(1)' }] });
     expect(items.map((i) => i.reviewId)).toEqual(['r1', 'r2']);
     expect(items[1].imageUrl).toBe('');
