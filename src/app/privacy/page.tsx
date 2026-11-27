@@ -120,9 +120,9 @@ const copies: Record<Locale, LegalCopy> = {
         title: '9. Conservación y eliminación de datos',
         paragraphs: [
           'Conservamos la información durante el tiempo necesario para operar InkDuel, mantener la seguridad del servicio y cumplir obligaciones legales o de prevención de fraude.',
-          'Si solicitas eliminar tu cuenta desde la app o a través de nuestros canales de privacidad, eliminaremos o anonimizaremos la información asociada, salvo cuando debamos conservar ciertos datos por motivos legales, de seguridad o defensa frente a abusos.',
-          'Cuando una cuenta sea eliminada, podremos eliminar o anonimizar la información asociada. En algunos casos, ciertos registros vinculados a duelos, rankings, reportes, seguridad o prevención de abuso podrían conservarse de forma limitada o anonimizada para preservar la integridad del servicio.',
-          'La eliminación de cuenta en InkDuel es lógica: la cuenta se marca como eliminada y deja de poder usarse. Las obras de una cuenta eliminada dejan de ser visibles públicamente. Tu progreso de lectura sigue asociado a la cuenta eliminada y no se muestra a nadie.',
+          'Si solicitas eliminar tu cuenta desde la app o a través de nuestros canales de privacidad, la desactivamos de forma permanente: queda marcada como eliminada, ya no puedes iniciar sesión con ella, tu perfil deja de mostrarse y dejamos de enviarte notificaciones.',
+          'Al eliminar la cuenta, eliminamos las imágenes de portada de tus obras y tu progreso de lectura, cancelamos las portadas que estuvieran en revisión y despublicamos tus obras, que dejan de mostrarse en InkDuel y en la web.',
+          'Conservamos, sin mostrarlos públicamente, el registro de la cuenta eliminada, el texto de tus obras y capítulos y los registros vinculados a duelos, rankings, reportes, moderación, seguridad y prevención de abuso, para preservar la integridad del servicio. Si quieres que eliminemos también esa información, puedes pedirlo a través de nuestros canales de privacidad: la eliminaremos o anonimizaremos, salvo lo que debamos conservar por motivos legales, de seguridad o de prevención de abuso.',
           `También puedes solicitar la eliminación de tu cuenta o datos desde nuestro canal web: ${DELETE_ACCOUNT_URL}`,
         ],
         cta: {
@@ -271,9 +271,9 @@ const copies: Record<Locale, LegalCopy> = {
         title: '9. Data retention and account deletion',
         paragraphs: [
           'We keep information for as long as needed to operate InkDuel, maintain service security, and comply with legal obligations or fraud-prevention needs.',
-          'If you request deletion of your account from inside the app or through our privacy channels, we will delete or anonymize the associated information unless we must retain certain data for legal, security, or abuse-prevention reasons.',
-          'When an account is deleted, we may delete or anonymize the associated information. In some cases, certain records related to duels, rankings, reports, security, or abuse prevention may be kept in a limited or anonymized form to preserve service integrity.',
-          'Account deletion on InkDuel is logical: the account is marked as deleted and can no longer be used. The works of a deleted account stop being publicly visible. Your reading progress stays associated with the deleted account and is not shown to anyone.',
+          'If you request deletion of your account from inside the app or through our privacy channels, we deactivate it permanently: it is marked as deleted, you can no longer sign in with it, your profile stops being shown and we stop sending you notifications.',
+          'When the account is deleted, we delete the cover images of your works and your reading progress, cancel any covers still under review, and unpublish your works, which stop being shown on InkDuel and on the web.',
+          'We keep, without showing them publicly, the record of the deleted account, the text of your works and chapters, and records related to duels, rankings, reports, moderation, security and abuse prevention, to preserve the integrity of the service. If you want us to delete that information as well, you can ask through our privacy channels: we will delete or anonymize it, except for what we must keep for legal, security or abuse-prevention reasons.',
           `You can also request deletion of your account or related data through our web channel: ${DELETE_ACCOUNT_URL}`,
         ],
         cta: {
@@ -422,9 +422,9 @@ const copies: Record<Locale, LegalCopy> = {
         title: '9. Retencao e exclusao de dados',
         paragraphs: [
           'Mantemos as informacoes pelo tempo necessario para operar o InkDuel, preservar a seguranca do servico e cumprir obrigacoes legais ou necessidades de prevencao a fraude.',
-          'Se voce solicitar a exclusao da sua conta dentro do app ou pelos nossos canais de privacidade, excluiremos ou anonimizaremos as informacoes associadas, salvo quando precisarmos manter certos dados por motivos legais, de seguranca ou prevencao de abuso.',
-          'Quando uma conta for excluida, poderemos excluir ou anonimizar as informacoes associadas. Em alguns casos, certos registros vinculados a duelos, rankings, denuncias, seguranca ou prevencao de abuso podem ser mantidos de forma limitada ou anonimizada para preservar a integridade do servico.',
-          'A exclusao de conta no InkDuel e logica: a conta e marcada como excluida e deixa de poder ser usada. As obras de uma conta excluida deixam de ser visiveis publicamente. Seu progresso de leitura continua associado a conta excluida e nao e mostrado a ninguem.',
+          'Se voce solicitar a exclusao da sua conta dentro do app ou pelos nossos canais de privacidade, nos a desativamos de forma permanente: ela fica marcada como excluida, voce nao pode mais entrar com ela, seu perfil deixa de ser exibido e deixamos de enviar notificacoes.',
+          'Ao excluir a conta, excluimos as imagens de capa das suas obras e o seu progresso de leitura, cancelamos as capas que estiverem em analise e despublicamos suas obras, que deixam de ser exibidas no InkDuel e na web.',
+          'Mantemos, sem exibi-los publicamente, o registro da conta excluida, o texto das suas obras e capitulos e os registros vinculados a duelos, rankings, denuncias, moderacao, seguranca e prevencao de abuso, para preservar a integridade do servico. Se voce quiser que tambem excluamos essas informacoes, pode pedir pelos nossos canais de privacidade: vamos exclui-las ou anonimiza-las, salvo o que precisarmos manter por motivos legais, de seguranca ou de prevencao de abuso.',
           `Voce tambem pode solicitar a exclusao da sua conta ou dos seus dados pelo nosso canal web: ${DELETE_ACCOUNT_URL}`,
         ],
         cta: {
