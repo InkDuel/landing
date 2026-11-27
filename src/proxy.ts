@@ -1,10 +1,11 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { GA_HIT_SOURCES, GA_SCRIPT_SOURCES } from '@/lib/analytics-csp';
+import { COVER_IMAGE_ORIGIN } from '@/lib/covers';
 import { API_BASE_URL, firebaseWebConfig } from '@/lib/session/config';
 
 // Strict CSP with a per-request nonce, only for the signed-in area — /login,
-// /me and /me/*, /stories, /profile/*, /work/* (founder
+// /me and /me/*, /stories, /profile/*, /work/*, /ops/* (founder
 // decision B, 2026-10-04). Those pages render per request anyway; the public
 // pages keep the static policy from next.config.ts and their CDN cache.
 //
@@ -23,7 +24,8 @@ function sessionPolicy(nonce: string): string {
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://apis.google.com ${GA_SCRIPT_SOURCES}${isDev ? " 'unsafe-eval'" : ''}`,
     // Styles keep 'unsafe-inline': next/font and React style attributes.
     "style-src 'self' 'unsafe-inline'",
-    `img-src 'self' data: blob: ${GA_HIT_SOURCES}`,
+    // Covers (approved, and signed ones for the author and the review page).
+    `img-src 'self' data: blob: ${COVER_IMAGE_ORIGIN} ${GA_HIT_SOURCES}`,
     "font-src 'self'",
     [
       "connect-src 'self'",
@@ -75,7 +77,7 @@ export const config = {
       ],
     },
     {
-      source: '/(me|profile|work|duels)/:path*',
+      source: '/(me|profile|work|duels|ops)/:path*',
       missing: [
         { type: 'header', key: 'next-router-prefetch' },
         { type: 'header', key: 'purpose', value: 'prefetch' },

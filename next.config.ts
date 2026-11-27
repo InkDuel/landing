@@ -18,7 +18,8 @@ const contentSecurityPolicy = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline' ${GA_SCRIPT_SOURCES}${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob: ${GA_HIT_SOURCES}`,
+  // Approved covers live in the public bucket (see COVER_IMAGE_ORIGIN).
+  `img-src 'self' data: blob: https://storage.googleapis.com ${GA_HIT_SOURCES}`,
   "font-src 'self'",
   `connect-src 'self' https://identitytoolkit.googleapis.com ${GA_HIT_SOURCES}${isDev ? " ws: wss:" : ""}`,
   "media-src 'self'",
