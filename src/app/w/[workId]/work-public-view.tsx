@@ -60,7 +60,7 @@ export function WorkPublicView({
         return (
           <article className="pt-6">
             <header className="flex flex-col gap-6 sm:flex-row sm:items-end">
-              <WorkCover workId={work.id} title={work.title} author={author} width={148} />
+              <WorkCover workId={work.id} title={work.title} author={author} width={148} coverUrl={work.coverUrl} />
               <div className="flex flex-col gap-3">
                 <h1 className="type-literary-title text-content sm:type-literary-title-lg">{work.title}</h1>
                 <a href={withLang(`/u/${encodeURIComponent(work.authorId)}`, locale)} className="ink-focus flex items-center gap-2 type-caption font-extrabold text-primary no-underline">

@@ -30,7 +30,7 @@ export function LockedChapterView({
         return (
           <article className="pt-6">
             <a href={withLang(`/w/${encodeURIComponent(work.id)}`, locale)} className="ink-focus flex items-center gap-4 no-underline">
-              <WorkCover workId={work.id} title={work.title} author={work.authorDisplayName} width={72} />
+              <WorkCover workId={work.id} title={work.title} author={work.authorDisplayName} width={72} coverUrl={work.coverThumbUrl || work.coverUrl} />
               <span className="flex flex-col gap-1">
                 <span className="font-literary text-[20px] font-bold leading-tight text-content">{work.title}</span>
                 <span className="type-caption text-secondary">{work.authorDisplayName}</span>

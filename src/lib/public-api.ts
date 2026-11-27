@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { coverImageUrl } from './covers';
+
 // Public, unauthenticated backend endpoints used by the share pages. Called
 // from the server only; the browser never talks to the backend in phase 0.
 
@@ -110,6 +112,7 @@ export async function fetchPublicDuelStory(duelId: string, userId: string): Prom
 
 // ---- Obras on the web (inkduel.com/w/{id}) ----
 
+
 export type PublicWorkChapterSummary = { id: string; title: string; orderIndex: number };
 
 export type PublicWork = {
@@ -125,6 +128,9 @@ export type PublicWork = {
   lastActivityAt: string;
   freeChapterId: string;
   chapters: PublicWorkChapterSummary[];
+  /** Approved uploaded cover; '' = InkDuel's default cover. */
+  coverUrl: string;
+  coverThumbUrl: string;
 };
 
 export type PublicWorkChapter = {
@@ -159,6 +165,8 @@ export async function fetchPublicWork(workId: string): Promise<PublicWork | null
     lastActivityAt: str(data.lastActivityAt),
     freeChapterId: str(data.freeChapterId),
     chapters,
+    coverUrl: coverImageUrl(data.coverUrl),
+    coverThumbUrl: coverImageUrl(data.coverThumbUrl),
   };
 }
 

@@ -27,6 +27,8 @@ const work: PublicWork = {
     { id: 'c1', title: 'La herencia', orderIndex: 1 },
     { id: 'c2', title: '', orderIndex: 2 },
   ],
+  coverUrl: '',
+  coverThumbUrl: '',
 };
 const free: PublicWorkChapter = { id: 'c1', title: 'La herencia', orderIndex: 1, position: 1, locked: false, content: 'La carta llegó un martes.' };
 
@@ -49,6 +51,13 @@ describe('WorkPublicView', () => {
   it('a one-chapter work has no account gate', () => {
     render(<WorkPublicView work={{ ...work, chapters: [work.chapters[0]], publishedChapterCount: 1 }} freeChapter={free} initialLocale="es" resolveOnClient={false} />);
     expect(screen.queryByText('Sigue leyendo con tu cuenta')).toBeNull();
+  });
+
+  it('an approved cover replaces the default face', () => {
+    const url = 'https://storage.googleapis.com/b/covers/public/w1/r1.jpg';
+    const { container } = render(<WorkPublicView work={{ ...work, coverUrl: url }} freeChapter={free} initialLocale="es" resolveOnClient={false} />);
+    expect(container.querySelector(`img[src="${url}"]`)).toBeTruthy();
+    expect(screen.queryByText('InkDuel')).toBeNull();
   });
 
   it('not found', () => {

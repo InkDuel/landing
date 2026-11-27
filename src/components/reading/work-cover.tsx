@@ -3,7 +3,8 @@ import { cx } from '@/components/ink/cx';
 // InkDuel's default cover for an obra, the web twin of the app's WorkCover:
 // the paper of its Historias spine (same hash as the app, so the cover and the
 // spine always match), the title in Literata and the author. An object, like a
-// printed book: same colours in light and dark themes.
+// printed book: same colours in light and dark themes. An approved uploaded
+// cover (coverUrl) replaces the face; the frame stays.
 
 const PAPERS = ['#e9b4c4', '#b4c1ee', '#ead592', '#7c88b8', '#ede4cf'];
 export const COVER_INK = '#131a3a';
@@ -24,12 +25,14 @@ export function WorkCover({
   author,
   width,
   className,
+  coverUrl = '',
 }: {
   workId: string;
   title: string;
   author: string;
   width: number;
   className?: string;
+  coverUrl?: string;
 }) {
   return (
     <div
@@ -45,6 +48,20 @@ export function WorkCover({
         color: COVER_INK,
       }}
     >
+      {coverUrl ? (
+        // A plain <img>: the bucket already serves the two sizes we need.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" decoding="async" />
+      ) : (
+        <DefaultFace title={title} author={author} width={width} />
+      )}
+    </div>
+  );
+}
+
+function DefaultFace({ title, author, width }: { title: string; author: string; width: number }) {
+  return (
+    <>
       <span aria-hidden="true" className="absolute inset-y-0 left-0" style={{ width: width * 0.07, background: 'rgba(19,26,58,.14)' }} />
       <div className="absolute inset-0 flex flex-col" style={{ padding: `${width * 0.09}px ${width * 0.09}px ${width * 0.08}px ${width * 0.13}px` }}>
         <span className="font-ui font-extrabold uppercase opacity-70" style={{ fontSize: width * 0.06, letterSpacing: '0.1em' }}>
@@ -59,6 +76,6 @@ export function WorkCover({
           {author}
         </span>
       </div>
-    </div>
+    </>
   );
 }
