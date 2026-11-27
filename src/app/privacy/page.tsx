@@ -14,7 +14,7 @@ const copies: Record<Locale, LegalCopy> = {
     intro:
       'Esta política explica qué datos podemos tratar cuando usas InkDuel, por qué los tratamos y qué opciones tienes sobre tu información.',
     lastUpdatedLabel: 'Última actualización',
-    lastUpdatedValue: '26 de noviembre de 2026',
+    lastUpdatedValue: '27 de noviembre de 2026',
     contactLabel: 'Contacto de privacidad',
     contactValue: CONTACT_EMAIL,
     sections: [
@@ -37,6 +37,7 @@ const copies: Record<Locale, LegalCopy> = {
           'Datos de uso y actividad, como historial básico de interacción, participación en duelos, votos, rankings, resultados y preferencias dentro de la app.',
           'Datos técnicos, como identificadores de dispositivo, registros básicos de actividad, información de errores, rendimiento, versión de la app y configuraciones generales.',
           'Datos de notificaciones, como el token necesario para enviarte avisos sobre resultados, actividad relevante o mensajes operativos.',
+          'Datos de lectura de obras, como, por cada obra y lector, el último capítulo abierto, la posición alcanzada en él, cuándo lo abriste y cuándo terminaste un capítulo. Son privados: solo los ves tú, y los usamos para ofrecerte «Continúa leyendo» y para calcular «Lo más leído».',
         ],
       },
       {
@@ -45,7 +46,7 @@ const copies: Record<Locale, LegalCopy> = {
           'El contenido generado por los usuarios, como relatos, obras y sus capítulos, imágenes de portada, respuestas a consignas, votos, resultados de duelos, estadísticas y reportes, puede ser tratado para operar las funcionalidades principales de InkDuel, incluyendo la participación en duelos, la evaluación de resultados, la generación de retroalimentación, la prevención de abusos y la mejora de la experiencia creativa.',
           'InkDuel no reclama la titularidad sobre los relatos o textos que los usuarios crean dentro de la plataforma. Sin embargo, al usar el servicio, el usuario nos autoriza a procesar, mostrar, almacenar y organizar dicho contenido en la medida necesaria para prestar las funciones de la app.',
           'Los relatos enviados en modos solitarios (como Sprint de Tinta) pueden ser reutilizados como la respuesta del rival en duelos posteriores de otros usuarios. En esos casos puede mostrarse tu nombre de usuario como autor original. Estos relatos pueden retirarse en cualquier momento mediante el sistema de reportes o por decisiones de moderación.',
-          'Si subes una imagen de portada para una obra, esa imagen también es contenido tuyo. Antes de publicarla, la analizamos con herramientas automáticas de un proveedor externo (Google Cloud Vision) para detectar contenido que no se permite en InkDuel, como desnudez o violencia explícita. Si el análisis no es concluyente, una persona del equipo de InkDuel revisa la imagen antes de aprobarla o rechazarla. Una portada rechazada no se publica.',
+          'Si subes una imagen de portada para una obra, esa imagen también es contenido tuyo. Antes de publicarla, la analizamos con herramientas automáticas de un proveedor externo (Google Cloud Vision) para detectar contenido que no se permite en InkDuel, como desnudez o violencia explícita. Si el análisis no es concluyente, una persona del equipo de InkDuel revisa la imagen antes de aprobarla o rechazarla. Una portada rechazada no se publica. Las imágenes de portada rechazadas o reemplazadas se eliminan de nuestro almacenamiento.',
         ],
       },
       {
@@ -89,6 +90,7 @@ const copies: Record<Locale, LegalCopy> = {
           'Algunas funciones de InkDuel implican que cierta información sea visible para otros usuarios, como nombre de usuario, perfil público, relatos publicados, participación en duelos, resultados, rankings, votos o estadísticas asociadas a la actividad dentro de la plataforma.',
           'Las obras que publicas tienen una página pública en inkduel.com. Cualquier persona con el enlace, tenga o no cuenta en InkDuel, puede ver la ficha de la obra (por ejemplo, título, portada, sinopsis y tu nombre de usuario como autor) y leer el capítulo 1. Estas páginas pueden aparecer en buscadores como Google. Para leer los demás capítulos hace falta una cuenta de InkDuel, y tus borradores y capítulos sin publicar siguen siendo privados.',
           'Si eliminas una obra, su página pública deja de estar disponible en InkDuel. Los buscadores pueden tardar un tiempo en retirarla de sus resultados.',
+          '«Lo más leído» muestra las obras con más lectores distintos que terminaron un capítulo en los últimos 7 días. Es un recuento agregado: nunca mostramos quién leyó qué, ni a ti ni a otros usuarios, ni al autor de la obra.',
           'La visibilidad concreta puede depender de la configuración del producto, de la naturaleza pública o competitiva de determinadas funciones y de los ajustes de privacidad que ofrezca la app en cada momento.',
         ],
       },
@@ -120,6 +122,7 @@ const copies: Record<Locale, LegalCopy> = {
           'Conservamos la información durante el tiempo necesario para operar InkDuel, mantener la seguridad del servicio y cumplir obligaciones legales o de prevención de fraude.',
           'Si solicitas eliminar tu cuenta desde la app o a través de nuestros canales de privacidad, eliminaremos o anonimizaremos la información asociada, salvo cuando debamos conservar ciertos datos por motivos legales, de seguridad o defensa frente a abusos.',
           'Cuando una cuenta sea eliminada, podremos eliminar o anonimizar la información asociada. En algunos casos, ciertos registros vinculados a duelos, rankings, reportes, seguridad o prevención de abuso podrían conservarse de forma limitada o anonimizada para preservar la integridad del servicio.',
+          'La eliminación de cuenta en InkDuel es lógica: la cuenta se marca como eliminada y deja de poder usarse. Las obras de una cuenta eliminada dejan de ser visibles públicamente. Tu progreso de lectura sigue asociado a la cuenta eliminada y no se muestra a nadie.',
           `También puedes solicitar la eliminación de tu cuenta o datos desde nuestro canal web: ${DELETE_ACCOUNT_URL}`,
         ],
         cta: {
@@ -162,7 +165,7 @@ const copies: Record<Locale, LegalCopy> = {
     intro:
       'This policy explains what data we may process when you use InkDuel, why we process it, and what choices you have over your information.',
     lastUpdatedLabel: 'Last updated',
-    lastUpdatedValue: 'November 26, 2026',
+    lastUpdatedValue: 'November 27, 2026',
     contactLabel: 'Privacy contact',
     contactValue: CONTACT_EMAIL,
     sections: [
@@ -185,6 +188,7 @@ const copies: Record<Locale, LegalCopy> = {
           'Usage and activity data, such as basic interaction history, duel participation, votes, rankings, results, and preferences within the app.',
           'Technical data, such as device identifiers, basic activity logs, crash information, performance data, app version, and general settings.',
           'Notification data, such as the token needed to send you results, relevant activity updates, or operational messages.',
+          'Reading data for works, such as, for each work and reader, the last chapter opened, the position reached in it, when you opened it and when you finished a chapter. It is private: only you can see it, and we use it to offer you “Continue reading” and to calculate “Most read”.',
         ],
       },
       {
@@ -193,7 +197,7 @@ const copies: Record<Locale, LegalCopy> = {
           'User-generated content, such as stories, works and their chapters, cover images, responses to prompts, votes, duel results, statistics, and reports, may be processed in order to operate InkDuel’s core features, including duel participation, result evaluation, feedback generation, abuse prevention, and improvement of the creative experience.',
           'InkDuel does not claim ownership over the stories or texts that users create within the platform. However, by using the service, the user authorizes us to process, display, store, and organize that content to the extent necessary to provide the app’s features.',
           'Stories submitted in solo modes (such as Tinta Sprint) may be reused as the rival’s response in later duels played by other users. In such cases, your username may be shown as the original author. These stories can be removed at any time through the reporting system or moderation decisions.',
-          'If you upload a cover image for a work, that image is also your content. Before publishing it, we analyze it with automated tools from an external provider (Google Cloud Vision) to detect content that is not allowed on InkDuel, such as nudity or graphic violence. If the analysis is inconclusive, a member of the InkDuel team reviews the image before approving or rejecting it. A rejected cover is not published.',
+          'If you upload a cover image for a work, that image is also your content. Before publishing it, we analyze it with automated tools from an external provider (Google Cloud Vision) to detect content that is not allowed on InkDuel, such as nudity or graphic violence. If the analysis is inconclusive, a member of the InkDuel team reviews the image before approving or rejecting it. A rejected cover is not published. Cover images that are rejected or replaced are deleted from our storage.',
         ],
       },
       {
@@ -237,6 +241,7 @@ const copies: Record<Locale, LegalCopy> = {
           'Some InkDuel features imply that certain information may be visible to other users, such as username, public profile, published stories, duel participation, results, rankings, votes, or statistics associated with activity within the platform.',
           'Works you publish have a public page on inkduel.com. Anyone with the link, whether or not they have an InkDuel account, can see the work’s page (for example, title, cover, synopsis, and your username as the author) and read chapter 1. These pages may appear in search engines such as Google. Reading the other chapters requires an InkDuel account, and your drafts and unpublished chapters remain private.',
           'If you delete a work, its public page is no longer available on InkDuel. Search engines may take some time to remove it from their results.',
+          '“Most read” shows the works with the most distinct readers who finished a chapter in the last 7 days. It is an aggregated count: we never show who read what, neither to you nor to other users, nor to the author of the work.',
           'The specific visibility of this information may depend on product configuration, the public or competitive nature of certain features, and the privacy settings made available by the app at any given time.',
         ],
       },
@@ -268,6 +273,7 @@ const copies: Record<Locale, LegalCopy> = {
           'We keep information for as long as needed to operate InkDuel, maintain service security, and comply with legal obligations or fraud-prevention needs.',
           'If you request deletion of your account from inside the app or through our privacy channels, we will delete or anonymize the associated information unless we must retain certain data for legal, security, or abuse-prevention reasons.',
           'When an account is deleted, we may delete or anonymize the associated information. In some cases, certain records related to duels, rankings, reports, security, or abuse prevention may be kept in a limited or anonymized form to preserve service integrity.',
+          'Account deletion on InkDuel is logical: the account is marked as deleted and can no longer be used. The works of a deleted account stop being publicly visible. Your reading progress stays associated with the deleted account and is not shown to anyone.',
           `You can also request deletion of your account or related data through our web channel: ${DELETE_ACCOUNT_URL}`,
         ],
         cta: {
@@ -310,7 +316,7 @@ const copies: Record<Locale, LegalCopy> = {
     intro:
       'Esta politica explica quais dados podemos tratar quando voce usa o InkDuel, por que tratamos esses dados e quais escolhas voce tem sobre as suas informacoes.',
     lastUpdatedLabel: 'Ultima atualizacao',
-    lastUpdatedValue: '26 de novembro de 2026',
+    lastUpdatedValue: '27 de novembro de 2026',
     contactLabel: 'Contato de privacidade',
     contactValue: CONTACT_EMAIL,
     sections: [
@@ -333,6 +339,7 @@ const copies: Record<Locale, LegalCopy> = {
           'Dados de uso e atividade, como historico basico de interacao, participacao em duelos, votos, rankings, resultados e preferencias dentro do app.',
           'Dados tecnicos, como identificadores do dispositivo, registros basicos de atividade, informacoes de erros, desempenho, versao do app e configuracoes gerais.',
           'Dados de notificacoes, como o token necessario para enviar resultados, atividade relevante ou mensagens operacionais.',
+          'Dados de leitura de obras, como, por obra e leitor, o ultimo capitulo aberto, a posicao alcancada nele, quando voce o abriu e quando terminou um capitulo. Sao privados: so voce os ve, e os usamos para oferecer "Continue lendo" e para calcular "Mais lidas".',
         ],
       },
       {
@@ -341,7 +348,7 @@ const copies: Record<Locale, LegalCopy> = {
           'O conteudo gerado pelos usuarios, como historias, obras e seus capitulos, imagens de capa, respostas a consignas, votos, resultados de duelos, estatisticas e denuncias, pode ser tratado para operar as funcionalidades principais do InkDuel, incluindo participacao em duelos, avaliacao de resultados, geracao de feedback, prevencao de abusos e melhoria da experiencia criativa.',
           'O InkDuel nao reivindica a titularidade sobre as historias ou textos criados pelos usuarios dentro da plataforma. No entanto, ao usar o servico, o usuario nos autoriza a processar, exibir, armazenar e organizar esse conteudo na medida necessaria para prestar as funcoes do app.',
           'Os textos enviados em modos solo (como o Sprint de Tinta) podem ser reutilizados como a resposta do rival em duelos posteriores de outros usuarios. Nesses casos, seu nome de usuario pode ser exibido como autor original. Esses textos podem ser removidos a qualquer momento pelo sistema de denuncias ou por decisoes de moderacao.',
-          'Se voce enviar uma imagem de capa para uma obra, essa imagem tambem e conteudo seu. Antes de publica-la, nos a analisamos com ferramentas automaticas de um fornecedor externo (Google Cloud Vision) para detectar conteudo que nao e permitido no InkDuel, como nudez ou violencia explicita. Se a analise nao for conclusiva, uma pessoa da equipe do InkDuel revisa a imagem antes de aprova-la ou recusa-la. Uma capa recusada nao e publicada.',
+          'Se voce enviar uma imagem de capa para uma obra, essa imagem tambem e conteudo seu. Antes de publica-la, nos a analisamos com ferramentas automaticas de um fornecedor externo (Google Cloud Vision) para detectar conteudo que nao e permitido no InkDuel, como nudez ou violencia explicita. Se a analise nao for conclusiva, uma pessoa da equipe do InkDuel revisa a imagem antes de aprova-la ou recusa-la. Uma capa recusada nao e publicada. As imagens de capa recusadas ou substituidas sao excluidas do nosso armazenamento.',
         ],
       },
       {
@@ -385,6 +392,7 @@ const copies: Record<Locale, LegalCopy> = {
           'Algumas funcoes do InkDuel implicam que certas informacoes possam ser visiveis para outros usuarios, como nome de usuario, perfil publico, historias publicadas, participacao em duelos, resultados, rankings, votos ou estatisticas associadas a atividade dentro da plataforma.',
           'As obras que voce publica tem uma pagina publica em inkduel.com. Qualquer pessoa com o link, tenha ou nao conta no InkDuel, pode ver a pagina da obra (por exemplo, titulo, capa, sinopse e o seu nome de usuario como autor) e ler o capitulo 1. Essas paginas podem aparecer em buscadores como o Google. Para ler os demais capitulos e preciso ter uma conta no InkDuel, e os seus rascunhos e capitulos nao publicados continuam privados.',
           'Se voce excluir uma obra, a pagina publica dela deixa de estar disponivel no InkDuel. Os buscadores podem levar algum tempo para retira-la dos resultados.',
+          '"Mais lidas" mostra as obras com mais leitores distintos que terminaram um capitulo nos ultimos 7 dias. E uma contagem agregada: nunca mostramos quem leu o que, nem para voce, nem para outros usuarios, nem para o autor da obra.',
           'A visibilidade especifica dessas informacoes pode depender da configuracao do produto, da natureza publica ou competitiva de certas funcoes e das configuracoes de privacidade disponibilizadas pelo app em cada momento.',
         ],
       },
@@ -416,6 +424,7 @@ const copies: Record<Locale, LegalCopy> = {
           'Mantemos as informacoes pelo tempo necessario para operar o InkDuel, preservar a seguranca do servico e cumprir obrigacoes legais ou necessidades de prevencao a fraude.',
           'Se voce solicitar a exclusao da sua conta dentro do app ou pelos nossos canais de privacidade, excluiremos ou anonimizaremos as informacoes associadas, salvo quando precisarmos manter certos dados por motivos legais, de seguranca ou prevencao de abuso.',
           'Quando uma conta for excluida, poderemos excluir ou anonimizar as informacoes associadas. Em alguns casos, certos registros vinculados a duelos, rankings, denuncias, seguranca ou prevencao de abuso podem ser mantidos de forma limitada ou anonimizada para preservar a integridade do servico.',
+          'A exclusao de conta no InkDuel e logica: a conta e marcada como excluida e deixa de poder ser usada. As obras de uma conta excluida deixam de ser visiveis publicamente. Seu progresso de leitura continua associado a conta excluida e nao e mostrado a ninguem.',
           `Voce tambem pode solicitar a exclusao da sua conta ou dos seus dados pelo nosso canal web: ${DELETE_ACCOUNT_URL}`,
         ],
         cta: {
